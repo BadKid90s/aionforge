@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "styles": [
+    {
+      "id": "pdd-clean",
+      "name": "拼多多干净棚拍",
+      "platforms": ["pinduoduo", "taobao"],
+      "keywords": ["拼多多", "淘宝", "主图", "干净"],
+      "temperature": "neutral",
+      "palette": {
+        "background": "#F7F5F2",
+        "text": "#2D2D2D",
+        "accent": "product-matched"
+      },
+      "lighting": "左上柔光，中性冷调",
+      "typography": "现代几何无衬线，短标签",
+      "garment_scale": "全身 75–85%",
+      "style_lock": "Campaign Style Lock: consistent womenswear ecommerce set; seamless off-white background #F7F5F2; charcoal text #2D2D2D; one product-matched accent; neutral-cool soft studio light from upper left; modern geometric sans-serif short labels only; garment identity locked to the product photo; generous whitespace; no palette drift, no mixed fonts, no random locations, no extra logos."
+    },
+    {
+      "id": "taobao-warm",
+      "name": "淘宝暖调生活",
+      "platforms": ["taobao", "tmall"],
+      "keywords": ["淘宝", "暖调", "生活"],
+      "temperature": "warm",
+      "palette": {
+        "background": "#F5EFE6",
+        "text": "#3A2F27",
+        "accent": "product-matched"
+      },
+      "lighting": "暖窗光或暖棚灯，色温约 4500K",
+      "typography": "一种无衬线",
+      "garment_scale": "全身 70–80%",
+      "style_lock": "Campaign Style Lock: warm womenswear lifestyle set; cream background #F5EFE6; deep brown text #3A2F27; one product-matched accent; warm window-like light; single sans-serif; same room logic across the set; no cold blue cast, no mixed fonts, no extra logos."
+    },
+    {
+      "id": "amazon-white",
+      "name": "Amazon 白底主图",
+      "platforms": ["amazon"],
+      "keywords": ["amazon", "白底", "主图"],
+      "temperature": "neutral",
+      "palette": {
+        "background": "#FFFFFF",
+        "text": "#111111"
+      },
+      "lighting": "均匀棚光，阴影极淡",
+      "typography": "图内尽量无字，主图合规",
+      "garment_scale": "服装填充 85% 以上，四周安全边",
+      "style_lock": "Campaign Style Lock: Amazon-ready womenswear packshot; true white background #FFFFFF; even studio lighting; product fills the frame with small safety margin; no props, no lifestyle room, no badges, no readable promotional text, no extra logos."
+    },
+    {
+      "id": "xhs-fresh",
+      "name": "小红书清新",
+      "platforms": ["xiaohongshu", "douyin"],
+      "keywords": ["小红书", "清新", "种草"],
+      "temperature": "cool",
+      "palette": {
+        "background": "#F3F6F4",
+        "text": "#2A2A2A",
+        "accent": "#7A9E8A"
+      },
+      "lighting": "通透自然光",
+      "typography": "少字大字，一种无衬线",
+      "garment_scale": "半身或全身 60–75%",
+      "style_lock": "Campaign Style Lock: fresh Xiaohongshu womenswear; airy cool daylight; pale mint-grey environment #F3F6F4; one sage accent #7A9E8A; natural skin; short labels only in one sans-serif; no heavy makeup look, no cluttered stickers, no extra logos."
+    },
+    {
+      "id": "editorial-magazine",
+      "name": "杂志编辑风",
+      "platforms": ["lookbook"],
+      "keywords": ["杂志", "editorial", "大片"],
+      "temperature": "neutral",
+      "palette": {
+        "background": "#EDEAE4",
+        "text": "#1A1A1A"
+      },
+      "lighting": "方向明确的塑形光，可有轮廓光",
+      "typography": "若有字只用一种几何无衬线",
+      "garment_scale": "全身 60–80%，留白多",
+      "style_lock": "Campaign Style Lock: editorial womenswear magazine set; sculpted directional light; muted set #EDEAE4; generous negative space; fashion-photography grain optional and consistent; no coupon badges, no mixed fonts, no extra logos."
+    },
+    {
+      "id": "luxury-dark",
+      "name": "深色奢感",
+      "platforms": ["lookbook"],
+      "keywords": ["奢华", "深色", "夜"],
+      "temperature": "warm",
+      "palette": {
+        "background": "#1A1714",
+        "text": "#F4EFE6",
+        "accent": "#C4A574"
+      },
+      "lighting": "伦勃朗式侧光，暗部有细节",
+      "typography": "细无衬线，极少字",
+      "garment_scale": "半身或全身 70%",
+      "style_lock": "Campaign Style Lock: dark luxury womenswear; deep brown-black set #1A1714; warm rim light; champagne accent #C4A574; rich fabric texture; no neon, no busy pattern backgrounds, no extra logos."
+    },
+    {
+      "id": "campus-youth",
+      "name": "校园青年女装",
+      "platforms": ["pinduoduo", "taobao", "xiaohongshu"],
+      "keywords": ["女大学生", "校园", "T恤", "卫衣", "年轻"],
+      "temperature": "cool",
+      "palette": {
+        "background": "#F4F1EA",
+        "text": "#2C2C2C",
+        "accent": "product-matched"
+      },
+      "lighting": "树荫或窗边软日光，皮肤干净通透",
+      "typography": "少字，一种无衬线",
+      "garment_scale": "全身 70–85%，半身印花图 60–70%",
+      "style_lock": "Campaign Style Lock: youthful campus womenswear for young adult female models (college-age, not children); airy daylight; cream-grey set #F4F1EA; natural light makeup; casual tee and hoodie fabrics; one product-matched accent; same daylight across the set; no schoolchild uniform, no over-sexy posing, no mixed fonts, no extra logos."
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aionforge.local/schemas/style.schema.json",
+  "title": "视觉风格目录",
+  "description": "风格管色板、冷暖、字体和 Campaign Style Lock。选定后把 style_lock 原样贴进每一张 Prompt，不要每张重写。",
+  "type": "object",
+  "required": ["version", "styles"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer", "minimum": 1 },
+    "styles": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/style" }
+    }
+  },
+  "$defs": {
+    "style": {
+      "type": "object",
+      "required": ["id", "name", "temperature", "palette", "style_lock"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "name": { "type": "string" },
+        "platforms": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "适用平台，如 pinduoduo、amazon"
+        },
+        "keywords": { "type": "array", "items": { "type": "string" } },
+        "temperature": {
+          "type": "string",
+          "enum": ["warm", "cool", "neutral"],
+          "description": "全套冷暖调"
+        },
+        "palette": {
+          "type": "object",
+          "required": ["background", "text"],
+          "additionalProperties": false,
+          "properties": {
+            "background": { "type": "string", "description": "背景色，写 hex" },
+            "text": { "type": "string", "description": "图内文字色，写 hex" },
+            "accent": { "type": "string", "description": "强调色 hex，可按成衣主色替换" }
+          }
+        },
+        "lighting": { "type": "string" },
+        "typography": { "type": "string" },
+        "garment_scale": { "type": "string", "description": "服装占画面大致比例" },
+        "style_lock": {
+          "type": "string",
+          "minLength": 40,
+          "description": "Campaign Style Lock 全文，原样复制到每张 Prompt"
+        }
+      }
+    }
+  }
+}

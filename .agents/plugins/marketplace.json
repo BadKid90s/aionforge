@@ -1,0 +1,20 @@
+{
+  "name": "aionforge",
+  "interface": {
+    "displayName": "AionForge"
+  },
+  "plugins": [
+    {
+      "name": "aionforge",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

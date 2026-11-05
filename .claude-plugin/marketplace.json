@@ -1,0 +1,18 @@
+{
+  "name": "aionforge",
+  "owner": {
+    "name": "BadKid90s",
+    "url": "https://github.com/BadKid90s"
+  },
+  "metadata": {
+    "description": "AionForge 女装电商 AI 出图插件"
+  },
+  "plugins": [
+    {
+      "name": "aionforge",
+      "source": "./",
+      "description": "女装电商 AI 出图：印花提取 / 印花合成 / 模特换衣 / 多机位裂变 / 主图+详情整套上架图",
+      "category": "productivity"
+    }
+  ]
+}
