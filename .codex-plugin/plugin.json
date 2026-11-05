@@ -1,0 +1,27 @@
+{
+  "name": "aionforge",
+  "version": "0.1.0",
+  "description": "女装电商 AI 出图：印花提取 / 印花合成 / 模特换衣 / 多机位裂变 / 主图+详情整套上架图",
+  "author": {
+    "name": "BadKid90s",
+    "url": "https://github.com/BadKid90s"
+  },
+  "homepage": "https://github.com/BadKid90s/aionforge",
+  "repository": "https://github.com/BadKid90s/aionforge",
+  "license": "MIT",
+  "keywords": ["ecommerce", "fashion", "image-generation", "womenswear", "try-on"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "AionForge 女装出图",
+    "shortDescription": "女装电商图的看图分析、Prompt、生成与质检",
+    "longDescription": "把衣服照片、模特照片或印花交给 Agent：锁定商品细节、写出图计划、逐张生成并质检。覆盖印花提取、印花合成、模特换衣、多机位裂变，以及拼多多 / 淘宝 / 京东 / 抖音 / Amazon 主图 + 详情整套上架图。",
+    "developerName": "BadKid90s",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "defaultPrompt": [
+      "这件吊带出一套拼多多主图",
+      "把这件成衣穿到这个模特身上"
+    ],
+    "websiteURL": "https://github.com/BadKid90s/aionforge"
+  }
+}

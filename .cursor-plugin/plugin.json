@@ -1,0 +1,14 @@
+{
+  "name": "aionforge",
+  "displayName": "AionForge 女装出图",
+  "description": "女装电商 AI 出图：印花提取 / 印花合成 / 模特换衣 / 多机位裂变 / 主图+详情整套上架图",
+  "version": "0.1.0",
+  "author": {
+    "name": "BadKid90s"
+  },
+  "homepage": "https://github.com/BadKid90s/aionforge",
+  "repository": "https://github.com/BadKid90s/aionforge",
+  "license": "MIT",
+  "keywords": ["ecommerce", "fashion", "image-generation", "womenswear", "try-on"],
+  "skills": "./skills/"
+}

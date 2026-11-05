@@ -8,7 +8,7 @@
 - **多机位裂变**：同一张成片扩展出多个机位 / 姿势
 - **整套上架图**：主图 + 详情图，适配拼多多 / 淘宝 / 京东 / 抖音 / Amazon
 
-支持 **Claude Code**、**Grok Build**、**Codex（ChatGPT 桌面版）**。
+支持 **Claude Code**、**Codex**、**Cursor**、**Gemini CLI**、**Grok Build**，以及其他支持 Agent Skills 的工具。
 
 ## 快速开始
 
@@ -24,6 +24,16 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 ```
 
 ### 2. 安装插件
+
+**通用方式（推荐）**：一条命令装到本机所有支持 Skills 的 Agent（Claude Code、Codex、Cursor、Gemini CLI、OpenCode 等 70+ 种），需要 Node.js：
+
+```bash
+npx skills add BadKid90s/aionforge -g
+```
+
+`-g` 装到用户目录，所有项目都能用；去掉则只装到当前项目。只装给某个 Agent 用 `-a claude-code`。
+
+也可以用各平台自己的插件系统安装：
 
 **Claude Code**（在 Claude Code 对话框里输入）
 
@@ -44,7 +54,15 @@ grok plugin install BadKid90s/aionforge
 codex plugin marketplace add BadKid90s/aionforge
 ```
 
-然后在 ChatGPT 桌面版的 Plugins 里安装 `aionforge`。
+然后在 Codex 的 `/plugins`（或 ChatGPT 桌面版的 Plugins）里安装 `aionforge`。
+
+**Cursor**：用上面的通用方式 `npx skills add BadKid90s/aionforge -g -a cursor`。
+
+**Gemini CLI**
+
+```bash
+gemini extensions install https://github.com/BadKid90s/aionforge
+```
 
 > 其他 Agent：从 [Releases](https://github.com/BadKid90s/aionforge/releases) 下载 `skill.zip`，解压到 Agent 的 skills 目录（如 `~/.claude/skills/`）。
 
@@ -109,7 +127,7 @@ Agent 会先让你确认商品细节和出图计划，确认后逐张生成。�
 
 **中断了想续跑**：告诉 Agent 继续上次的任务，它会沿用同一个任务目录接着出剩下的图。
 
-**更新插件**：Claude Code 里 `/plugin marketplace update aionforge`；Grok 用 `grok plugin update aionforge`。
+**更新插件**：`npx skills update`；Claude Code 里 `/plugin marketplace update aionforge`；Grok 用 `grok plugin update aionforge`；Gemini 用 `gemini extensions update aionforge`。
 
 ## 进阶
 
@@ -144,9 +162,16 @@ Agent 会自动调用，一般不用手动跑。手动调用：`uv run --project
 .claude-plugin/
   plugin.json             # Claude Code / Grok Build 插件清单
   marketplace.json        # 插件市场目录
-plugin.json               # Codex 插件清单
+.codex-plugin/
+  plugin.json             # Codex 插件清单
 .agents/plugins/
   marketplace.json        # Codex 插件市场目录
+plugin.json               # 通用 Agent Plugins 清单（Codex 新格式）
+.cursor-plugin/
+  plugin.json             # Cursor 插件清单（上架 Cursor 市场用）
+gemini-extension.json     # Gemini CLI 扩展清单，上下文入口 GEMINI.md
+scripts/
+  bump-version.sh         # 统一修改版本号
 skills/aionforge/
   SKILL.md                # 入口：流程、全局规则、资源地图
   .env.example            # 配置模板
@@ -163,10 +188,11 @@ uv run pytest -q
 uv run ruff check .
 ```
 
-发布新版本：同步修改 `.claude-plugin/plugin.json`、`plugin.json`、`skills/aionforge/scripts/pyproject.toml`、`skills/aionforge/scripts/aionforge/__init__.py` 里的版本号，然后：
+发布新版本：
 
 ```bash
-(cd skills/aionforge/scripts && uv lock)
+scripts/bump-version.sh            # 查看各清单当前版本是否一致
+scripts/bump-version.sh X.Y.Z      # 统一改版本号并刷新 uv.lock
 git commit -am "chore: release vX.Y.Z" && git tag -a vX.Y.Z -m vX.Y.Z && git push --follow-tags
 git archive --format=zip -o dist/skill.zip HEAD:skills aionforge
 gh release create vX.Y.Z dist/skill.zip --title vX.Y.Z --generate-notes
