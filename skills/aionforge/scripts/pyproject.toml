@@ -1,6 +1,6 @@
 [project]
 name = "aionforge"
-version = "0.2.0"
+version = "0.1.0"
 description = "货坊 AionForge — 女装电商 AI 工作流（Skill 编排 + 薄 CLI）"
 requires-python = ">=3.11"
 dependencies = [
