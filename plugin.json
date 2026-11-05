@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "aionforge",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "女装电商 AI 出图：印花提取 / 印花合成 / 模特换衣 / 多机位裂变 / 主图+详情整套上架图",
   "author": {
     "name": "BadKid90s",
