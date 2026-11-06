@@ -1,6 +1,6 @@
 # 电商卖点信息图与拼图 Prompt 模板（`infographic`）
 
-用于 `pdp` 工作流中的核心卖点副图（`main-selling-point`）、详情页信息图（`detail-infographic`）、三角度拼图（`detail-three-angle`）和一衣多穿多场景分屏（`detail-multi-scene`）。
+用于 `pdp` 工作流中的核心卖点副图（`main-selling-point`）、详情页信息图（`detail-infographic`）、多角度拼图（`detail-three-angle`）和一衣多穿多场景分屏（`detail-multi-scene`）。
 
 写入 `work/prompts/<name>.txt`，按目标平台从 `references/typography.md`（及 `references/catalog/typography.json`）选取排版美学与配色，再调用 `forge generate`：
 
@@ -166,12 +166,12 @@ Asymmetric split-grid womenswear editorial screen on [背景 Hex] background.
 
 ---
 
-## 补充板式 A：三角度 360° 同框拼图（`detail-three-angle`）
+## 补充板式 A：三角度同框拼图（`detail-three-angle`：正面 / 微侧 / 背面）
 
 ```
-# Role: 女装三角度 360° 同框商拍师
+# Role: 女装三角度同框商拍师
 
-Three-equal-panel vertical collage showing the exact same womenswear garment from Front, Side, and Back views on [背景 Hex] studio background.
+Three-equal-panel vertical collage showing the exact same womenswear garment from Front (正面 0°), Three-Quarter (微侧 45°), and Back (背面) views on [背景 Hex] studio background.
 
 ## Campaign Style Lock
 （粘贴 facts.style_lock 原文）
@@ -180,14 +180,14 @@ Three-equal-panel vertical collage showing the exact same womenswear garment fro
 - 成衣图（文件名 garment，若有背面图则同时参考 garment_back）：整件衣服颜色、版型、长度的唯一标准。
 - 成片参考图（文件名 source，若有）：三栏必须为同一位女性模特，五官、发型、肤色、下装与鞋完全一致。
 
-## 画面构图（Three-Angle 1:1:1 Split）
-- 画面水平均分为 3 个等宽竖栏（各占 33.3% 宽度），栏间用 2px 干净细白线分隔，全身从头到脚完整入画，禁止截断头部或双脚：
-  - **左栏（正面 0°）**：自然站立正面全身，展示前领、胸前设计与衣长。
-  - **中栏（正侧 90° 或 45°）**：侧身全身，展示侧面廓形、袖型与衣摆垂坠厚度。
-  - **右栏（背面 180°）**：背面全身（头可微侧回眸），展示后领、肩线与后背下摆（若仅有正面成衣图，后背按同色同面料素背处理，禁止把胸前印花画到后背）。
+## 画面构图（Three-Angle 1:1:1 Split：正面 / 微侧 / 背面）
+- 画面水平均分为 3 个等宽竖栏（各占 33.3% 宽度），栏间用 2px 干净细白线分隔，全身或七分完整入画，禁止截断头部：
+  - **左栏（正面 0°）**：自然站立正面，展示前领、胸前设计与衣长。
+  - **中栏（微侧 45°）**：四分之三微侧站姿，展示胸前设计侧透视、肩袖与侧身剪裁。
+  - **右栏（背面）**：背对镜头自然站立（只展示后脑长发与后背，严禁扭头露出正脸！），展示后领、肩线与后背下摆（后背按 garment_back 保持同色素面，禁止把胸前印花画到后背）。
 
 ## 负面约束
-三栏衣服颜色、衣长、袖长必须完全一致；无多余文字贴纸、无水印、无边框留白。
+严禁在右栏背面身体上扭头露出正脸；三栏衣服颜色、衣长、袖长必须完全一致；无多余文字贴纸、无水印、无边框留白。
 ```
 
 ---
