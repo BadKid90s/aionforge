@@ -15,12 +15,12 @@ forge doctor --json
 ## job init
 
 ```bash
-forge job init --workflow <extract|compose|tryon|vary|pdp> --slug <短名> --json
+forge job init --workflow <extract|compose|tryon|vary|pdp|deconstruct> --slug <短名> --json
 ```
 
 | 参数 | 说明 |
 | --- | --- |
-| `--workflow` / `-w` | 工作流 id，默认 `pdp` |
+| `--workflow` / `-w` | 工作流 id（`extract` / `compose` / `tryon` / `vary` / `pdp` / `deconstruct`），默认 `pdp` |
 | `--slug` / `-s` | 任务短名，进入目录名 |
 | `--output-dir` | 任务根目录，默认 `output/<workflow>` |
 
@@ -44,7 +44,7 @@ forge job init --workflow <extract|compose|tryon|vary|pdp> --slug <短名> --jso
 | --- | --- |
 | `--prompt` / `-p` | 提示词字符串，与 `--prompt-file` 二选一 |
 | `--prompt-file` | 从文件读提示词（推荐，放在 `work/prompts/`） |
-| `--ref` / `-r` | 参考图，可重复；带角色写 `garment=./a.png`、`model=./b.jpg`、`print=`、`source=` |
+| `--ref` / `-r` | 参考图，可重复；带角色写 `garment=./a.png`、`garment_back=./a_back.png`、`model=./b.jpg`、`print=`、`source=`、`style=`、`layout=`（严禁传入 `LONG_PAGE` 竖长条拼接图） |
 | `--name` / `-n` | 结果文件名（不含扩展名），默认 `image` |
 | `--ratio` | `W:H`，输出宽高均大于 480px |
 | `--fit` | 比例不符时的处理：`expand`（默认，扩图铺满）/ `crop`（居中裁切）/ `pad`（不要用） |
@@ -62,6 +62,10 @@ forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/main-01.
 # 换装
 forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/tryon-01.txt \
   --ref garment=./a.png --ref model=./b.jpg --name tryon-01 --json
+
+# 竞品参考图版式迁移（仅限单屏参考图 SINGLE_POSTER）
+forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/deconstruct-01-layout.txt \
+  --ref garment=./a.png --ref layout=./ref_poster.jpg --name deconstruct-01-layout --ratio 3:4 --json
 
 # 印花提取
 forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/print.txt \

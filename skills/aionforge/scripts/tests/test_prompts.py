@@ -1,11 +1,21 @@
+import json
 import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2] / "references" / "prompts"
+SKILL_DIR = ROOT.parents[1]
 
 
 def test_skill_prompt_templates_exist() -> None:
-    for name in ("extract.md", "compose.md", "tryon.md", "vary.md"):
+    for name in (
+        "extract.md",
+        "compose.md",
+        "tryon.md",
+        "vary.md",
+        "infographic.md",
+        "ghost-mannequin.md",
+        "deconstruct.md",
+    ):
         text = (ROOT / name).read_text(encoding="utf-8")
         assert "forge generate" in text
         assert "图1" not in text
@@ -21,11 +31,10 @@ def test_tryon_template_uses_roles() -> None:
 
 
 def test_skill_md_links_resolve() -> None:
-    skill = ROOT.parents[1]
-    text = (skill / "SKILL.md").read_text(encoding="utf-8")
+    text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
     assert text.startswith("---\nname: aionforge\n")
     for ref in re.findall(r"`(references/[^`<{]+?\.(?:md|json))`", text):
-        assert (skill / ref).is_file(), ref
+        assert (SKILL_DIR / ref).is_file(), ref
 
 
 def test_vary_and_compose_templates_use_roles() -> None:
@@ -40,3 +49,20 @@ def test_vary_and_compose_templates_use_roles() -> None:
     compose = (ROOT / "compose.md").read_text(encoding="utf-8")
     assert "print=" in compose
     assert "garment=" in compose
+
+
+def test_infographic_and_deconstruct_templates_have_visible_text_block() -> None:
+    info = (ROOT / "infographic.md").read_text(encoding="utf-8")
+    assert "VISIBLE_TEXT_BLOCK" in info
+    assert "garment_back" in info
+    deconstruct = (ROOT / "deconstruct.md").read_text(encoding="utf-8")
+    assert "VISIBLE_TEXT_BLOCK" in deconstruct
+    assert "layout=" in deconstruct
+
+
+def test_evals_json_files_valid() -> None:
+    evals_dir = SKILL_DIR / "evals"
+    trigger = json.loads((evals_dir / "trigger_cases.json").read_text(encoding="utf-8"))
+    behavior = json.loads((evals_dir / "behavior_cases.json").read_text(encoding="utf-8"))
+    assert len(trigger["cases"]) >= 6
+    assert len(behavior["cases"]) >= 4

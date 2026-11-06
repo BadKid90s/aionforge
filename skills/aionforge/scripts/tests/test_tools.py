@@ -72,10 +72,25 @@ async def test_generate_without_refs_uses_generate(tmp_path: Path) -> None:
     assert fake.calls[0][0] == "generate"
 
 
-def test_stage_refs_renames_roles(tmp_path: Path) -> None:
+def test_stage_refs_renames_roles_and_deduplicates_same_role(tmp_path: Path) -> None:
     job = Job.create(tmp_path, workflow="tryon", slug="t")
-    garment = _png(tmp_path / "g.png")
+    garment1 = _png(tmp_path / "g1.png")
+    garment2 = _png(tmp_path / "g2.png")
+    back = _png(tmp_path / "back.png")
     model = _png(tmp_path / "m.jpg")
     Image.new("RGB", (20, 20), "red").save(model)
-    staged = stage_refs(job, [Ref(garment, "garment"), Ref(model, "model")])
-    assert [p.name for p in staged] == ["garment.png", "model.jpg"]
+    staged = stage_refs(
+        job,
+        [
+            Ref(garment1, "garment"),
+            Ref(garment2, "garment"),
+            Ref(back, "garment_back"),
+            Ref(model, "model"),
+        ],
+    )
+    assert [p.name for p in staged] == [
+        "garment.png",
+        "garment_2.png",
+        "garment_back.png",
+        "model.jpg",
+    ]

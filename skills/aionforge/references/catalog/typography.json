@@ -1,0 +1,141 @@
+{
+  "version": 1,
+  "platforms": [
+    {
+      "id": "pinduoduo",
+      "name": "拼多多 · 清透莫兰迪胶囊轻杂志风",
+      "platforms": ["pinduoduo"],
+      "aesthetic": "清透莫兰迪胶囊·高转化轻杂志风（手机小屏 0.5 秒扫读看清核心卖点，同时保持女装干净高级感，易读不廉价）",
+      "headline_font": "现代端正几何无衬线（思源黑体 / 阿里巴巴普惠体 SemiBold，字重 600，正体不倾斜，无粗黑描边，28–36pt）",
+      "body_font": "干净现代无衬线（Noto Sans SC Regular/Medium，字重 500，14–16pt，行距宽松）",
+      "badge_style": "圆角柔雾胶囊标签（10px 圆角，暖燕麦/浅杏半透底 #EFECE6，配 1.5px 极简细线图标与短卖点词）",
+      "palette": {
+        "background": "#F7F5F2",
+        "background_alt": "#EFECE6",
+        "text": "#2D2D2D",
+        "subtext": "#5E5A55",
+        "accent": "#8C6A56"
+      },
+      "prompt": "Clean high-clarity womenswear conversion typography on warm off-white background (#F7F5F2, secondary #EFECE6). Upright modern geometric sans-serif headline (Noto Sans SC SemiBold, weight 600, #2D2D2D, no italic tilt, no black stroke). Selling points presented in soft rounded-pill Morandi capsules (10px radius, warm oat fill #EFECE6, subtle warm taupe accent #8C6A56) with delicate thin-line icons. Generous breathing room, zero supermarket-flyer clutter.",
+      "avoid": [
+        "红黄爆炸贴星标 (#E02E24 / #FFD700)",
+        "粗黑描边字",
+        "倾斜变形艺术字",
+        "荧光饱和促销底板",
+        "遮挡服装领口或印花的贴纸"
+      ]
+    },
+    {
+      "id": "taobao",
+      "name": "淘宝/天猫 · 暖调轻奢画册风",
+      "platforms": ["taobao", "tmall"],
+      "aesthetic": "暖调轻奢画册风（法式/韩系松弛感与品牌画册呼吸感）",
+      "headline_font": "优雅高对比衬线体（Noto Serif SC / Didot / Playfair Display 风格，字距 2px，28–40pt）",
+      "body_font": "现代纤细无衬线体（Noto Sans SC Light/Regular，14–16pt，色号 #6B6259）",
+      "badge_style": "主标题下方配 1.5px 香槟金细装饰线（#C4A574，长约标题宽度 50%），卖点用无框极简细线图标排布",
+      "palette": {
+        "background": "#F5EFE6",
+        "background_alt": "#EBE2D5",
+        "text": "#3A2F27",
+        "subtext": "#6B6259",
+        "accent": "#C4A574"
+      },
+      "prompt": "Warm editorial lookbook typography on cream background (#F5EFE6, secondary #EBE2D5). Refined high-contrast serif headline (Noto Serif SC / Didot style, deep espresso #3A2F27, letter-spacing 2px) with a delicate 1.5px champagne-gold underline accent (#C4A574). Subtitles and feature callouts in clean modern sans-serif (#6B6259) with minimalist thin-line icons and magazine-grade whitespace.",
+      "avoid": [
+        "密集牛皮癣小字",
+        "廉价高饱和促销框",
+        "超过 2 种字体混排",
+        "手写涂鸦风"
+      ]
+    },
+    {
+      "id": "jd",
+      "name": "京东 · 都市品质规格美学",
+      "platforms": ["jd"],
+      "aesthetic": "都市品质规格美学（突出面料克重、支数、防晒指数与工艺严谨感）",
+      "headline_font": "利落现代黑体（Noto Sans SC Bold，字重 700，端正对齐，28–36pt）",
+      "body_font": "无衬线正文 + 英文/数字等宽参数副标（Inter / Roboto Mono 风格，12–15pt）",
+      "badge_style": "极简微圆角参数胶囊（4px 圆角，浅云灰底 #F2F3F5，克制灰蓝 #7A8B99 或砖红 #B85D57 点缀）",
+      "palette": {
+        "background": "#FFFFFF",
+        "background_alt": "#F5F6F8",
+        "text": "#1A1A1A",
+        "subtext": "#5E5E5E",
+        "accent": "#7A8B99"
+      },
+      "prompt": "Precision urban quality typography on crisp white background (#FFFFFF, secondary #F5F6F8). Sharp modern sans-serif headline (Noto Sans SC Bold, #1A1A1A) paired with clean monospace parameter badges (4px radius pill tags in #F2F3F5, slate accent #7A8B99, subtext #5E5E5E). Structured grid alignment, clear fabric and craftsmanship data hierarchy.",
+      "avoid": [
+        "杂乱斜向排版",
+        "花哨衬线或手写体",
+        "刺眼全红底色铺满"
+      ]
+    },
+    {
+      "id": "douyin_xhs",
+      "name": "抖音/小红书 · 买手店种草笔记风",
+      "platforms": ["douyin", "xiaohongshu"],
+      "aesthetic": "买手店种草笔记风（原生感、高审美留白、视觉种草直觉）",
+      "headline_font": "现代几何无衬线大字（字重 600，少字精炼）或时尚杂志衬线短标题（26–36pt）",
+      "body_font": "极简无衬线短签（13–15pt），仅保留 2–3 个核心穿搭/面料词",
+      "badge_style": "原生感半透白底短胶囊或 1px 细线圆圈局部指引，自然融入画面负空间",
+      "palette": {
+        "background": "#F3F6F4",
+        "background_alt": "#E8EFEA",
+        "text": "#2A2A2A",
+        "subtext": "#5C6460",
+        "accent": "#7A9E8A"
+      },
+      "prompt": "Boutique buyer-note editorial typography on airy pale mint-grey (#F3F6F4, secondary #E8EFEA). Clean modern geometric sans-serif short headline (#2A2A2A) with sage green accent (#7A9E8A) and minimalist thin-line pointer circles placed in natural negative space. Native social-editorial feel, effortless and uncontrived.",
+      "avoid": [
+        "红青故障重影 (Glitch effect)",
+        "赛博霓虹色偏",
+        "廉价卡通贴纸堆砌",
+        "长篇幅密集说明文"
+      ]
+    },
+    {
+      "id": "amazon",
+      "name": "Amazon · 国际目录级净版美学",
+      "platforms": ["amazon"],
+      "aesthetic": "国际目录级净版美学（首图 100% 纯净无字；副图/A+ 采用欧美高端百货目录排版）",
+      "headline_font": "经典英文衬线体（Playfair Display / Didot 风格）或干净几何无衬线（Helvetica Neue / Inter，28–36pt）",
+      "body_font": "清爽英文无衬线（Source Sans Pro / Inter，14–16pt，#6B6B6B，行距 22px）",
+      "badge_style": "无底框极简细线图标 + 1px 大地棕装饰分割线（#8B7355），大面积留白",
+      "palette": {
+        "background": "#FFFFFF",
+        "background_alt": "#F7F7F7",
+        "text": "#111111",
+        "subtext": "#6B6B6B",
+        "accent": "#8B7355"
+      },
+      "prompt": "International department-store catalog typography (English only on secondary/A+ screens; zero text on hero packshot). Refined serif or clean Helvetica/Inter heading (#111111) with understated earth-tone line accent (#8B7355), paired with muted grey sans-serif labels (#6B6B6B) and generous 48%+ whitespace.",
+      "avoid": [
+        "首图出现任何文字/角标/徽章/水印",
+        "中英混排",
+        "促销感爆炸贴纸"
+      ]
+    },
+    {
+      "id": "shopify",
+      "name": "Shopify / 独立站 · DTC 极简画廊美学",
+      "platforms": ["shopify", "tiktok_shop", "lookbook"],
+      "aesthetic": "DTC 极简画廊美学（克制字号、高留白、当代独立品牌调性）",
+      "headline_font": "现代几何无衬线（Inter / SF Pro Display / Space Grotesk，字距 0.5–1px，24–34pt）",
+      "body_font": "同族几何无衬线（Inter Regular，13–15pt，#6B6B6B）",
+      "badge_style": "1px 极细浅灰分割线（#E5E5E5）与无框微标签，零多余装饰容器",
+      "palette": {
+        "background": "#F8F7F4",
+        "background_alt": "#EFECE6",
+        "text": "#1A1A1A",
+        "subtext": "#6B6B6B",
+        "accent": "product-matched"
+      },
+      "prompt": "Contemporary DTC brand lookbook typography on gallery off-white (#F8F7F4, secondary #EFECE6). Clean geometric sans-serif (Inter / SF Pro style, #1A1A1A, subtle 0.9 opacity) with 1px hairline dividers (#E5E5E5) and expansive negative space. Minimalist, modern, zero promotional clutter.",
+      "avoid": [
+        "促销折扣角标",
+        "超过 2 种字体",
+        "厚重阴影或立体字效"
+      ]
+    }
+  ]
+}

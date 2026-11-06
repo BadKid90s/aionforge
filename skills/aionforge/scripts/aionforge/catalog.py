@@ -1,13 +1,15 @@
-"""定义目录：姿势 / 场景 / 风格。数据在 Skill 的 references/catalog/，增删只改 JSON。"""
+"""定义目录：姿势 / 场景 / 风格 / 字体美学。数据在 references/catalog/，增删只改 JSON。"""
 
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
 # scripts/aionforge/catalog.py → Skill 根目录
 CATALOG_DIR = Path(__file__).resolve().parents[2] / "references" / "catalog"
+_HEX_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
 
 def catalog_dir() -> Path:
@@ -48,6 +50,10 @@ def load_styles() -> dict[str, Any]:
     return _load("styles.json")
 
 
+def load_typography() -> dict[str, Any]:
+    return _load("typography.json")
+
+
 def load_catalog(path: Path | None = None) -> dict[str, Any]:
     return load_poses(path)
 
@@ -86,11 +92,57 @@ def validate_styles(data: dict[str, Any]) -> None:
         raise ValueError("styles.json 缺少 styles")
     _index(data["styles"], "styles")
     for row in data["styles"]:
+        style_id = row.get("id", "<unknown>")
         if not (row.get("style_lock") or "").strip():
-            raise ValueError(f"{row.get('id')} 缺少 style_lock")
+            raise ValueError(f"{style_id} 缺少 style_lock")
         palette = row.get("palette") or {}
-        if not palette.get("background") or not palette.get("text"):
-            raise ValueError(f"{row.get('id')} palette 需要 background 与 text")
+        bg = palette.get("background")
+        text = palette.get("text")
+        if not bg or not text:
+            raise ValueError(f"{style_id} palette 需要 background 与 text")
+        for color_key in ("background", "background_alt", "text"):
+            val = palette.get(color_key)
+            if val is not None and not _HEX_RE.match(str(val)):
+                raise ValueError(f"{style_id} palette.{color_key} 必须为 6 位 Hex：{val}")
+
+
+def validate_typography(data: dict[str, Any]) -> None:
+    if "platforms" not in data:
+        raise ValueError("typography.json 缺少 platforms")
+    _index(data["platforms"], "platforms")
+    required_fields = (
+        "id",
+        "name",
+        "platforms",
+        "aesthetic",
+        "headline_font",
+        "body_font",
+        "badge_style",
+        "palette",
+        "prompt",
+        "avoid",
+    )
+    for row in data["platforms"]:
+        pid = row.get("id", "<unknown>")
+        for field in required_fields:
+            if field not in row:
+                raise ValueError(f"typography {pid} 缺少字段：{field}")
+        if not (row.get("prompt") or "").strip():
+            raise ValueError(f"typography {pid} prompt 不能为空")
+        palette = row.get("palette") or {}
+        for color_key in ("background", "background_alt", "text", "subtext"):
+            val = palette.get(color_key)
+            if not val or not _HEX_RE.match(str(val)):
+                raise ValueError(
+                    f"typography {pid} palette.{color_key} 必须为 6 位 Hex：{val}"
+                )
+        accent = palette.get("accent")
+        if not accent or (
+            accent != "product-matched" and not _HEX_RE.match(str(accent))
+        ):
+            raise ValueError(
+                f"typography {pid} palette.accent 必须为 6 位 Hex 或 product-matched：{accent}"
+            )
 
 
 def get_recipe(data: dict[str, Any], recipe_id: str) -> dict[str, Any]:

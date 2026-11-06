@@ -9,7 +9,11 @@
       "height": "胸口高度，镜头水平",
       "yaw": "0° 正面",
       "framing": "头到鞋，脚下留白",
-      "keywords": ["正面", "全身", "平视"],
+      "keywords": [
+        "正面",
+        "全身",
+        "平视"
+      ],
       "prompt": "相机平视，镜头与胸口同高，正面 0°，全身头到鞋，脚下留 8–10% 地面，服装完整入画"
     },
     {
@@ -18,7 +22,10 @@
       "height": "胸口高度",
       "yaw": "0°",
       "framing": "头到膝下",
-      "keywords": ["七分", "平视"],
+      "keywords": [
+        "七分",
+        "平视"
+      ],
       "prompt": "相机平视，取景头到膝下，脚可出画，突出上装与腰线"
     },
     {
@@ -27,7 +34,10 @@
       "height": "锁骨高度",
       "yaw": "0°",
       "framing": "头到腰下",
-      "keywords": ["半身", "近景"],
+      "keywords": [
+        "半身",
+        "近景"
+      ],
       "prompt": "半身近景，头到腰下 10cm，领口肩袖占画面主体"
     },
     {
@@ -36,7 +46,11 @@
       "height": "胸口高度",
       "yaw": "45°",
       "framing": "头到鞋",
-      "keywords": ["45", "四分之三", "侧身"],
+      "keywords": [
+        "45",
+        "四分之三",
+        "侧身"
+      ],
       "prompt": "相机平视，水平 45° 四分之三侧面，全身，看见胸前印花与侧身廓形"
     },
     {
@@ -45,7 +59,10 @@
       "height": "胸口高度",
       "yaw": "135°",
       "framing": "头到鞋",
-      "keywords": ["后侧", "135"],
+      "keywords": [
+        "后侧",
+        "135"
+      ],
       "prompt": "相机在模特后侧 135°，看见后背、肩胛、侧脸或耳际，下摆完整"
     },
     {
@@ -54,7 +71,11 @@
       "height": "胸口高度",
       "yaw": "90°",
       "framing": "头到鞋",
-      "keywords": ["侧面", "正侧", "90"],
+      "keywords": [
+        "侧面",
+        "正侧",
+        "90"
+      ],
       "prompt": "正侧面 90°，鼻尖到后脑一条线，看见胸线、腰线和衣摆垂坠，不要正脸"
     },
     {
@@ -63,7 +84,10 @@
       "height": "胸口高度",
       "yaw": "180°",
       "framing": "头到鞋",
-      "keywords": ["背面", "后背"],
+      "keywords": [
+        "背面",
+        "后背"
+      ],
       "prompt": "正背面 180°，头到鞋，肩线、后中缝、下摆完整；头可微侧，不要转成 45°"
     },
     {
@@ -72,7 +96,10 @@
       "height": "膝到髋",
       "yaw": "0° 或 45°",
       "framing": "头到鞋，略仰",
-      "keywords": ["低机位", "仰拍"],
+      "keywords": [
+        "低机位",
+        "仰拍"
+      ],
       "prompt": "相机放在髋部以下向上仰拍 10–15°，拉长腿部和衣摆，头顶留少量天空/墙"
     },
     {
@@ -81,7 +108,10 @@
       "height": "头顶上方",
       "yaw": "0°",
       "framing": "头到鞋，略俯",
-      "keywords": ["高机位", "俯拍"],
+      "keywords": [
+        "高机位",
+        "俯拍"
+      ],
       "prompt": "相机高于头顶 20–30° 向下俯拍，看见肩宽、领口和鞋，人物完整"
     },
     {
@@ -90,7 +120,10 @@
       "height": "头顶前上方",
       "yaw": "0°",
       "framing": "头到上胸",
-      "keywords": ["俯拍", "领口"],
+      "keywords": [
+        "俯拍",
+        "领口"
+      ],
       "prompt": "略俯的肩领特写，看见领口形状和锁骨，脸可入画但衣服领口是主体"
     },
     {
@@ -99,7 +132,9 @@
       "height": "耳侧后方",
       "yaw": "后侧 30–45°",
       "framing": "后脑到腰",
-      "keywords": ["过肩"],
+      "keywords": [
+        "过肩"
+      ],
       "prompt": "镜头从耳后越过肩膀看向前方，看见后领、肩线和侧脸轮廓"
     },
     {
@@ -108,7 +143,11 @@
       "height": "印花高度",
       "yaw": "正面略侧",
       "framing": "印花区域",
-      "keywords": ["印花", "微距", "特写"],
+      "keywords": [
+        "印花",
+        "微距",
+        "特写"
+      ],
       "prompt": "镜头贴到印花，印花占画面 60% 以上，可见面料织纹，不要整件衣服"
     },
     {
@@ -117,7 +156,10 @@
       "height": "膝到踝",
       "yaw": "略侧",
       "framing": "下摆与腿",
-      "keywords": ["下摆", "开衩"],
+      "keywords": [
+        "下摆",
+        "开衩"
+      ],
       "prompt": "镜头对准下摆与大腿/小腿交界，看开衩、花边或垂坠"
     },
     {
@@ -126,7 +168,9 @@
       "height": "手腕",
       "yaw": "略侧",
       "framing": "袖口与手",
-      "keywords": ["袖口"],
+      "keywords": [
+        "袖口"
+      ],
       "prompt": "镜头对准袖口和手，看袖口形态，手指放松"
     },
     {
@@ -135,7 +179,10 @@
       "height": "锁骨",
       "yaw": "正面略俯",
       "framing": "领口与锁骨",
-      "keywords": ["领口", "特写"],
+      "keywords": [
+        "领口",
+        "特写"
+      ],
       "prompt": "领口特写，锁骨和领型，脸可切到下颌"
     },
     {
@@ -144,7 +191,10 @@
       "height": "面料表面",
       "yaw": "侧光",
       "framing": "织纹",
-      "keywords": ["面料", "质感"],
+      "keywords": [
+        "面料",
+        "质感"
+      ],
       "prompt": "面料微距，侧光打出织纹或光泽，没有人脸"
     }
   ],
@@ -155,7 +205,10 @@
       "weight": "双脚分开与肩同宽，重心居中",
       "hands": "双臂自然垂在身侧",
       "gaze": "看镜头",
-      "keywords": ["站", "自然"],
+      "keywords": [
+        "站",
+        "自然"
+      ],
       "prompt": "自然站立，双脚与肩同宽，双臂放松垂下，肩放平，看镜头，表情安静"
     },
     {
@@ -164,7 +217,10 @@
       "weight": "重心在一条腿，另一腿微曲",
       "hands": "一只手叉腰或自然垂",
       "gaze": "看镜头或略偏",
-      "keywords": ["歇重心", "叉腰"],
+      "keywords": [
+        "歇重心",
+        "叉腰"
+      ],
       "prompt": "歇重心站姿，体重落在后腿，前腿膝微曲脚尖点地，骨盆微侧，一只手轻叉腰，看镜头"
     },
     {
@@ -173,7 +229,9 @@
       "weight": "双脚略分开",
       "hands": "双手叉腰，肘外开",
       "gaze": "看镜头",
-      "keywords": ["叉腰"],
+      "keywords": [
+        "叉腰"
+      ],
       "prompt": "双手叉腰，肘向两侧打开，展示腰线和袖笼，下巴平，看镜头"
     },
     {
@@ -182,7 +240,10 @@
       "weight": "重心一条腿",
       "hands": "一只手轻触领口或锁骨",
       "gaze": "看镜头或下视",
-      "keywords": ["抚领", "领口"],
+      "keywords": [
+        "抚领",
+        "领口"
+      ],
       "prompt": "一只手的指尖轻触领口或锁骨，不要抓皱衣服，另一手自然垂，头微侧"
     },
     {
@@ -191,7 +252,10 @@
       "weight": "歇重心",
       "hands": "一只手轻托耳际发丝",
       "gaze": "看镜头",
-      "keywords": ["撩发", "头发"],
+      "keywords": [
+        "撩发",
+        "头发"
+      ],
       "prompt": "一只手轻拨耳际头发，肘放松，不要挡脸，不要挡胸前印花"
     },
     {
@@ -200,8 +264,13 @@
       "weight": "歇重心",
       "hands": "手插侧袋或袋口搭住",
       "gaze": "看镜头",
-      "keywords": ["插袋", "口袋"],
-      "requires": ["pockets"],
+      "keywords": [
+        "插袋",
+        "口袋"
+      ],
+      "requires": [
+        "pockets"
+      ],
       "prompt": "手轻轻插进侧袋或搭在袋口（仅当衣服有袋），肩仍放松，不要把衣摆拽歪"
     },
     {
@@ -210,7 +279,9 @@
       "weight": "双脚分开",
       "hands": "双臂在腰前轻抱",
       "gaze": "看镜头",
-      "keywords": ["抱臂"],
+      "keywords": [
+        "抱臂"
+      ],
       "prompt": "双臂在腰前轻松交叉，不要压扁胸前印花，下摆保持原长"
     },
     {
@@ -219,7 +290,10 @@
       "weight": "行走中，前脚落地",
       "hands": "随步自然摆臂",
       "gaze": "看镜头",
-      "keywords": ["走", "动态"],
+      "keywords": [
+        "走",
+        "动态"
+      ],
       "prompt": "正在走向镜头的中步，前脚着地后脚离地，衣摆有轻微运动模糊感但人脸清晰"
     },
     {
@@ -228,7 +302,10 @@
       "weight": "背向走",
       "hands": "自然摆臂",
       "gaze": "回看镜头",
-      "keywords": ["走远", "回眸"],
+      "keywords": [
+        "走远",
+        "回眸"
+      ],
       "prompt": "背向镜头走，头从肩膀上回看镜头，看见后背和侧脸，前脚在画面深处"
     },
     {
@@ -237,7 +314,9 @@
       "weight": "脚站稳，肩对侧前方",
       "hands": "内侧手自然垂",
       "gaze": "过肩看镜头",
-      "keywords": ["回眸"],
+      "keywords": [
+        "回眸"
+      ],
       "prompt": "身体四分之三背对镜头，头转向镜头回眸，下颌贴近后肩，印花若在正面可只露侧缘"
     },
     {
@@ -246,7 +325,10 @@
       "weight": "身体朝前，头回看",
       "hands": "近镜头的手可轻扶或自然垂",
       "gaze": "看镜头",
-      "keywords": ["过肩", "回望"],
+      "keywords": [
+        "过肩",
+        "回望"
+      ],
       "prompt": "过肩回望，后脑和后领靠近镜头，眼睛看相机，身体继续朝前"
     },
     {
@@ -255,7 +337,10 @@
       "weight": "坐凳沿，双脚着地",
       "hands": "手搭膝或扶凳缘",
       "gaze": "看镜头",
-      "keywords": ["坐", "坐姿"],
+      "keywords": [
+        "坐",
+        "坐姿"
+      ],
       "prompt": "坐在凳沿，膝并拢或微错开，背挺直，衣服下摆自然铺在大腿，不要坐扁裙摆"
     },
     {
@@ -264,7 +349,10 @@
       "weight": "坐，小腿交叉",
       "hands": "手搭在大腿",
       "gaze": "看镜头或侧视",
-      "keywords": ["坐", "交叉"],
+      "keywords": [
+        "坐",
+        "交叉"
+      ],
       "prompt": "坐姿，小腿在踝部交叉，上身仍挺，看见裙摆或裤管垂坠"
     },
     {
@@ -273,7 +361,9 @@
       "weight": "一肩或背轻靠墙",
       "hands": "近墙的手垂，外侧手插袋或垂",
       "gaze": "看镜头",
-      "keywords": ["靠墙"],
+      "keywords": [
+        "靠墙"
+      ],
       "prompt": "一侧肩轻靠墙，身体没有完全贴平，外侧腿微交叉在前，表情放松"
     },
     {
@@ -282,7 +372,9 @@
       "weight": "髋后、肩略前",
       "hands": "手可扶膝或垂",
       "gaze": "看镜头",
-      "keywords": ["前倾"],
+      "keywords": [
+        "前倾"
+      ],
       "prompt": "从髋部微微前倾，像听人说话，领口打开一点，不要驼背"
     },
     {
@@ -291,7 +383,10 @@
       "weight": "脚仍朝前，胸转向 45°",
       "hands": "随转体自然",
       "gaze": "看镜头",
-      "keywords": ["扭身", "转体"],
+      "keywords": [
+        "扭身",
+        "转体"
+      ],
       "prompt": "脚朝相机，肋骨转向 45°，衣身出现自然扭转褶皱，印花仍完整可读"
     },
     {
@@ -300,7 +395,11 @@
       "weight": "歇重心",
       "hands": "一只手轻提下摆一角",
       "gaze": "看镜头或看摆",
-      "keywords": ["提摆", "下摆", "开衩"],
+      "keywords": [
+        "提摆",
+        "下摆",
+        "开衩"
+      ],
       "prompt": "一只手轻轻提起下摆一角展示长度或开衩，不要提到大腿中段以上"
     },
     {
@@ -309,7 +408,9 @@
       "weight": "站直",
       "hands": "一只手整理另一袖口",
       "gaze": "看袖或看镜头",
-      "keywords": ["袖口"],
+      "keywords": [
+        "袖口"
+      ],
       "prompt": "正在轻轻整理袖口，展示袖长和袖口形态，脸可看手"
     },
     {
@@ -318,7 +419,9 @@
       "weight": "一脚在前一脚在后",
       "hands": "自然垂",
       "gaze": "看镜头",
-      "keywords": ["迈步"],
+      "keywords": [
+        "迈步"
+      ],
       "prompt": "前脚迈出半步，后脚跟微抬，像刚停住的走姿，衣摆随惯性微偏"
     },
     {
@@ -327,7 +430,9 @@
       "weight": "站直或歇重心",
       "hands": "自然垂",
       "gaze": "看下或看镜头上方",
-      "keywords": ["低头"],
+      "keywords": [
+        "低头"
+      ],
       "prompt": "下颌微收，视线略低，适合展示领口和睫毛，不要挡住印花"
     },
     {
@@ -336,7 +441,9 @@
       "weight": "双脚站稳",
       "hands": "自然垂",
       "gaze": "看画面前方",
-      "keywords": ["侧立"],
+      "keywords": [
+        "侧立"
+      ],
       "prompt": "静止站立，不是走。双手自然垂，看画面前方不是镜头"
     },
     {
@@ -345,18 +452,13 @@
       "weight": "歇重心，轻松站",
       "hands": "长袖袖口盖住半掌，手指露出",
       "gaze": "看镜头",
-      "keywords": ["袖子", "长袖", "卫衣", "可爱"],
+      "keywords": [
+        "袖子",
+        "长袖",
+        "卫衣",
+        "可爱"
+      ],
       "prompt": "长袖或卫衣袖口轻轻盖住半只手掌，手指自然露出，肩放松，不要把袖子拉得变形，胸前印花完整可见"
-    },
-    {
-      "id": "pose-frame-print",
-      "name": "双手框印花",
-      "weight": "站直",
-      "hands": "双手在印花两侧轻框，不遮图案",
-      "gaze": "看镜头或看印花",
-      "keywords": ["印花", "T恤", "展示"],
-      "requires": ["print"],
-      "prompt": "双手在胸前印花左右两侧轻轻比框，指尖不挡住文字和图案，身体微侧 10°，让印花正对镜头"
     },
     {
       "id": "pose-hem-tug",
@@ -364,7 +466,11 @@
       "weight": "歇重心",
       "hands": "双手或一只手轻轻向下拉 T 恤/卫衣下摆",
       "gaze": "看镜头",
-      "keywords": ["衣摆", "T恤", "长度"],
+      "keywords": [
+        "衣摆",
+        "T恤",
+        "长度"
+      ],
       "prompt": "一只或两只手轻轻向下抚平衣摆，展示衣长刚好盖过裤头，不要拉得太紧变形，印花保持平整"
     },
     {
@@ -373,8 +479,13 @@
       "weight": "站直或微前倾",
       "hands": "双手轻捏卫衣帽绳",
       "gaze": "看镜头",
-      "keywords": ["卫衣", "帽绳"],
-      "requires": ["hoodie"],
+      "keywords": [
+        "卫衣",
+        "帽绳"
+      ],
+      "requires": [
+        "hoodie"
+      ],
       "prompt": "帽子戴在后背或松开，双手轻轻捏住帽绳两端，绳长自然，不要勒紧领口，袋鼠兜和印花仍可见"
     },
     {
@@ -383,8 +494,14 @@
       "weight": "歇重心",
       "hands": "一只手扶帽边或自然垂",
       "gaze": "看镜头，脸仍清楚",
-      "keywords": ["卫衣", "帽子", "戴帽"],
-      "requires": ["hoodie"],
+      "keywords": [
+        "卫衣",
+        "帽子",
+        "戴帽"
+      ],
+      "requires": [
+        "hoodie"
+      ],
       "prompt": "卫衣帽子戴上，脸和刘海仍清楚看见，不要遮住眼睛，一只手可轻扶帽边，胸前印花完整"
     },
     {
@@ -393,8 +510,14 @@
       "weight": "歇重心",
       "hands": "双手插进袋鼠兜",
       "gaze": "看镜头",
-      "keywords": ["卫衣", "口袋", "袋鼠兜"],
-      "requires": ["hoodie"],
+      "keywords": [
+        "卫衣",
+        "口袋",
+        "袋鼠兜"
+      ],
+      "requires": [
+        "hoodie"
+      ],
       "prompt": "双手轻松插进卫衣袋鼠兜，肩下沉，衣服下摆平整，不要把前幅拽歪，印花在兜上方完整"
     },
     {
@@ -403,7 +526,11 @@
       "weight": "歇重心，外侧腿在前",
       "hands": "一只手扶背包带",
       "gaze": "看镜头",
-      "keywords": ["书包", "校园", "通勤"],
+      "keywords": [
+        "书包",
+        "校园",
+        "通勤"
+      ],
       "prompt": "双肩包只背一条肩带斜在一侧，或双肩背但一只手扶带，包不要挡住胸前印花，校园休闲，不是旅行大包"
     },
     {
@@ -412,7 +539,11 @@
       "weight": "站或靠墙",
       "hands": "双手或一只手抱笔记本/书在腰侧，不挡印花",
       "gaze": "看镜头",
-      "keywords": ["书", "校园", "女大学生"],
+      "keywords": [
+        "书",
+        "校园",
+        "女大学生"
+      ],
       "prompt": "怀里或腰侧轻松抱一本素色笔记本，封面无可读文字，不要挡住胸前图案，表情轻松像课间"
     },
     {
@@ -421,7 +552,11 @@
       "weight": "坐校园台阶，双脚着地",
       "hands": "手搭膝或抱膝但不蜷成一团",
       "gaze": "看镜头",
-      "keywords": ["台阶", "校园", "坐"],
+      "keywords": [
+        "台阶",
+        "校园",
+        "坐"
+      ],
       "prompt": "坐在干净的室外台阶上，背挺直，双脚着地，卫衣或 T 恤下摆自然搭在大腿，不要蜷缩，衣身印花朝镜头"
     },
     {
@@ -430,7 +565,11 @@
       "weight": "站直，略收肩",
       "hands": "双臂在身前轻轻环抱，袖子可见",
       "gaze": "看镜头",
-      "keywords": ["卫衣", "保暖", "拥抱"],
+      "keywords": [
+        "卫衣",
+        "保暖",
+        "拥抱"
+      ],
       "prompt": "双臂在腰前轻轻环抱自己，表现卫衣厚度和袖长，不要挡住胸前印花中心，表情安静"
     }
   ],
@@ -440,7 +579,10 @@
       "camera": "cam-eye-full",
       "pose": "pose-stand-relax",
       "sells": "第一眼完整款",
-      "keywords": ["正面", "全身"],
+      "keywords": [
+        "正面",
+        "全身"
+      ],
       "prompt": "相机平视胸口高度，正面 0° 全身头到鞋。自然站立，双臂垂下，看镜头。服装占画面 75–85%，脚下留白。展示整件衣服的领口、袖长、下摆。"
     },
     {
@@ -448,7 +590,10 @@
       "camera": "cam-3q-full",
       "pose": "pose-contrapposto",
       "sells": "廓形与腰线",
-      "keywords": ["45", "歇重心"],
+      "keywords": [
+        "45",
+        "歇重心"
+      ],
       "prompt": "相机平视，水平 45° 全身。歇重心，体重在后腿，前腿微曲，一只手轻叉腰，看镜头。看见胸前印花与侧身垂坠。"
     },
     {
@@ -456,7 +601,10 @@
       "camera": "cam-profile",
       "pose": "pose-walk-toward",
       "sells": "走姿与厚度",
-      "keywords": ["侧走", "侧面"],
+      "keywords": [
+        "侧走",
+        "侧面"
+      ],
       "prompt": "正侧面 90° 全身。模特沿画面横向走向画面前方，前脚着地。看见胸线、腰线、衣摆动态。不要正脸，侧脸清晰。"
     },
     {
@@ -464,7 +612,10 @@
       "camera": "cam-back",
       "pose": "pose-look-back",
       "sells": "后背与肩线",
-      "keywords": ["背面", "回眸"],
+      "keywords": [
+        "背面",
+        "回眸"
+      ],
       "prompt": "正背面全身。身体仍朝远离镜头，头过肩回看镜头。肩线、后中、下摆完整。正面印花不要画到后背。"
     },
     {
@@ -472,7 +623,10 @@
       "camera": "cam-eye-full",
       "pose": "pose-walk-toward",
       "sells": "动态衣摆",
-      "keywords": ["走", "正面走"],
+      "keywords": [
+        "走",
+        "正面走"
+      ],
       "prompt": "平视正面全身。走向镜头的中步，衣摆轻动，人脸清晰。重心在前脚。"
     },
     {
@@ -480,7 +634,10 @@
       "camera": "cam-eye-half",
       "pose": "pose-hand-collar",
       "sells": "领口肩袖",
-      "keywords": ["半身", "领口"],
+      "keywords": [
+        "半身",
+        "领口"
+      ],
       "prompt": "平视半身头到腰下。一只手轻触领口，不抓皱。领型、肩线、袖笼清楚。"
     },
     {
@@ -488,7 +645,10 @@
       "camera": "cam-eye-34",
       "pose": "pose-sit-stool",
       "sells": "坐姿版型",
-      "keywords": ["坐", "坐姿"],
+      "keywords": [
+        "坐",
+        "坐姿"
+      ],
       "prompt": "平视七分。坐凳沿，背挺直，下摆铺在大腿。展示衣长和坐着时的褶皱。"
     },
     {
@@ -496,7 +656,9 @@
       "camera": "cam-over-shoulder",
       "pose": "pose-over-shoulder",
       "sells": "后领与侧脸",
-      "keywords": ["过肩"],
+      "keywords": [
+        "过肩"
+      ],
       "prompt": "镜头从耳后过肩。后领、肩线靠近镜头，眼睛看相机。场景仍是参考图那个房间。"
     },
     {
@@ -504,7 +666,10 @@
       "camera": "cam-low-full",
       "pose": "pose-contrapposto",
       "sells": "拉长比例",
-      "keywords": ["低机位", "仰拍"],
+      "keywords": [
+        "低机位",
+        "仰拍"
+      ],
       "prompt": "相机在髋下向上仰 12°，正面全身。歇重心。拉长腿和衣摆，头顶留一点背景。"
     },
     {
@@ -512,7 +677,10 @@
       "camera": "cam-high-full",
       "pose": "pose-stand-relax",
       "sells": "肩宽与鞋",
-      "keywords": ["高机位", "俯拍"],
+      "keywords": [
+        "高机位",
+        "俯拍"
+      ],
       "prompt": "相机高于头顶俯拍 25°，全身入画。双臂自然垂。看见肩宽、领口和鞋。"
     },
     {
@@ -520,7 +688,9 @@
       "camera": "cam-3q-back",
       "pose": "pose-look-back",
       "sells": "后侧轮廓",
-      "keywords": ["后侧"],
+      "keywords": [
+        "后侧"
+      ],
       "prompt": "后侧 135° 全身。回眸。看见后背与侧脸，下摆完整。"
     },
     {
@@ -528,7 +698,10 @@
       "camera": "cam-profile",
       "pose": "pose-still",
       "sells": "厚度与垂坠",
-      "keywords": ["正侧", "静止"],
+      "keywords": [
+        "正侧",
+        "静止"
+      ],
       "prompt": "正侧 90° 静止站立，不是走。双手自然垂，看画面前方不是镜头。展示厚度和垂坠。"
     },
     {
@@ -536,7 +709,9 @@
       "camera": "cam-eye-full",
       "pose": "pose-hand-hip",
       "sells": "腰线袖笼",
-      "keywords": ["叉腰"],
+      "keywords": [
+        "叉腰"
+      ],
       "prompt": "平视正面全身。双手叉腰，肘外开，看镜头。展示腰线和袖笼。"
     },
     {
@@ -544,7 +719,9 @@
       "camera": "cam-3q-full",
       "pose": "pose-lean-wall",
       "sells": "休闲靠墙",
-      "keywords": ["靠墙"],
+      "keywords": [
+        "靠墙"
+      ],
       "prompt": "平视 45° 全身。一肩轻靠墙，外侧腿在前。房间仍是参考图。"
     },
     {
@@ -552,7 +729,9 @@
       "camera": "cam-eye-full",
       "pose": "pose-twist",
       "sells": "扭转褶皱",
-      "keywords": ["扭身"],
+      "keywords": [
+        "扭身"
+      ],
       "prompt": "平视正面。脚朝相机，胸转到 45°，印花仍完整。"
     },
     {
@@ -560,7 +739,10 @@
       "camera": "cam-eye-full",
       "pose": "pose-hem-hold",
       "sells": "衣长开衩",
-      "keywords": ["提摆", "下摆"],
+      "keywords": [
+        "提摆",
+        "下摆"
+      ],
       "prompt": "平视全身。一只手轻提下摆一角，展示衣长或开衩。"
     },
     {
@@ -568,8 +750,12 @@
       "camera": "cam-3q-full",
       "pose": "pose-pockets",
       "sells": "口袋细节",
-      "keywords": ["插袋"],
-      "requires": ["pockets"],
+      "keywords": [
+        "插袋"
+      ],
+      "requires": [
+        "pockets"
+      ],
       "prompt": "平视 45°。手插袋或搭袋口（仅衣服有袋时）。"
     },
     {
@@ -577,7 +763,9 @@
       "camera": "cam-eye-full",
       "pose": "pose-cross-arms",
       "sells": "上装结构",
-      "keywords": ["抱臂"],
+      "keywords": [
+        "抱臂"
+      ],
       "prompt": "平视正面半身或全身。轻抱臂，不要挡住印花。"
     },
     {
@@ -585,7 +773,9 @@
       "camera": "cam-eye-full",
       "pose": "pose-step-out",
       "sells": "刚停住的走姿",
-      "keywords": ["迈步"],
+      "keywords": [
+        "迈步"
+      ],
       "prompt": "平视正面全身。前脚迈出半步刚停住。"
     },
     {
@@ -593,7 +783,9 @@
       "camera": "cam-back",
       "pose": "pose-walk-away",
       "sells": "离去回眸",
-      "keywords": ["走远"],
+      "keywords": [
+        "走远"
+      ],
       "prompt": "背面全身。背向走，回眸看镜头。"
     },
     {
@@ -601,7 +793,10 @@
       "camera": "cam-eye-34",
       "pose": "pose-sit-cross",
       "sells": "坐姿垂坠",
-      "keywords": ["坐", "交叉"],
+      "keywords": [
+        "坐",
+        "交叉"
+      ],
       "prompt": "七分坐姿，小腿交叉，手搭大腿。"
     },
     {
@@ -609,7 +804,9 @@
       "camera": "cam-eye-half",
       "pose": "pose-hand-hair",
       "sells": "肩领与发丝",
-      "keywords": ["撩发"],
+      "keywords": [
+        "撩发"
+      ],
       "prompt": "半身。一只手轻拨耳际头发，不挡脸不挡印花。"
     },
     {
@@ -617,7 +814,9 @@
       "camera": "cam-detail-cuff",
       "pose": "pose-cuff-adjust",
       "sells": "袖口形态",
-      "keywords": ["袖口"],
+      "keywords": [
+        "袖口"
+      ],
       "prompt": "袖口微距。手在整理袖口，展示袖口形态。"
     },
     {
@@ -625,7 +824,9 @@
       "camera": "cam-eye-half",
       "pose": "pose-chin-down",
       "sells": "领口",
-      "keywords": ["低头"],
+      "keywords": [
+        "低头"
+      ],
       "prompt": "半身。下颌微收视线略低，突出领口。"
     },
     {
@@ -633,8 +834,13 @@
       "camera": "cam-detail-print",
       "pose": "pose-still",
       "sells": "印花文字",
-      "keywords": ["印花", "微距"],
-      "requires": ["print"],
+      "keywords": [
+        "印花",
+        "微距"
+      ],
+      "requires": [
+        "print"
+      ],
       "prompt": "印花微距，印花占画面 60% 以上，文字清晰，可见织纹。不要整件衣服，不要新手。"
     },
     {
@@ -642,7 +848,10 @@
       "camera": "cam-detail-hem",
       "pose": "pose-still",
       "sells": "下摆工艺",
-      "keywords": ["下摆", "微距"],
+      "keywords": [
+        "下摆",
+        "微距"
+      ],
       "prompt": "下摆与腿的交界微距，看开衩或垂坠。"
     },
     {
@@ -650,7 +859,10 @@
       "camera": "cam-detail-neck",
       "pose": "pose-still",
       "sells": "领型",
-      "keywords": ["领口", "特写"],
+      "keywords": [
+        "领口",
+        "特写"
+      ],
       "prompt": "领口特写，锁骨和领型，脸可切到下颌。"
     },
     {
@@ -658,7 +870,10 @@
       "camera": "cam-detail-fabric",
       "pose": "pose-still",
       "sells": "面料质感",
-      "keywords": ["面料", "质感"],
+      "keywords": [
+        "面料",
+        "质感"
+      ],
       "prompt": "面料微距，侧光打出织纹或光泽，没有人脸。"
     },
     {
@@ -666,7 +881,12 @@
       "camera": "cam-eye-full",
       "pose": "pose-stand-relax",
       "sells": "T恤/卫衣正面印花与衣长",
-      "keywords": ["T恤", "卫衣", "正面", "印花"],
+      "keywords": [
+        "T恤",
+        "卫衣",
+        "正面",
+        "印花"
+      ],
       "prompt": "青年女性模特，平视正面全身。T恤或卫衣自然穿着，胸前印花完整朝镜头，下摆盖住裤头。双臂垂下，表情轻松。服装占画面 75–85%。"
     },
     {
@@ -674,24 +894,37 @@
       "camera": "cam-3q-full",
       "pose": "pose-contrapposto",
       "sells": "上装廓形与袖长",
-      "keywords": ["T恤", "卫衣", "45"],
+      "keywords": [
+        "T恤",
+        "卫衣",
+        "45"
+      ],
       "prompt": "平视 45° 全身。歇重心，青年女性休闲站姿。看见胸前印花侧面与袖长，卫衣或长袖不要贴身变形。"
     },
     {
       "id": "vary-tee-half-print",
       "camera": "cam-eye-half",
-      "pose": "pose-frame-print",
+      "pose": "pose-stand-relax",
       "sells": "胸前印花特写",
-      "keywords": ["印花", "半身", "T恤"],
-      "requires": ["print"],
-      "prompt": "平视半身。双手在印花两侧轻框但不挡字。青年女性，领口和肩线清楚，印花文字可读。"
+      "keywords": [
+        "印花",
+        "半身",
+        "T恤"
+      ],
+      "requires": [
+        "print"
+      ],
+      "prompt": "??????????????????????????? 10? ?????????????????????????"
     },
     {
       "id": "vary-tee-hem",
       "camera": "cam-eye-34",
       "pose": "pose-hem-tug",
       "sells": "衣长",
-      "keywords": ["衣摆", "长度"],
+      "keywords": [
+        "衣摆",
+        "长度"
+      ],
       "prompt": "平视七分。轻轻抚平 T恤或卫衣下摆，展示衣长与裤头关系。不要拉变形。"
     },
     {
@@ -699,7 +932,11 @@
       "camera": "cam-eye-half",
       "pose": "pose-sleeve-hands",
       "sells": "长袖袖长",
-      "keywords": ["长袖", "袖口", "卫衣"],
+      "keywords": [
+        "长袖",
+        "袖口",
+        "卫衣"
+      ],
       "prompt": "平视半身。长袖袖口盖住半掌，手指露出，肩放松。适合卫衣和长袖 T。"
     },
     {
@@ -707,8 +944,13 @@
       "camera": "cam-3q-full",
       "pose": "pose-kangaroo",
       "sells": "袋鼠兜与厚度",
-      "keywords": ["卫衣", "口袋"],
-      "requires": ["hoodie"],
+      "keywords": [
+        "卫衣",
+        "口袋"
+      ],
+      "requires": [
+        "hoodie"
+      ],
       "prompt": "平视 45° 全身。双手插卫衣袋鼠兜，肩放松，帽在后背。印花在兜上方完整。"
     },
     {
@@ -716,8 +958,13 @@
       "camera": "cam-eye-half",
       "pose": "pose-hoodie-strings",
       "sells": "帽绳与领口",
-      "keywords": ["卫衣", "帽绳"],
-      "requires": ["hoodie"],
+      "keywords": [
+        "卫衣",
+        "帽绳"
+      ],
+      "requires": [
+        "hoodie"
+      ],
       "prompt": "平视半身。双手轻捏帽绳，帽子未戴在头上。领口和印花清楚。"
     },
     {
@@ -725,8 +972,13 @@
       "camera": "cam-eye-half",
       "pose": "pose-hoodie-up",
       "sells": "戴帽效果",
-      "keywords": ["卫衣", "戴帽"],
-      "requires": ["hoodie"],
+      "keywords": [
+        "卫衣",
+        "戴帽"
+      ],
+      "requires": [
+        "hoodie"
+      ],
       "prompt": "平视半身。卫衣帽子戴上，脸仍完整可见，不遮眼。一只手可扶帽边。"
     },
     {
@@ -734,7 +986,11 @@
       "camera": "cam-eye-full",
       "pose": "pose-backpack",
       "sells": "校园日常穿搭",
-      "keywords": ["校园", "书包", "女大学生"],
+      "keywords": [
+        "校园",
+        "书包",
+        "女大学生"
+      ],
       "prompt": "平视正面全身。青年女性，单肩或轻背双肩包，包不挡印花。休闲校园感，不是旅行。"
     },
     {
@@ -742,7 +998,11 @@
       "camera": "cam-3q-full",
       "pose": "pose-hold-book",
       "sells": "课间休闲",
-      "keywords": ["校园", "书", "女大学生"],
+      "keywords": [
+        "校园",
+        "书",
+        "女大学生"
+      ],
       "prompt": "平视 45° 全身或七分。腰侧抱素色笔记本，封面无字。T恤或卫衣印花朝镜头。"
     },
     {
@@ -750,7 +1010,11 @@
       "camera": "cam-eye-34",
       "pose": "pose-sit-steps",
       "sells": "坐姿衣长",
-      "keywords": ["台阶", "校园", "坐"],
+      "keywords": [
+        "台阶",
+        "校园",
+        "坐"
+      ],
       "prompt": "平视七分。坐干净台阶，背挺直，上装下摆自然搭在大腿。印花朝镜头。"
     },
     {
@@ -758,15 +1022,24 @@
       "camera": "cam-eye-half",
       "pose": "pose-self-hug",
       "sells": "卫衣厚度",
-      "keywords": ["卫衣", "保暖"],
-      "requires": ["hoodie"],
+      "keywords": [
+        "卫衣",
+        "保暖"
+      ],
+      "requires": [
+        "hoodie"
+      ],
       "prompt": "平视半身。轻轻环抱自己，表现卫衣厚度和袖长，不挡印花中心。"
     }
   ],
   "packs": {
     "default-8": {
       "name": "默认 8 张",
-      "when": ["没点名", "裂变", "多拍几张"],
+      "when": [
+        "没点名",
+        "裂变",
+        "多拍几张"
+      ],
       "recipes": [
         "vary-front-relax",
         "vary-3q-contrapposto",
@@ -780,7 +1053,11 @@
     },
     "lookbook-16": {
       "name": "Lookbook 16 张",
-      "when": ["全套", "多拍", "lookbook"],
+      "when": [
+        "全套",
+        "多拍",
+        "lookbook"
+      ],
       "recipes": [
         "vary-front-relax",
         "vary-3q-contrapposto",
@@ -802,7 +1079,10 @@
     },
     "motion-6": {
       "name": "动态 6 张",
-      "when": ["只要动态", "走姿"],
+      "when": [
+        "只要动态",
+        "走姿"
+      ],
       "recipes": [
         "vary-walk-front",
         "vary-profile-walk",
@@ -814,7 +1094,10 @@
     },
     "detail-4": {
       "name": "细节 4 张",
-      "when": ["只要细节", "特写"],
+      "when": [
+        "只要细节",
+        "特写"
+      ],
       "recipes": [
         "vary-half-collar",
         "vary-print-macro",
@@ -824,7 +1107,14 @@
     },
     "tee-hoodie-12": {
       "name": "T恤卫衣校园 12 张",
-      "when": ["T恤", "卫衣", "长袖", "女大学生", "年轻女生", "校园"],
+      "when": [
+        "T恤",
+        "卫衣",
+        "长袖",
+        "女大学生",
+        "年轻女生",
+        "校园"
+      ],
       "recipes": [
         "vary-tee-front-print",
         "vary-tee-3q",
@@ -842,7 +1132,10 @@
     },
     "tee-8": {
       "name": "T恤 8 张",
-      "when": ["只要T恤", "短袖"],
+      "when": [
+        "只要T恤",
+        "短袖"
+      ],
       "recipes": [
         "vary-tee-front-print",
         "vary-tee-3q",
@@ -856,7 +1149,11 @@
     },
     "hoodie-10": {
       "name": "卫衣长袖 10 张",
-      "when": ["只要卫衣", "帽衫", "长袖"],
+      "when": [
+        "只要卫衣",
+        "帽衫",
+        "长袖"
+      ],
       "recipes": [
         "vary-tee-front-print",
         "vary-tee-3q",
@@ -872,7 +1169,11 @@
     }
   },
   "substitutions": {
-    "no_print": { "vary-print-macro": "vary-fabric-macro" },
-    "pants": { "vary-sit": "vary-step-out" }
+    "no_print": {
+      "vary-print-macro": "vary-fabric-macro"
+    },
+    "pants": {
+      "vary-sit": "vary-step-out"
+    }
   }
 }

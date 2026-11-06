@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "description": "AionForge Skill 行为契约回归评测集：验证关键防翻车规则与排版美学不退化。",
+  "cases": [
+    {
+      "id": "behavior-no-image-index-reference",
+      "scenario": "多参考图输入（如成衣图 + 模特图 + 版式参考图）编写 Prompt",
+      "must_include": ["成衣图", "模特图"],
+      "must_not_include": ["图1", "图2", "第一张图", "第二张图"]
+    },
+    {
+      "id": "behavior-long-page-isolation",
+      "scenario": "用户上传 H/W >= 2.2 的竞品详情长图作为参考",
+      "must_include": ["LONG_PAGE", "只看图", "不传进 --ref"],
+      "must_not_include": ["--ref layout=long_page", "--ref style=long_page"]
+    },
+    {
+      "id": "behavior-two-stage-model-anchor",
+      "scenario": "pdp 套图包含多张同模特主图与场景图",
+      "must_include": ["main-hero", "--ref source="],
+      "must_not_include": []
+    },
+    {
+      "id": "behavior-pinduoduo-modern-typography",
+      "scenario": "拼多多女装卖点主图与信息图排版",
+      "must_include": ["#F7F5F2", "#EFECE6", "#2D2D2D", "#8C6A56", "VISIBLE_TEXT_BLOCK"],
+      "must_not_include": ["爆炸贴", "红底黄字", "粗黑描边", "#E02E24", "#FFD700"]
+    },
+    {
+      "id": "behavior-front-back-garment-routing",
+      "scenario": "同时拥有正面成衣图与背面成衣图，生成背面展示图或三视角图",
+      "must_include": ["garment_back"],
+      "must_not_include": []
+    }
+  ]
+}

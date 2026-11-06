@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aionforge.local/schemas/typography.schema.json",
+  "title": "平台字体与排版美学目录",
+  "description": "定义 6 大电商平台女装视觉的字体搭配、标签组件、标准配色与排版 Prompt 片段。",
+  "type": "object",
+  "required": ["version", "platforms"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer", "minimum": 1 },
+    "platforms": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/platform_typography" }
+    }
+  },
+  "$defs": {
+    "platform_typography": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "aesthetic",
+        "headline_font",
+        "body_font",
+        "badge_style",
+        "palette",
+        "prompt",
+        "avoid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "name": { "type": "string" },
+        "platforms": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "aesthetic": { "type": "string", "description": "平台排版美学定位" },
+        "headline_font": { "type": "string", "description": "主标题字体与字重规范" },
+        "body_font": { "type": "string", "description": "副标题与短标签字体规范" },
+        "badge_style": { "type": "string", "description": "信息标签/胶囊框/分割线组件样式" },
+        "palette": {
+          "type": "object",
+          "required": ["background", "text", "accent"],
+          "additionalProperties": false,
+          "properties": {
+            "background": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+            "background_alt": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+            "text": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+            "subtext": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+            "accent": { "type": "string" }
+          }
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 30,
+          "description": "直接拼入带字主图/卖点图/详情信息图的排版指令"
+        },
+        "avoid": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        }
+      }
+    }
+  }
+}

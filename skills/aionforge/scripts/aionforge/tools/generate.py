@@ -56,14 +56,18 @@ def parse_ref(raw: str) -> Ref:
 
 
 def stage_refs(job: Job, refs: Sequence[Ref]) -> list[Path]:
-    """有角色名的参考图复制为 work/refs/<role>.<ext>，让图片模型看见文件名。"""
+    """有角色名的参考图复制为 work/refs/<role>.<ext>（同角色多张加序号），让图片模型看见文件名。"""
     staged: list[Path] = []
     refs_dir = job.work / "refs"
+    role_counts: dict[str, int] = {}
     for item in refs:
         if not item.role:
             staged.append(item.path)
             continue
-        dest = refs_dir / f"{item.role}{item.path.suffix.lower()}"
+        count = role_counts.get(item.role, 0) + 1
+        role_counts[item.role] = count
+        stem = item.role if count == 1 else f"{item.role}_{count}"
+        dest = refs_dir / f"{stem}{item.path.suffix.lower()}"
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_bytes(item.path.read_bytes())
         staged.append(dest)
