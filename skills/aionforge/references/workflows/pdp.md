@@ -4,8 +4,8 @@
 
 ## 默认交付
 
-- 主图 5 张，比例 `1:1`
-- 详情 6 张，比例 `1:1`
+- 主图 5 张，比例 `1:1`（拼多多 / 淘宝）或按 `references/platforms.md`
+- 详情 6 张，比例 `3:4`
 - 图型、张数与顺序以 `references/shots-womenswear.md` 的菜单和组装规则为准（先参考图，不够再补；不要套死 5 槽主图或 6 张固定详情）
 
 ## 核心卖点图（`main-selling-point` / `detail-infographic`）板式智能推荐
@@ -62,7 +62,7 @@
     {
       "name": "detail-01-infographic",
       "prompt": "infographic-asymmetric",
-      "ratio": "1:1",
+      "ratio": "3:4",
       "goal": "详情首屏 60:40 非对称卖点信息图，左主视觉右局部细节"
     }
   ]
@@ -89,7 +89,7 @@ forge generate --job-dir <run_dir> \
 # 卖点信息图 / 隐形人台 / 微距细节
 forge generate --job-dir <run_dir> \
   --prompt-file <run_dir>/work/prompts/detail-01-infographic.txt \
-  --ref garment=<正面成衣> --name detail-01-infographic --ratio 1:1 --json
+  --ref garment=<正面成衣> --name detail-01-infographic --ratio 3:4 --json
 ```
 
 9. 逐张看图质检（含文字 200% 笔画核对）；失败只重跑该 `--name`
