@@ -32,7 +32,7 @@ description: >
 | 写某类 Prompt 时复制模板 | `references/prompts/{extract,compose,tryon,vary}.md` |
 | 看图写 `facts.json` | `references/analysis.md` |
 | 多图任务锁风格 | `references/style-lock.md` + `references/catalog/styles.json` |
-| 换装多机位 / 裂变选姿势 | `references/catalog/poses.json`（场景 `scenes.json`） |
+| 换装多机位 / 裂变选姿势 | `references/workflows/vary.md` + `references/catalog/poses.json`（`cameras` × `poses`） |
 | 整套图选图型和顺序 | `references/shots-womenswear.md` |
 | 用户点名平台、需要比例 | `references/platforms.md` |
 | 查 CLI 全部参数、信封格式 | `references/cli.md` |
@@ -48,7 +48,7 @@ description: >
 | 基于一张通过的成片，多机位 / 多姿势 | `vary` |
 | 主图 + 详情整套上架图 | `pdp`（内部会调用 tryon / vary / extract） |
 
-用户已经点名就直接用。拿不准时问一句，比出错一整套便宜。
+用户已经点名就直接用。一句话里有多步（合成再换装、换装再裂变）时按顺序串成一条流水线，共用同一个 `job-dir`，生图前确认只问一次整单缺口。
 
 ## 标准流程
 
@@ -57,14 +57,16 @@ description: >
 1. **环境检查**：`forge doctor --json`。任一项 `pass: false` 就把 `suggestion` 转告用户并停下——Key 或网络不通时出图只会浪费用户的额度和时间。
 2. **建任务目录**：`forge job init --workflow <id> --slug <短名> --json`，记下 `run_dir`，之后所有命令带同一个 `--job-dir`，这样中断后能续跑。
 3. **登记素材角色**：每张用户图只承担一种角色——成衣 / 模特 / 印花 / 成片参考 / 风格参考。风格参考只提供光线和色调，它上面的品牌、文案、卖点不是这件商品的事实。
-4. **锁商品事实**：按 `references/analysis.md` 写 `facts.json`，给用户确认。这是整套图的"真相源"，后面每张 Prompt 都从这里抄。
-5. **锁风格**（多图任务）：从 `styles.json` 选一条，`style_lock` 原文贴进每一张 Prompt。整套图看起来像一次拍摄出来的，靠的就是每张一字不差。
-6. **写计划**：`plan.json` 列出每张的 `name` / `ratio` / 一句话目标，等用户批准。
-7. **逐张出图**：Prompt 写进 `work/prompts/<name>.txt`，再 `forge generate --prompt-file`。用文件而不是命令行字符串，是为了能复查、能改、能复现。
-8. **逐张质检**：自己看图，对照下方清单。不合格只重做那一张。
-9. **交付**：报告 `run_dir`、`images/` 下的文件、失败项和 Assumptions。
-
-用户说「你决定 / 直接出」时可以跳过等待确认，但 facts 和 plan 仍要写进目录，交付时列出你替用户做的假设（Assumptions），方便用户事后核对。
+4. **锁商品事实**：按 `references/analysis.md` 写 `facts.json`。这是整套图的"真相源"，后面每张 Prompt 都从这里抄。看不清的写入 `facts.uncertain`。
+5. **锁风格**（多图任务）：按 `references/style-lock.md`。用户点名则用 `styles.json` 原文；没点名则跟场景参考图写 `style_lock`，贴进每一张，一字不差。
+6. **写计划**：`plan.json` 列出每张的 `name` / `ratio` / 一句话目标。
+7. **生图前确认**：只问缺口。用户已经点名的直接采用，不要再确认。
+   - 缺口：`facts.uncertain`、技能 Default、用户两句话互相打架、以及比例 / 张数 / 场景 / 印花位置 / 露脸与配饰 / 素材角色里用户没说的项。姿势按 `references/workflows/vary.md` 从镜头×姿势随机组合。模特图脸被挡或看不清，也是缺口（换露脸图 / 允许生成五官 / 保持挡脸）。
+   - 有缺口：一次问完，每项给选项和建议；用户回答或说「你决定 / 直接出」之前禁止 `forge generate`。
+   - 没有缺口：跳过提问，直接出图。
+8. **逐张出图**：Prompt 写进 `work/prompts/<name>.txt`，再 `forge generate --prompt-file`。用文件而不是命令行字符串，是为了能复查、能改、能复现。
+9. **逐张质检**：自己看图，对照下方清单。不合格只重做那一张。
+10. **交付**：报告 `run_dir`、`images/` 下的文件、失败项。若用户说了「你决定」，把当时代选的项列为 Assumptions。
 
 ## 命令速查
 

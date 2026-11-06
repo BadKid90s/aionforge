@@ -2,7 +2,7 @@
 
 每张机位单独一份 `work/prompts/<name>.txt`。**禁止**只写两三句「同一人同一件衣服 + 走两步」。必须按下面骨架，把成片里看见的细节全部写进去。
 
-`references/catalog/poses.json` 的 `recipes[].prompt` 只填「本张机位与姿势」那一节，不能代替整份 Prompt。
+「本张机位与姿势」填该张 `camera.prompt` + `pose.prompt`（`recipes` 里已有这一对则用那条 `prompt`）。这一节不能代替整份 Prompt。
 
 有成衣图时 `--ref source=` 与 `--ref garment=` 一起传：
 
@@ -21,7 +21,7 @@ forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/<name>.t
 输出一张可上架的实拍电商照片，不是插画、不是拼图、不是九宫格。
 
 ## Campaign Style Lock
-（从 references/catalog/styles.json 复制选定风格的 style_lock 原文。T恤/卫衣校园默认 campus-youth。）
+（粘贴 facts.style_lock。用户点名 styles.json 条目则用该条原文；没点名则用按参考图写的那段。）
 
 ## 参考图
 - 成片参考图（文件名 source）：身份、房间、光线、下装、配饰以这张为准。
@@ -53,7 +53,7 @@ forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/<name>.t
 本张仍在同一空间、同一时段。禁止换房间，除非用户明确要求换 references/catalog/scenes.json 里的场景。
 
 ## 本张机位与姿势
-（粘贴 references/catalog/poses.json 对应配方的 prompt，再补：重心、手、视线、与成片原姿势的差别。）
+（粘贴本张 camera.prompt + pose.prompt，再补：重心、手、视线、与成片原姿势的差别。）
 - 相机高度：
 - 水平角度：
 - 取景（全身/七分/半身）：

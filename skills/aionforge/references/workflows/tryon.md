@@ -16,16 +16,16 @@
 | 有完整人脸的模特图 | model | 是 |
 | 本张姿势、机位、比例 | 补充说明 | 否 |
 
-成衣图没有需要保留的人脸。模特图必须有脸。两张都是街拍真人时，先问哪张是「要穿的衣服标准」、哪张是「要保留的脸」。
+成衣图没有需要保留的人脸。两张都是街拍真人时，先问哪张是「要穿的衣服标准」、哪张是「要保留的脸」。模特图脸被挡或看不清时按 `SKILL.md` 生图前确认来问，不要默默生成五官。
 
 ## 步骤
 
 1. doctor。
 2. `forge job init --workflow tryon --slug <短名> --json`。
-3. 看图锁商品事实（版型、领口、袖口、下摆、面料、颜色、印花位置与文字）写入 `facts.json`，给用户确认。
+3. 看图锁商品事实（版型、领口、袖口、下摆、面料、颜色、印花位置与文字）写入 `facts.json`。缺口确认见 `SKILL.md`「生图前确认」。
 4. 看模特图记下：五官、眼部细节、发型发色、下装、包、房间光线。身体和头按本张姿势重新摆，不要把正面脸贴到走、坐、回眸上。
 5. 列出模特原上衣有、成衣没有的结构（罗纹袖口、帽兜、袋鼠兜等），写进 prompt 补充说明的「必须去掉」。
-6. 多机位先出计划：读 `references/catalog/poses.json` 的 `packs` / `recipes`（默认 `default-8` 或按 keywords 匹配），等人批准。单张可直接确认 Prompt。风格用 `references/catalog/styles.json`。
+6. 多机位按 `references/workflows/vary.md` 从镜头×姿势随机组对后写入计划。单张且用户已写清姿势则按该姿势写 Prompt。风格按 `references/style-lock.md`。
 7. 复制 `references/prompts/tryon.md` 到 `work/prompts/<name>.txt`，贴上 Style Lock（若有）、facts 锁定项、本张姿势。
 8. 出图（参考图必须带角色名）：
 

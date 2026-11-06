@@ -12,7 +12,7 @@
 
 1. doctor
 2. `forge job init --workflow pdp --slug <商品短名> --json`，记下 `run_dir`
-3. 看图写 `facts.json` 到 `run_dir`，展示卖点与结构，等人确认
+3. 看图写 `facts.json` 到 `run_dir`。缺口确认见 `SKILL.md`「生图前确认」
 4. 写 Style Lock，写入 `facts.json` 的 `style_lock` 字段
 5. 按图型清单写 `plan.json`：
 
@@ -37,7 +37,7 @@
 
 需要模特身份的镜头用 `references/workflows/tryon.md`。多机位补图用 `references/workflows/vary.md`。平铺、微距、印花特写自己写构图 Prompt。印花文件先走 `references/workflows/extract.md`。
 
-6. 等人批准计划
+6. 计划写入 `plan.json`；用户没点名的张数/比例/图型列为缺口
 7. 为每张写 `work/prompts/<name>.txt`：Style Lock 原文 + 对应模板或构图 + facts 锁定项
 8. 执行：
 

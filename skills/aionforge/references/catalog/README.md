@@ -14,10 +14,10 @@
 
 **姿势配方**
 
-1. 若是新镜头：在 `poses.json` → `cameras` 加对象。  
-2. 若是新身体动作：在 `poses` 加对象。  
-3. 在 `recipes` 用 `camera` + `pose` 组合成片，写整段 `prompt`。  
-4. 把配方 `id` 放进某个 `packs.*.recipes`。
+1. 新镜头写入 `poses.json` → `cameras`。  
+2. 新身体动作写入 `poses`。  
+3. 可选：在 `recipes` 为某一对写整段 `prompt`，出图时优先用。  
+出图按 `workflows/vary.md` 从入池的 `cameras` × `poses` 随机配对。
 
 **场景**
 
@@ -27,7 +27,7 @@
 
 在 `styles.json` → `styles` 追加一条。`style_lock` 必须是整段锁定文本，原样贴进每一张 Prompt。
 
-主营 T 恤 / 卫衣 / 长袖、客群青年女性时：套餐用 `packs.tee-hoodie-12`（纯 T 恤用 `tee-8`，纯卫衣用 `hoodie-10`）。场景优先 `campus-quad`、`dorm-desk`、`campus-stairs`。风格默认 `campus-youth`。模特按女大学生/青年女性来写，不要写成儿童。
+多机位一律按 `workflows/vary.md` 随机配对镜头与姿势。用户点名校园场景时用 `campus-quad` / `dorm-desk` / `campus-stairs`。模特按女大学生/青年女性来写。
 
 加完后在 `scripts/` 目录执行：
 

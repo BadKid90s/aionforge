@@ -6,7 +6,7 @@
 
 ## 何时用
 
-用户说把印花贴上去、印花合成、白衣加图案、胸前/后背印花。还没有透明底印花时，先跑 `references/workflows/extract.md`。
+用户说把印花贴上去、印花合成、白衣加图案、胸前/后背印花。印花图已经是平面白底或透明底、没有衣服和褶皱，直接合成。印花还在成衣/实拍上，先跑 `references/workflows/extract.md`。
 
 ## 输入
 
@@ -21,7 +21,7 @@
 1. doctor。
 2. 已有任务目录则复用（提取刚跑完）；否则 `job init --workflow compose`。
 3. 看两张图：成衣版型颜色；印花文字与朝向。写入 facts。
-4. 确认位置：`chest_center` / 左胸 / 右胸 / 后背正中 / 下摆。用户没说则胸前正中，标 Default。
+4. 确认位置：`chest_center` / 左胸 / 右胸 / 后背正中 / 下摆。用户没说则放进生图前确认问题，建议胸前正中。
 5. 复制 `references/prompts/compose.md` 到 `work/prompts/print-on-garment.txt`，写上位置和大约宽（例如「宽约衣宽的 30%」）。
 6. 出图：
 
@@ -38,4 +38,5 @@ forge generate --job-dir <run_dir> \
    - 文字可读、未镜像
    - 位置符合计划，没有漂到袖子或领口
    - 没有凭空出现第二件衣服或模特
+   - 背景仍是成衣图那种干净底（常见纯白），没有变成黑底或灰底板
 8. 失败改位置描述，同一 `--name` 重跑 1 次。

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "locale": "zh",
-  "how_to_extend": "新增镜头写入 cameras，新增姿势写入 poses，再用二者组合一条 recipes。把配方 id 追加进 packs.*.recipes。不要改字段名。",
+  "how_to_extend": "新增镜头写入 cameras，新增姿势写入 poses。出图时二者随机配对；可选再为某一对写 recipes 条目。字段名保持不变。",
   "cameras": [
     {
       "id": "cam-eye-full",
