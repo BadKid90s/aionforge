@@ -4,9 +4,9 @@
 
 ## 默认交付
 
-- 主图 5 张，比例 `1:1`（拼多多 / 淘宝）或按 `references/platforms.md`
-- 详情 6 张，比例 `3:4`
-- 图型、顺序与防疲劳规则以 `references/shots-womenswear.md` 为准；用户点名张数或图型时听用户
+- 主图 5 张，比例 `1:1`
+- 详情 6 张，比例 `1:1`
+- 图型、张数与顺序以 `references/shots-womenswear.md` 的菜单和组装规则为准（先参考图，不够再补；不要套死 5 槽主图或 6 张固定详情）
 
 ## 核心卖点图（`main-selling-point` / `detail-infographic`）板式智能推荐
 
@@ -42,7 +42,7 @@
 2. `forge job init --workflow pdp --slug <商品短名> --json`，记下 `run_dir`
 3. 看图写 `facts.json` 到 `run_dir`（含 `conversion_driver`、`garment_position`、`input_image_type`、`selling_points[].visual_keywords`）。缺口确认见 `SKILL.md`「生图前确认」
 4. 按 `references/style-lock.md` 与 `references/typography.md` 锁定 `style_lock` 与平台排版美学，写入 `facts.json`
-5. 按 `references/shots-womenswear.md` 写 `plan.json`（检查角度多样性：无连续 3 张同角度，全身全景 ≤ 50%）：
+5. 按 `references/shots-womenswear.md` 写 `plan.json`（从图型菜单组装，先映射参考图，不够再补；无连续 3 张同角度）：
 
 ```json
 {
@@ -62,7 +62,7 @@
     {
       "name": "detail-01-infographic",
       "prompt": "infographic-asymmetric",
-      "ratio": "3:4",
+      "ratio": "1:1",
       "goal": "详情首屏 60:40 非对称卖点信息图，左主视觉右局部细节"
     }
   ]
@@ -89,7 +89,7 @@ forge generate --job-dir <run_dir> \
 # 卖点信息图 / 隐形人台 / 微距细节
 forge generate --job-dir <run_dir> \
   --prompt-file <run_dir>/work/prompts/detail-01-infographic.txt \
-  --ref garment=<正面成衣> --name detail-01-infographic --ratio 3:4 --json
+  --ref garment=<正面成衣> --name detail-01-infographic --ratio 1:1 --json
 ```
 
 9. 逐张看图质检（含文字 200% 笔画核对）；失败只重跑该 `--name`

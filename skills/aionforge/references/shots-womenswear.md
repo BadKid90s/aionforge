@@ -1,39 +1,68 @@
-# 女装图型清单与多角度防疲劳规则
+# 女装图型清单
 
-`pdp` 默认按此顺序规划主图与详情图。用户指定图型时，用 `id` 对齐 `plan.json` 的 `name` 前缀。全部用 `forge generate`。
+`pdp` 按下面规则写 `plan.json`。图型是菜单，不是固定槽位。用户指定图型时，用 `id` 做 `name` 前缀。全部用 `forge generate`。
 
-## 主图序列（默认 `1:1`，G1–G5 高转化骨架）
+做法对齐可组合套图：先覆盖买家问题，再从图型池里选，张数和顺序可改。参考 [wzj177/ecommerce-image-suite](https://github.com/wzj177/ecommerce-image-suite) 的 `--types` 菜单、[motiful/product-shots](https://github.com/motiful/product-shots) 的多角度池。
 
-| id | 槽位 | 名称 | Prompt 模板 | 目标与构图规则 |
-| --- | --- | --- | --- | --- |
-| `main-hero` | G1 | 正面首图（视觉锚） | 有模特用 `tryon.md`；无模特用 `ghost-mannequin.md` | 服装全身/主体居中占 `75–85%`，留白 `≥ 20%`，背景干净；**有模特时本张作为后续镜头的 `source` 锚点图** |
-| `main-selling-point` | G2 | 核心卖点图 | `infographic.md`（放大镜气泡 / 胶囊标签 / 标注线） | 服装占 `45–55%`，留白 `≥ 45%`，展示 2–3 个核心卖点短签，严禁遮挡领口与印花 |
-| `main-three-quarter` | G3 | 45° 侧身廓形 | `vary.md`（以 `main-hero` 为 `source`）或 `tryon.md` | 45° 四分之三侧面，突出腰线、袖笼与衣摆垂坠 |
-| `main-back` | G3/G4 | 侧面 / 侧背结构 | 传 `--ref garment_back=<背面成衣> --ref source=<main-hero>` | **采用 90° 侧面或 110°–135° 侧背角度，不要 180° 完全背面**；兼顾展示侧面袖笼、后领、后背垂坠与自然侧脸轮廓 |
-| `main-detail` | G4 | 领袖/面料微距证据 | 自写微距构图或 `infographic.md` | 领口 / 袖口 / 走线 / 面料织纹微距，侧光打肌理，特写占 `60%` 以上 |
-| `main-ghost` / `main-flat` | G5 | 3D 隐形人台 / 平铺收口 | `ghost-mannequin.md` 或平铺构图 | 净版展示整件衣服立体版型或平整全貌，建立标准品相预期 |
+## 写计划优先级
 
-默认 5 张主图顺序：`main-hero` → `main-selling-point` → `main-three-quarter` → `main-back`（侧面/侧背）或 `main-detail` → `main-ghost`（或 `main-flat`）。Amazon 首图（`main-hero`）强制纯白底 `#FFFFFF` 且 100% 无文字无徽章。
+目标张数：用户点名 > 主图默认 5、详情默认 6（用户说只要主图则详情为 0）。比例：主图和详情默认都是 `1:1`（用户点名或 `platforms.md` 另有规定时除外）。抽对规则见 `workflows/vary.md` 与 `catalog/poses.json`。
 
-## 详情页序列（默认 `3:4`，纯摄影 + 信息图 + 拼图组合，不单独做图案印花大特写）
+1. **先映射参考图**：每一张单屏主图 / lookbook / 详情分屏，记下图型（上身、侧身、卖点信息、人台、微距、分屏…）、景别和动作，映射到下方菜单的 `id` + `poses.json` 最接近的 `camera` × `pose`，输出 1 张。衣服用自家成衣，不抄参考图款式。
+2. **不够再补**：已映射张数少于目标时，先补还没回答的买家问题（见「组装」），模特镜头按 `vary.md` 从 `poses.json` 随机抽不重复的 `camera` × `pose`；已占用的 camera id、pose id 不再抽。
+3. **选锚点**：已排好的模特镜头里，选一张正面露脸的半身或七分做 `main-hero`（`tryon.md`），其余模特图用 `vary.md` 从 hero 派生。
+4. **卖点图 / 人台**：参考里有、或用户点名、或组装时还缺「卖点 / 净版」才加入。不要为了凑旧的 G1–G5 去替换已经映射的姿势槽。
 
-**详情页 ≠ 单纯换角度拍同一种照片，也不要单独拿一张整屏放大图案印花特写充数。** 详情页必须把「多角度上身穿搭」、「版型/功能卖点信息图（`infographic.md`）」与「领袖做工/面料垂感」穿插排布：
+## 图型菜单
 
-| id | 名称 | Prompt 模板 | 目标与构图规则 |
+需要某张时从表里选 `id` 和 Prompt 模板。同一套里同一 `id` 最多一次，除非用户点名要两张。
+
+### 主图（默认 `1:1`）
+
+| id | 买家问题 | Prompt 模板 | 构图要点 |
 | --- | --- | --- | --- |
-| `detail-infographic` | 核心卖点信息图 | `infographic.md`（按卖点选：①放大镜气泡 / ②图标列表 / ③杂志标注线 / ④60:40非对称分屏） | 首屏承接，留白 `≥ 45%`，用平台排版美学（`typography.md`）直观拆解 3 大卖点 |
-| `detail-multi-scene` | 一衣多穿多场景分屏 | `infographic.md`（多场景分屏骨架） | 双栏或三栏对比不同场景穿搭（严禁写死固定场景，必须取自 `facts.target_scenes`） |
-| `detail-benefit` | 实穿利益点列表图 | `infographic.md`（板式 ② 左衣/上身右签 `icon-list`） | 左侧展示模特半身/七分松弛感穿搭，右侧纵向排列 3 个极简图标 + 莫兰迪胶囊标签（透气亲肤、遮肉显瘦、高腰百搭） |
-| `detail-craft` | 领袖下摆做工拆解图 | `infographic.md`（板式 ③ 杂志标注线或 ① 放大镜气泡） | 聚焦领口罗纹、肩袖剪裁、下摆双针走线与面料垂坠，不做单纯图案放大特写 |
-| `detail-three-angle` | 三角度同框拼图 | `infographic.md`（三角度拼图骨架） | 左/中/右三等宽竖栏同框展示「正面 / 微侧（45°） / 背面」，细白线分隔（背面栏只展示后脑长发与纯白后背，严禁扭头露正脸） |
-| `detail-ghost` / `detail-scene` | 3D 隐形人台 / 场景氛围 | `ghost-mannequin.md` 或 `vary.md` | 净版 3D 立体陈列或户外生活感全身/半身抓拍收尾 |
+| `main-hero` | 这件衣服穿上是什么样 | 有模特用 `tryon.md`；无模特用 `ghost-mannequin.md` | 主体 75–85%，留白 ≥20%；有模特时本张作为后续 `source` |
+| `main-three-quarter` | 侧面廓形、袖笼、衣摆 | `vary.md` | 45°，看见印花侧透视 |
+| `main-back` | 后背、后领、衣长 | `vary.md`；有背面成衣则 `--ref garment_back=` | 90° 正侧或 110°–135° 侧背，不要 180° 正背面 |
+| `main-detail` | 面料、领口、走线、五金 | 微距构图或 `infographic.md` | 特写占 ≥60%，侧光打肌理 |
+| `main-selling-point` | 2–3 个核心卖点 | `infographic.md` | 服装 45–55%，留白 ≥45%，文字在留白区 |
+| `main-ghost` / `main-flat` | 不靠模特看版型 | `ghost-mannequin.md` 或平铺 | 立体人台或平整全貌 |
+| `main-scene` | 穿去哪儿 | `vary.md` | 场景来自 `facts.target_scenes` |
 
-默认 6 张详情顺序：`detail-infographic` → `detail-multi-scene` → `detail-benefit` → `detail-craft` → `detail-three-angle` → `detail-ghost`（或 `detail-scene`）。
+Amazon 首图（若用 `main-hero`）纯白 `#FFFFFF`、无字无徽章，见 `platforms.md`。
 
-## 多角度、景别与背景节奏防疲劳规则
+### 详情（默认 `1:1`，与主图相同）
 
-1. **禁止连续 3 张相同角度**：AI 默认倾向生成正面或微侧 3/4 角。主图序列（5 张）必须包含 **≥ 3 种角度**（其中至少 1 张特写/微距）；详情序列（6+ 张）必须包含 **≥ 4 种角度**。
-2. **不要 180° 完全背面**：展示侧面或后背版型时，一律采用 **90° 正侧面或 110°–135° 侧背角度**（自然露出侧颜轮廓与肩袖侧面线条），避免死板的 180° 完全正背面或扭头畸变。
-3. **详情页不单独出图案印花大特写**：详情页聚焦版型包容度、一衣多搭、面料透气亲肤与领袖车线做工，不要用单张图案印花微距占满一屏。
-4. **全景全身占比 ≤ 50%**：整套图中全身全景镜头不得超过一半，必须穿插七分景、半身景、分屏拼图与工艺标注图。
-5. **详情页双背景色交替**：连续详情图在 `styles.json` 的主背景色 `palette.background` 与副背景色 `palette.background_alt` 之间交替使用，消除买家纵向滑动时的视觉疲劳。
+详情回答主图没讲完的问题：版型、一衣多穿、做工、多角度。不要用整屏印花微距充数。
+
+| id | 买家问题 | Prompt 模板 | 构图要点 |
+| --- | --- | --- | --- |
+| `detail-infographic` | 三个卖点一眼看懂 | `infographic.md`（按卖点选板式） | 留白 ≥45%，板式见 `workflows/pdp.md` |
+| `detail-multi-scene` | 一衣多穿 | `infographic.md` 多场景分屏 | 场景取自 `facts.target_scenes` |
+| `detail-benefit` | 穿着利益（显瘦、亲肤、百搭） | `infographic.md` 的 `icon-list` | 左衣右签 |
+| `detail-craft` | 领、袖、下摆、车线 | `infographic.md` 标注线或放大镜 | 对着 `selling_points[].visual_keywords` |
+| `detail-three-angle` | 正 / 侧 / 背同框 | `infographic.md` 三角度骨架 | 背面栏不扭头露正脸；后背按 `garment_back` |
+| `detail-ghost` | 净版立体 | `ghost-mannequin.md` | 无真人四肢 |
+| `detail-scene` | 生活场景收尾 | `vary.md` | 全身或七分，场景来自 `target_scenes` |
+
+信息图板式（放大镜 / 图标列表 / 标注线 / 60:40 分屏）在真正选了信息图时再按 `workflows/pdp.md` 挑，不要每套详情都六种板式出一遍。
+
+## 组装
+
+用户点名图型或张数 → 照做。
+
+有参考图 → 先映射，再按目标张数补缺口。
+
+无参考、用户只要「一套主图 / 详情」→ 用目标张数，从菜单组一套，**每张只回答一个还没回答的买家问题**。建议（可增删、可换序）：
+
+- **主图**：先保证上身多样性（hero + 不同姿势/角度）。有背面成衣或后背设计再加 `main-back`。`conversion_driver` 为 `craft` 时加一张 `main-detail` 或 `main-ghost`；为 `pain_point` 时加一张 `main-selling-point`。其余用姿势库上身镜头填满。
+- **详情**：从详情菜单抽不同 `id`，优先补主图没覆盖的问题。`visual` 偏多场景 / 三角度 / 场景；`pain_point` 偏利益点 / 信息图；`craft` 偏做工 / 人台。不要六张都是信息图，也不要六张都是同一姿势换角度。
+
+`plan.json` 每张写 `name`（`id` 或 `id-pose`）、`ratio`、一句话目标（点明本张回答哪个买家问题）。
+
+## 多角度与节奏
+
+1. 不要连续 3 张同一角度。补齐的镜头至少换角度或换姿势；已映射的参考保持原样。
+2. 展示后背用 90° 或 110°–135° 侧背，不要 180° 死板正背面。
+3. 详情背景在 `styles.json` 的 `palette.background` 与 `background_alt` 之间交替。
+4. 从姿势库补的全身全景不超过该组一半；参考图是全身的保持全身。

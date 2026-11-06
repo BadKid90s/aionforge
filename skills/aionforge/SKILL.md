@@ -35,7 +35,7 @@ description: >
 | 多图任务锁风格（含 6 位 Hex 色板与量化占比） | `references/style-lock.md` + `references/catalog/styles.json` |
 | 图内印字、6 大平台字体与排版美学 | `references/typography.md` + `references/catalog/typography.json` |
 | 换装多机位 / 裂变选姿势 | `references/workflows/vary.md` + `references/catalog/poses.json`（`cameras` × `poses`） |
-| 整套图选图型、G1–G5 主图漏斗与信息图板式 | `references/shots-womenswear.md` |
+| 整套图选图型、姿势映射、主图/详情菜单与组装 | `references/shots-womenswear.md` |
 | 竞品参考图反推与视觉机制迁移 | `references/workflows/deconstruct.md` + `references/prompts/deconstruct.md` |
 | 用户点名平台、需要比例与风格映射 | `references/platforms.md` |
 | 查 CLI 全部参数、信封格式 | `references/cli.md` |
@@ -67,9 +67,9 @@ description: >
    - **长图隔离红线**：若参考图是竖长条详情页拼接图（`H / W >= 2.2`），标记 `LONG_PAGE`，**只看图文字反推，严禁传给 `--ref`**。
 4. **锁商品事实**：按 `references/analysis.md` 写 `facts.json`（含 `garment_position` 合理搭配推导、`conversion_driver` 转化钩子、`selling_points` 卖点视觉化）。这是整套图的"真相源"，后面每张 Prompt 都从这里抄。看不清的写入 `facts.uncertain`。
 5. **锁风格与字体美学**（多图任务）：按 `references/style-lock.md` 与 `references/typography.md`。用户点名则用 `styles.json` + `typography.json` 原文（必须包含 6 位 Hex 色号、主体占比与留白占比）；没点名则跟参考图写 `style_lock`，贴进每一张，一字不差。
-6. **写计划**：`plan.json` 列出每张的 `name` / `ratio` / 一句话目标（含信息图板式类型）。
+6. **写计划**：按 `references/shots-womenswear.md` 写 `plan.json`（`name` / `ratio` / 一句话目标；图型从菜单组装，姿势先映射参考图，不够再从姿势库补齐）。
 7. **生图前确认**：只问缺口。用户已经点名的直接采用，不要再确认。
-   - 缺口：`facts.uncertain`、技能 Default、用户两句话互相打架、以及比例 / 张数 / 场景 / 印花位置 / 露脸与配饰 / 素材角色里用户没说的项。姿势按 `references/workflows/vary.md` 从镜头×姿势随机组合。模特图脸被挡或看不清，也是缺口（换露脸图 / 允许生成五官 / 保持挡脸）。
+   - 缺口：`facts.uncertain`、技能 Default、用户两句话互相打架、以及比例 / 张数 / 场景 / 印花位置 / 露脸与配饰 / 素材角色里用户没说的项。姿势按 `references/shots-womenswear.md` 写入计划，不必再问。模特图脸被挡或看不清，也是缺口（换露脸图 / 允许生成五官 / 保持挡脸）。
    - 有缺口：一次问完，每项给选项和建议；用户回答或说「你决定 / 直接出」之前禁止 `forge generate`。
    - 没有缺口：跳过提问，直接出图。
 8. **两阶段模特锚点锁定（多张含模特图时）**：先生成第 1 张核心上身主图（`main-hero`），质检通过后，后续所有含模特的镜头必须把这张成片作为 `--ref source=<run_dir>/images/main-hero.png` 传入，实现跨机位同一人物、同一场景锚定。

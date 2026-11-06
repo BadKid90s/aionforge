@@ -28,6 +28,8 @@
 
 读取 `references/catalog/poses.json`。每一张都是一对 `camera` + `pose`。N = 用户说的张数，未说则为 8。
 
+姿势来源按 `references/shots-womenswear.md`「写计划优先级」：先映射用户给的单屏姿势 / 主图参考，目标张数不够再按下面入池规则随机抽对补齐；已映射占用的 camera id、pose id 不再抽。
+
 1. **入池**：镜头、姿势各自独立入池。条目带 `requires` 时，成衣具备该结构才入池（`print` / `pockets` / `hoodie`）。用户说了走、坐、回眸、半身、微距等，只保留 `keywords` 命中的条目。
 2. **配对**：`cam-detail-*` 配站定类姿势；其余镜头配入池里的任意姿势。随机抽 N 对：每对唯一，同一套内每个镜头 id、每个姿势 id 只用一次。N 取用户张数与两池较小者。
 3. **落盘**：`name` = `vary-<camera>-<pose>`。本张机位 = 该镜头 `prompt` + 该姿势 `prompt`；`recipes` 里已有这一对时用那条 `prompt`。`plan.json` 写 `name` / `ratio` / 一句话目标。

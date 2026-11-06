@@ -6,7 +6,7 @@
 
 ```bash
 forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/<name>.txt \
-  --ref garment=<成衣> --name <name> --ratio 3:4 --json
+  --ref garment=<成衣> --name <name> --ratio 1:1 --json
 ```
 
 若本张信息图内需要已确认的真人模特上身形象，同时传入 `--ref source=<已通过的 main-hero.png> --ref garment=<成衣>`。
