@@ -27,6 +27,12 @@
       "must_not_include": ["爆炸贴", "红底黄字", "粗黑描边", "#E02E24", "#FFD700"]
     },
     {
+      "id": "behavior-sku-colorway-lock",
+      "scenario": "SKU 母版 + 多张配色白底图生成规格图",
+      "must_include": ["--ref source=", "--ref garment=", "sku-"],
+      "must_not_include": ["图1", "图2"]
+    },
+    {
       "id": "behavior-front-back-garment-routing",
       "scenario": "同时拥有正面成衣图与背面成衣图，生成背面展示图或三视角图",
       "must_include": ["garment_back"],

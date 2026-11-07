@@ -12,6 +12,7 @@ def test_skill_prompt_templates_exist() -> None:
         "compose.md",
         "tryon.md",
         "vary.md",
+        "sku.md",
         "infographic.md",
         "ghost-mannequin.md",
         "deconstruct.md",
@@ -49,6 +50,11 @@ def test_vary_and_compose_templates_use_roles() -> None:
     compose = (ROOT / "compose.md").read_text(encoding="utf-8")
     assert "print=" in compose
     assert "garment=" in compose
+    sku = (ROOT / "sku.md").read_text(encoding="utf-8")
+    assert "source=" in sku
+    assert "garment=" in sku
+    assert "sku-" in sku
+    assert "图1" not in sku
 
 
 def test_infographic_and_deconstruct_templates_have_visible_text_block() -> None:

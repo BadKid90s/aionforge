@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "AionForge Skill 触发回归评测集：验证六大核心电商出图意图命中与非出图请求过滤。",
+  "description": "AionForge Skill 触发回归评测集：验证核心电商出图意图命中与非出图请求过滤。",
   "cases": [
     {
       "id": "trigger-extract-print",
@@ -31,6 +31,12 @@
       "user_prompt": "这件针织开衫我要上架拼多多，帮我出一套高转化主图和带卖点放大的详情页套图",
       "should_trigger": true,
       "expected_workflow": "pdp"
+    },
+    {
+      "id": "trigger-sku-colorways",
+      "user_prompt": "这张主图当 SKU 母版，按黑、藏青、浅灰三张白底成衣出批量规格图",
+      "should_trigger": true,
+      "expected_workflow": "sku"
     },
     {
       "id": "trigger-deconstruct-competitor",

@@ -3,11 +3,13 @@ name: aionforge
 description: >
   女装电商 AI 出图编排：看图锁商品事实、写计划与逐图 Prompt、调用 `forge generate` 出图并逐张质检。
   覆盖印花提取（抠出透明底图案）、印花合成（图案贴回白衣）、模特换衣（成衣穿到指定模特、锁五官）、
-  电商图裂变（同一成片多机位多姿势）、竞品参考图反推迁移（借版式与光影出自家衣服）、
+  电商图裂变（同一成片多机位多姿势）、SKU 配色规格图（母版产品图 + 多张配色白底生成规格图）、
+  竞品参考图反推迁移（借版式与光影出自家衣服）、
   主图 + 详情整套上架图（拼多多 / 淘宝 / 京东 / 抖音 / Amazon / Shopify 等，含 4 类卖点信息图与 3D 隐形人台）。
   只要用户想用衣服照片、模特照片、竞品参考图或印花做任何电商图，就使用本 Skill，即使没说「套图」或「工作流」：
   例如「提取胸前印花」「把这个图案印到白T上」「把成衣穿到这个模特身上」「这张再裂变 6 个机位」
-  「照这张竞品图的排版和色调做我的连衣裙」「这件吊带出一套拼多多主图」「换个姿势再来几张」。
+  「照这张竞品图的排版和色调做我的连衣裙」「这件吊带出一套拼多多主图」「换个姿势再来几张」
+  「SKU裂变」「SKU套图」「按这张母版出黑、藏青、浅灰规格图」。
   只是讨论或修改 AionForge 代码、聊电商运营而不需要出图时不要使用。
 ---
 
@@ -30,12 +32,13 @@ description: >
 | 什么时候读 | 文件 |
 | --- | --- |
 | 选定工作流后，照着走步骤 | `references/workflows/<workflow>.md` |
-| 写某类 Prompt 时复制模板 | `references/prompts/{extract,compose,tryon,vary,infographic,ghost-mannequin,deconstruct}.md` |
+| 写某类 Prompt 时复制模板 | `references/prompts/{extract,compose,tryon,vary,sku,infographic,ghost-mannequin,deconstruct}.md` |
 | 看图写 `facts.json`（含正反面路由、三轴参考协议） | `references/analysis.md` |
 | 多图任务锁风格（含 6 位 Hex 色板与量化占比） | `references/style-lock.md` + `references/catalog/styles.json` |
 | 图内印字、6 大平台字体与排版美学 | `references/typography.md` + `references/catalog/typography.json` |
 | 换装多机位 / 裂变选姿势 | `references/workflows/vary.md` + `references/catalog/poses.json`（`cameras` × `poses`） |
 | 整套图选图型、姿势映射、主图/详情菜单与组装 | `references/shots-womenswear.md` |
+| SKU 配色规格图（母版 + 多色白底） | `references/workflows/sku.md` |
 | 竞品参考图反推与视觉机制迁移 | `references/workflows/deconstruct.md` + `references/prompts/deconstruct.md` |
 | 用户点名平台、需要比例与风格映射 | `references/platforms.md` |
 | 查 CLI 全部参数、信封格式 | `references/cli.md` |
@@ -49,6 +52,7 @@ description: >
 | 把已有印花贴到白底成衣 | `compose`（还没有印花文件就先 `extract`） |
 | 把成衣穿到某个模特身上 | `tryon` |
 | 基于一张通过的成片，多机位 / 多姿势 | `vary` |
+| SKU 裂变 / SKU 套图 / SKU 母版 / 电商 SKU / SKU 图 / 批量规格图：母版产品图 + 多张配色白底 | `sku` |
 | 参考竞品图 / 标杆海报的版式与光影，迁移到自家成衣 | `deconstruct` |
 | 主图 + 详情整套上架图（含卖点信息图、3D 隐形人台） | `pdp`（内部会调用 tryon / vary / extract） |
 
@@ -67,12 +71,12 @@ description: >
    - **长图隔离红线**：若参考图是竖长条详情页拼接图（`H / W >= 2.2`），标记 `LONG_PAGE`，**只看图文字反推，严禁传给 `--ref`**。
 4. **锁商品事实**：按 `references/analysis.md` 写 `facts.json`（含 `garment_position` 合理搭配推导、`conversion_driver` 转化钩子、`selling_points` 卖点视觉化）。这是整套图的"真相源"，后面每张 Prompt 都从这里抄。看不清的写入 `facts.uncertain`。写完立刻把关键事实列给用户核对：品类、主色、领口、袖型/袖口、下摆、衣长、印花文字与位置、`uncertain`。用户说没问题之前，禁止写计划、禁止 `forge generate`。用户改正则先改 `facts.json` 再继续。说「你决定 / 直接出」只跳过第 7 步的缺口提问，不跳过本步——领口袖口看错一次，后面整套都错款。
 5. **锁风格与字体美学**（多图任务）：按 `references/style-lock.md` 与 `references/typography.md`。用户点名则用 `styles.json` + `typography.json` 原文（必须包含 6 位 Hex 色号、主体占比与留白占比）；没点名则跟参考图写 `style_lock`，贴进每一张，一字不差。
-6. **写计划**：按 `references/shots-womenswear.md` 写 `plan.json`（`name` / `ratio` / 一句话目标；图型从菜单组装，姿势先映射参考图，不够再从姿势库补齐）。
+6. **写计划**：sku 按 `references/workflows/sku.md` 一色一任务；其余按 `references/shots-womenswear.md` 写 `plan.json`（`name` / `ratio` / 一句话目标；图型从菜单组装，姿势先映射参考图，不够再从姿势库补齐）。
 7. **生图前确认**：只问缺口。用户已经点名的直接采用，不要再确认。
    - 缺口：`facts.uncertain`、技能 Default、用户两句话互相打架、以及比例 / 张数 / 场景 / 印花位置 / 露脸与配饰 / 素材角色里用户没说的项。姿势按 `references/shots-womenswear.md` 写入计划，不必再问。模特图脸被挡或看不清，也是缺口（换露脸图 / 允许生成五官 / 保持挡脸）。
    - 有缺口：一次问完，每项给选项和建议；用户回答或说「你决定 / 直接出」之前禁止 `forge generate`。
    - 没有缺口：跳过提问，直接出图。
-8. **两阶段模特锚点锁定（多张含模特图时）**：先生成第 1 张核心上身主图（`main-hero`），质检通过后，后续所有含模特的镜头必须把这张成片作为 `--ref source=<run_dir>/images/main-hero.png` 传入，实现跨机位同一人物、同一场景锚定。
+8. **两阶段模特锚点锁定（多张含模特图时）**：先生成第 1 张核心上身主图（`main-hero`），质检通过后，后续所有含模特的镜头必须把这张成片作为 `--ref source=<run_dir>/images/main-hero.png` 传入，实现跨机位同一人物、同一场景锚定。sku 每张都用原始母版做 `--ref source=`，不要把上一色的生成图当母版。
 9. **逐张出图**：Prompt 写进 `work/prompts/<name>.txt`，再 `forge generate --prompt-file`。需要画面内文字时必须使用 `VISIBLE_TEXT_BLOCK` 隔离块。
 10. **逐张质检**：自己看图，对照下方清单。不合格只重做那一张。
 11. **交付**：报告 `run_dir`、`images/` 下的文件、失败项。若用户说了「你决定」，把当时代选的项列为 Assumptions。
@@ -91,7 +95,7 @@ forge generate --job-dir <run_dir> --prompt-file <txt> --ref <图> --name <id> -
 - 印花提取加 `--cutout`（本地把白底转透明并裁切）。
 - 返回 `{ok, run_dir, images, error}`。完整参数见 `references/cli.md`。
 
-CLI 只有 `doctor` / `job init` / `generate` 三个命令。换装、提取、合成、裂变、反推迁移的差别全在 Prompt 里，不存在额外子命令。
+CLI 只有 `doctor` / `job init` / `generate` 三个命令。换装、提取、合成、裂变、SKU 配色、反推迁移的差别全在 Prompt 里，不存在额外子命令。
 
 ## 两条全局规则
 
@@ -109,6 +113,7 @@ CLI 只有 `doctor` / `job init` / `generate` 三个命令。换装、提取、�
 - 领口 / 袖口 / 下摆 / 肩线 / 衣长与成衣一致
 - 印花位置、颜色、文字逐字一致，只出现一次，未镜像
 - 换装 / 裂变 / 套图：同一双眼睛和五官，头的朝向符合本张姿势
+- SKU 规格图：人、姿势、场景与母版一致；衣服颜色和结构是本张配色白底那一件，不是母版原色
 - 主图背景干净，服装轮廓完整，主体占比与呼吸留白符合平台美学
 - 图内若有文字（`VISIBLE_TEXT_BLOCK`）：放大 200% 检查汉字笔画完整无乱码、无黑边描边、未把字号/色号等排版元指令画进画面
 - 画幅等于计划比例，四边都有内容

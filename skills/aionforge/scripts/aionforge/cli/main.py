@@ -84,7 +84,7 @@ def job_init(
         "pdp",
         "--workflow",
         "-w",
-        help="工作流 id：extract / compose / tryon / vary / pdp。",
+        help="工作流 id：extract / compose / tryon / vary / sku / pdp / deconstruct。",
     ),
     slug: str = typer.Option("job", "--slug", "-s", help="任务短名，进入目录名。"),
     output_dir: Path | None = typer.Option(

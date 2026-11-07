@@ -15,12 +15,12 @@ forge doctor --json
 ## job init
 
 ```bash
-forge job init --workflow <extract|compose|tryon|vary|pdp|deconstruct> --slug <短名> --json
+forge job init --workflow <extract|compose|tryon|vary|sku|pdp|deconstruct> --slug <短名> --json
 ```
 
 | 参数 | 说明 |
 | --- | --- |
-| `--workflow` / `-w` | 工作流 id（`extract` / `compose` / `tryon` / `vary` / `pdp` / `deconstruct`），默认 `pdp` |
+| `--workflow` / `-w` | 工作流 id（`extract` / `compose` / `tryon` / `vary` / `sku` / `pdp` / `deconstruct`），默认 `pdp` |
 | `--slug` / `-s` | 任务短名，进入目录名 |
 | `--output-dir` | 任务根目录，默认 `output/<workflow>` |
 
@@ -66,6 +66,10 @@ forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/tryon-01
 # 竞品参考图版式迁移（仅限单屏参考图 SINGLE_POSTER）
 forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/deconstruct-01-layout.txt \
   --ref garment=./a.png --ref layout=./ref_poster.jpg --name deconstruct-01-layout --ratio 3:4 --json
+
+# SKU 配色规格图
+forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/sku-black.txt \
+  --ref source=./master.jpg --ref garment=./black.png --name sku-black --json
 
 # 印花提取
 forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/print.txt \
