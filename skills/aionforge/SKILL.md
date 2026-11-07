@@ -52,7 +52,7 @@ description: >
 | 参考竞品图 / 标杆海报的版式与光影，迁移到自家成衣 | `deconstruct` |
 | 主图 + 详情整套上架图（含卖点信息图、3D 隐形人台） | `pdp`（内部会调用 tryon / vary / extract） |
 
-用户已经点名就直接用。一句话里有多步（合成再换装、换装再裂变）时按顺序串成一条流水线，共用同一个 `job-dir`，生图前确认只问一次整单缺口。
+用户已经点名就直接用。一句话里有多步（合成再换装、换装再裂变）时按顺序串成一条流水线，共用同一个 `job-dir`。商品事实核对见第 4 步；生图前确认只问一次整单缺口。
 
 ## 标准流程
 
@@ -65,7 +65,7 @@ description: >
    - 人物身份源：`model`（指定模特）、`source`（已通过的锚点成片）
    - 视觉机制源：`style`（只借光线色调）、`layout`（只借版式构图，严禁复制参考图上的衣服款式与竞品 Logo）
    - **长图隔离红线**：若参考图是竖长条详情页拼接图（`H / W >= 2.2`），标记 `LONG_PAGE`，**只看图文字反推，严禁传给 `--ref`**。
-4. **锁商品事实**：按 `references/analysis.md` 写 `facts.json`（含 `garment_position` 合理搭配推导、`conversion_driver` 转化钩子、`selling_points` 卖点视觉化）。这是整套图的"真相源"，后面每张 Prompt 都从这里抄。看不清的写入 `facts.uncertain`。
+4. **锁商品事实**：按 `references/analysis.md` 写 `facts.json`（含 `garment_position` 合理搭配推导、`conversion_driver` 转化钩子、`selling_points` 卖点视觉化）。这是整套图的"真相源"，后面每张 Prompt 都从这里抄。看不清的写入 `facts.uncertain`。写完立刻把关键事实列给用户核对：品类、主色、领口、袖型/袖口、下摆、衣长、印花文字与位置、`uncertain`。用户说没问题之前，禁止写计划、禁止 `forge generate`。用户改正则先改 `facts.json` 再继续。说「你决定 / 直接出」只跳过第 7 步的缺口提问，不跳过本步——领口袖口看错一次，后面整套都错款。
 5. **锁风格与字体美学**（多图任务）：按 `references/style-lock.md` 与 `references/typography.md`。用户点名则用 `styles.json` + `typography.json` 原文（必须包含 6 位 Hex 色号、主体占比与留白占比）；没点名则跟参考图写 `style_lock`，贴进每一张，一字不差。
 6. **写计划**：按 `references/shots-womenswear.md` 写 `plan.json`（`name` / `ratio` / 一句话目标；图型从菜单组装，姿势先映射参考图，不够再从姿势库补齐）。
 7. **生图前确认**：只问缺口。用户已经点名的直接采用，不要再确认。

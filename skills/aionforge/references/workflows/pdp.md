@@ -40,7 +40,7 @@
 
 1. `forge doctor --json`
 2. `forge job init --workflow pdp --slug <商品短名> --json`，记下 `run_dir`
-3. 看图写 `facts.json` 到 `run_dir`（含 `conversion_driver`、`garment_position`、`input_image_type`、`selling_points[].visual_keywords`）。缺口确认见 `SKILL.md`「生图前确认」
+3. 看图写 `facts.json` 到 `run_dir`（含 `conversion_driver`、`garment_position`、`input_image_type`、`selling_points[].visual_keywords`）。写完按 `SKILL.md`「锁商品事实」给用户核对，通过后再进入下一步。
 4. 按 `references/style-lock.md` 与 `references/typography.md` 锁定 `style_lock` 与平台排版美学，写入 `facts.json`
 5. 按 `references/shots-womenswear.md` 写 `plan.json`（从图型菜单组装，先映射参考图，不够再补；无连续 3 张同角度）：
 

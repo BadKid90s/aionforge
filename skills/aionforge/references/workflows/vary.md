@@ -38,7 +38,7 @@
 
 1. doctor。
 2. `forge job init --workflow vary --slug <短名> --json`（或接到已有 tryon 的 `run_dir`）。
-3. 看参考图锁视觉 DNA：房间、光线、色温、人物。看成衣图锁版型印花。
+3. 看参考图锁视觉 DNA：房间、光线、色温、人物。看成衣图锁版型印花。新任务写完 `facts.json` 后按 `SKILL.md`「锁商品事实」给用户核对；接到已有 tryon 则沿用已确认的 facts。
 4. 按上一节选出 N 对，写入 `plan.json`。确认规则见 `SKILL.md`「生图前确认」。
 5. 每张：按 `references/prompts/vary.md` **整份骨架填写**。先看图写人物/印花零件/房间道具，再把本张 camera + pose 的文案填进「本张机位与姿势」，并写清与成片差在哪。Style Lock 按 `references/style-lock.md`。
 6. 出图：

@@ -20,7 +20,7 @@
 
 1. doctor。
 2. 已有任务目录则复用（提取刚跑完）；否则 `job init --workflow compose`。
-3. 看两张图：成衣版型颜色；印花文字与朝向。写入 facts。
+3. 看两张图：成衣版型颜色；印花文字与朝向。写入 facts。写完按 `SKILL.md`「锁商品事实」给用户核对，通过后再进入下一步。
 4. 确认位置：`chest_center` / 左胸 / 右胸 / 后背正中 / 下摆。用户没说则放进生图前确认问题，建议胸前正中。
 5. 复制 `references/prompts/compose.md` 到 `work/prompts/print-on-garment.txt`，写上位置和大约宽（例如「宽约衣宽的 30%」）。
 6. 出图：

@@ -52,7 +52,7 @@
 
 1. `forge doctor --json`。
 2. `forge job init --workflow deconstruct --slug <短名> --json`。
-3. 看用户成衣图写 `facts.json`（含 `garment_position`、`conversion_driver`、`selling_points`）。
+3. 看用户成衣图写 `facts.json`（含 `garment_position`、`conversion_driver`、`selling_points`）。写完按 `SKILL.md`「锁商品事实」给用户核对，通过后再进入下一步。
 4. 看竞品参考图，判断 `SINGLE_POSTER` 还是 `LONG_PAGE`，拆解五维视觉机制。
 5. 写入 `plan.json`，按 `SKILL.md`「生图前确认」向用户确认缺口（如 1 张还是 4 张、是否印字、目标平台）。
 6. 按 `references/prompts/deconstruct.md` 逐张编写 `work/prompts/<name>.txt`，显式列出 **借用机制** 与 **隔离禁区**。

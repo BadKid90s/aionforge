@@ -21,7 +21,7 @@
 
 1. `forge doctor --json`。失败则停。
 2. `forge job init --workflow extract --slug <短名> --json`。
-3. 看图登记：印花位置、文字原文、主色、是否多块印花。写入 `facts.json` 的 `print` 段。文字必须逐字来自图。
+3. 看图登记：印花位置、文字原文、主色、是否多块印花。写入 `facts.json` 的 `print` 段。文字必须逐字来自图。写完按 `SKILL.md`「锁商品事实」给用户核对印花文字与块数，通过后再进入下一步。
 4. 多块印花时问用户提取哪一块；用户说「都要」则每块一个任务。
 5. 把 `references/prompts/extract.md` 模板写入 `work/prompts/print.txt`，补充说明写位置。
 6. 只有一块印花且用户已指定（或图上只有一块）则不必再问。多块或位置不清时按 `SKILL.md`「生图前确认」问要提取哪块。
