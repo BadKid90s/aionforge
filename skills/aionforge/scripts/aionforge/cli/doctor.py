@@ -7,11 +7,19 @@ from typing import Any
 
 import httpx
 
-from aionforge.core.config import Settings, key_env_hint
+from aionforge.core.config import (
+    CUSTOM,
+    Settings,
+    auth_headers,
+    available_providers,
+    key_env_hint,
+    merge_env,
+)
 
 _ALL_KEY_VARS = (
-    "XAI_API_KEY / OPENAI_API_KEY / DASHSCOPE_API_KEY / ARK_API_KEY，"
-    "或 custom 网关的 AIONFORGE_API_BASE + AIONFORGE_API_KEY"
+    "一等：XAI_API_KEY / OPENAI_API_KEY / GEMINI_API_KEY / DASHSCOPE_API_KEY / "
+    "ARK_API_KEY / HUNYUAN_API_KEY / QIANFAN_API_KEY；"
+    "或兼容网关：AIONFORGE_API_BASE + AIONFORGE_API_KEY + AIONFORGE_IMAGE_MODEL"
 )
 
 
@@ -24,19 +32,29 @@ def collect_checks(settings: Settings) -> list[dict[str, Any]]:
         )
 
     image = settings.image
-    check("image.provider", True, f"{image.provider}/{image.model}")
-    check("image.api", True, f"{image.api} @ {image.api_base}")
-    check(
-        "image.api_key",
-        bool(image.api_key),
-        image.provider,
-        f"设置 {key_env_hint(image.provider)}（{_ALL_KEY_VARS}）",
-    )
-    if image.api_key:
+    has_key = bool(image.api_key)
+    key_hint = _ALL_KEY_VARS if not has_key else ""
+
+    check("image.selected", has_key, f"{image.provider}/{image.model}", key_hint)
+
+    if image.provider == CUSTOM:
+        has_base = bool(image.api_base)
+        check(
+            "image.base",
+            has_base,
+            f"{image.api} @ {image.api_base}",
+            "" if has_base else "设置 AIONFORGE_API_BASE",
+        )
+    else:
+        check("image.base", True, f"{image.api} @ {image.api_base}")
+
+    check("image.api_key", has_key, key_env_hint(image.provider), key_hint)
+
+    if has_key:
         try:
             resp = httpx.get(
                 f"{image.api_base.rstrip('/')}/models",
-                headers={"Authorization": f"Bearer {image.api_key}"},
+                headers=auth_headers(image.provider, image.api_key),
                 timeout=10.0,
             )
             check(
@@ -52,6 +70,20 @@ def collect_checks(settings: Settings) -> list[dict[str, Any]]:
                 str(exc)[:120],
                 "检查网络连通性与 api_base 是否可达",
             )
+
+    others = [p for p in available_providers(merge_env()) if p != image.provider]
+    extra_suggestion = ""
+    if others:
+        extra_names = ", ".join(others)
+        extra_suggestion = (
+            f"当前用 {image.provider}；若要用 {extra_names} 请去掉 {key_env_hint(image.provider)}"
+        )
+    check(
+        "image.also_configured",
+        True,
+        ", ".join(others) if others else "none",
+        extra_suggestion,
+    )
 
     root = Path(settings.storage.root).expanduser()
     try:

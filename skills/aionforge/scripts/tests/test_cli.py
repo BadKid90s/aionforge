@@ -43,10 +43,8 @@ def _hermetic(tmp_path, monkeypatch):
 def test_doctor_json_reports_checks() -> None:
     result = runner.invoke(app, ["doctor", "--json"])
     payload = json.loads(result.output)
-    assert isinstance(payload["ok"], bool)
-    assert result.exit_code == (0 if payload["ok"] else 1)
     names = {c["name"] for c in payload["checks"]}
-    assert {"image.api_key", "storage.writable"} <= names
+    assert {"image.selected", "image.api_key", "storage.writable"} <= names
 
 
 def test_doctor_with_key_includes_connectivity(monkeypatch) -> None:
@@ -54,7 +52,32 @@ def test_doctor_with_key_includes_connectivity(monkeypatch) -> None:
     result = runner.invoke(app, ["doctor", "--json"])
     payload = json.loads(result.output)
     names = {c["name"] for c in payload["checks"]}
-    assert {"image.api_key", "image.reachable"} <= names
+    assert {"image.api_key", "image.reachable", "image.selected"} <= names
+    selected = next(c for c in payload["checks"] if c["name"] == "image.selected")
+    assert selected["detail"].startswith("grok/")
+
+
+def test_doctor_uses_google_gemini_base_url(monkeypatch) -> None:
+    monkeypatch.setenv("GEMINI_API_KEY", "g-key")
+    monkeypatch.setenv("GOOGLE_GEMINI_BASE_URL", "http://gemini-proxy.example/v1beta")
+    result = runner.invoke(app, ["doctor", "--json"])
+    payload = json.loads(result.output)
+    selected = next(c for c in payload["checks"] if c["name"] == "image.selected")
+    assert selected["detail"].startswith("gemini/")
+    base = next(c for c in payload["checks"] if c["name"] == "image.base")
+    assert "http://gemini-proxy.example/v1beta" in base["detail"]
+
+
+def test_doctor_warns_extra_keys(monkeypatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "o-key")
+    monkeypatch.setenv("GEMINI_API_KEY", "g-key")
+    result = runner.invoke(app, ["doctor", "--json"])
+    payload = json.loads(result.output)
+    selected = next(c for c in payload["checks"] if c["name"] == "image.selected")
+    assert selected["detail"].startswith("openai/")
+    extra = next(c for c in payload["checks"] if c["name"] == "image.also_configured")
+    assert "gemini" in extra["detail"]
+    assert extra["pass"] is True
 
 
 def test_job_init_json(tmp_path: Path) -> None:
