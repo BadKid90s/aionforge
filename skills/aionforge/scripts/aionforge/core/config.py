@@ -14,34 +14,63 @@ from pathlib import Path
 SKILL_DIR = Path(__file__).resolve().parents[3]
 
 CUSTOM = "custom"
-BUILTIN_PROVIDERS = ("grok", "openai", "dashscope", "ark")
+BUILTIN_PROVIDERS = (
+    "grok",
+    "openai",
+    "gemini",
+    "dashscope",
+    "ark",
+    "hunyuan",
+    "qianfan",
+)
 PROVIDERS = (*BUILTIN_PROVIDERS, CUSTOM)
 
 _PROVIDER_API_BASE = {
     "grok": "https://api.x.ai/v1",
     "openai": "https://api.openai.com/v1",
+    "gemini": "https://generativelanguage.googleapis.com/v1beta",
     "dashscope": "https://dashscope.aliyuncs.com/api/v1",
     "ark": "https://ark.cn-beijing.volces.com/api/v3",
+    "hunyuan": "https://api.hunyuan.cloud.tencent.com/v1",
+    "qianfan": "https://qianfan.baidubce.com/v2",
 }
 PROVIDER_KEY_ENV = {
     "grok": "XAI_API_KEY",
     "openai": "OPENAI_API_KEY",
+    "gemini": "GEMINI_API_KEY",
     "dashscope": "DASHSCOPE_API_KEY",
     "ark": "ARK_API_KEY",
+    "hunyuan": "HUNYUAN_API_KEY",
+    "qianfan": "QIANFAN_API_KEY",
     CUSTOM: "AIONFORGE_API_KEY",
 }
 _DEFAULT_MODEL = {
     "grok": "grok-imagine-image-2.0",
     "openai": "gpt-image-2.5-sunburst",
+    "gemini": "gemini-3-pro-image",
     "dashscope": "wanx2.1-imageedit",
     "ark": "seedream-4.0",
+    "hunyuan": "hy-image-v3",
+    "qianfan": "ernie-image",
 }
 _DEFAULT_API = {
     "grok": "edits_json",
     "openai": "edits_multipart",
+    "gemini": "gemini_generate_content",
     "dashscope": "dashscope_async",
     "ark": "edits_multipart",
+    "hunyuan": "edits_multipart",
+    "qianfan": "edits_multipart",
     CUSTOM: "edits_multipart",
+}
+PROVIDER_BASE_ENV = {
+    "grok": "XAI_BASE_URL",
+    "openai": "OPENAI_BASE_URL",
+    "gemini": "GOOGLE_GEMINI_BASE_URL",
+    "dashscope": "DASHSCOPE_BASE_URL",
+    "ark": "ARK_BASE_URL",
+    "hunyuan": "HUNYUAN_BASE_URL",
+    "qianfan": "QIANFAN_BASE_URL",
 }
 
 _TRUE = ("1", "true", "yes", "on")
@@ -105,6 +134,12 @@ def key_env_hint(provider: str) -> str:
     return PROVIDER_KEY_ENV[provider]
 
 
+def auth_headers(provider: str, api_key: str) -> dict[str, str]:
+    if provider == "gemini":
+        return {"x-goog-api-key": api_key}
+    return {"Authorization": f"Bearer {api_key}"}
+
+
 def available_providers(env: Mapping[str, str] | None = None) -> list[str]:
     environ = os.environ if env is None else env
     found = [p for p in BUILTIN_PROVIDERS if _available_key(environ, p)]
@@ -142,28 +177,26 @@ def merge_env(
 
 
 def _pick_provider(env: Mapping[str, str]) -> str:
-    explicit = _get(env, "AIONFORGE_PROVIDER").lower()
-    if explicit:
-        if explicit not in PROVIDERS:
-            raise ConfigError(
-                f"AIONFORGE_PROVIDER={explicit} 不是可用供应商；可选 {', '.join(PROVIDERS)}"
-            )
-        return explicit
-    if _available_key(env, CUSTOM) and _get(env, "AIONFORGE_API_BASE"):
-        return CUSTOM
     for provider in BUILTIN_PROVIDERS:
         if _available_key(env, provider):
             return provider
+    if _available_key(env, CUSTOM) and _get(env, "AIONFORGE_API_BASE"):
+        return CUSTOM
     return BUILTIN_PROVIDERS[0]
 
 
 def _api_base(env: Mapping[str, str], provider: str) -> str:
-    override = _get(env, "AIONFORGE_API_BASE")
     if provider == CUSTOM:
+        override = _get(env, "AIONFORGE_API_BASE")
         if not override:
             raise ConfigError("custom 供应商需要 AIONFORGE_API_BASE")
         return override
-    return override or _PROVIDER_API_BASE[provider]
+    specific_name = PROVIDER_BASE_ENV.get(provider, "")
+    if specific_name:
+        specific = _get(env, specific_name)
+        if specific:
+            return specific
+    return _PROVIDER_API_BASE[provider]
 
 
 def _model(env: Mapping[str, str], provider: str) -> str:

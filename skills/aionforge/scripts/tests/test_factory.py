@@ -7,6 +7,7 @@ import pytest
 from aionforge.adapters.factory import build_image_adapter
 from aionforge.adapters.image import (
     DashScopeImageAdapter,
+    GeminiImageAdapter,
     JsonEditsImageAdapter,
     MultipartEditsImageAdapter,
 )
@@ -33,6 +34,39 @@ def test_image_api_selects_adapter_by_shape() -> None:
     assert isinstance(
         build_image_adapter(_image(provider="dashscope", api="dashscope_async")),
         DashScopeImageAdapter,
+    )
+    assert isinstance(
+        build_image_adapter(
+            _image(
+                provider="gemini",
+                model="gemini-3-pro-image",
+                api_base="https://generativelanguage.googleapis.com/v1beta",
+                api="gemini_generate_content",
+            )
+        ),
+        GeminiImageAdapter,
+    )
+    assert isinstance(
+        build_image_adapter(
+            _image(
+                provider="hunyuan",
+                model="hy-image-v3",
+                api_base="https://api.hunyuan.cloud.tencent.com/v1",
+                api="edits_multipart",
+            )
+        ),
+        MultipartEditsImageAdapter,
+    )
+    assert isinstance(
+        build_image_adapter(
+            _image(
+                provider="qianfan",
+                model="ernie-image",
+                api_base="https://qianfan.baidubce.com/v2",
+                api="edits_multipart",
+            )
+        ),
+        MultipartEditsImageAdapter,
     )
 
 
