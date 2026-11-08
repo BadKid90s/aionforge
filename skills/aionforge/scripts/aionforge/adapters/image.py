@@ -201,3 +201,71 @@ class DashScopeImageAdapter:
 
     async def aclose(self) -> None:
         await self._client.aclose()
+
+
+def _inline_image_b64(payload: dict[str, Any]) -> str:
+    for candidate in payload.get("candidates") or []:
+        content = candidate.get("content") or {}
+        for part in content.get("parts") or []:
+            blob = part.get("inlineData") or part.get("inline_data") or {}
+            data = blob.get("data")
+            if data:
+                return data
+    raise RuntimeError("Gemini 没有返回图片")
+
+
+class GeminiImageAdapter:
+    """Gemini 原生 generateContent：文生图与多图参考编辑。"""
+
+    def __init__(self, client: httpx.AsyncClient, model: str) -> None:
+        self._client = client
+        self._model = model
+
+    async def edit(self, prompt: str, images: Sequence[Path], output: Path) -> Path:
+        return await self._generate_content(prompt, images, output)
+
+    async def generate(self, prompt: str, output: Path) -> Path:
+        return await self._generate_content(prompt, (), output)
+
+    async def _generate_content(
+        self, prompt: str, images: Sequence[Path], output: Path
+    ) -> Path:
+        parts: list[dict[str, Any]] = [{"text": prompt}]
+        for path in images:
+            mime = mimetypes.guess_type(path.name)[0] or "image/png"
+            parts.append(
+                {
+                    "inline_data": {
+                        "mime_type": mime,
+                        "data": base64.b64encode(path.read_bytes()).decode("ascii"),
+                    }
+                }
+            )
+        _log.info(
+            "Gemini POST %s/models/%s:generateContent refs=%s",
+            self._client.base_url,
+            self._model,
+            [path.name for path in images],
+        )
+        try:
+            response = await self._client.post(
+                f"/models/{self._model}:generateContent",
+                json={
+                    "contents": [{"role": "user", "parts": parts}],
+                    "generationConfig": {"responseModalities": ["TEXT", "IMAGE"]},
+                },
+            )
+            response.raise_for_status()
+        except httpx.ConnectError as exc:
+            raise RuntimeError(f"无法连接图片接口 {self._client.base_url}") from exc
+        except httpx.HTTPStatusError as exc:
+            _log.error("图片接口 HTTP %s %s", exc.response.status_code, exc.response.text[:500])
+            raise
+        encoded = _inline_image_b64(response.json())
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_bytes(base64.b64decode(encoded))
+        return output
+
+    async def aclose(self) -> None:
+        await self._client.aclose()
+
