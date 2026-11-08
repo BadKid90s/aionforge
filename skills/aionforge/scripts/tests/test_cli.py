@@ -22,7 +22,19 @@ class _FakeResponse:
 def _hermetic(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     for name in list(os.environ):
-        if name.startswith(("XAI_", "OPENAI_", "DASHSCOPE_", "ARK_", "AIONFORGE_")):
+        if name.startswith(
+            (
+                "XAI_",
+                "OPENAI_",
+                "DASHSCOPE_",
+                "ARK_",
+                "AIONFORGE_",
+                "GEMINI_",
+                "GOOGLE_",
+                "HUNYUAN_",
+                "QIANFAN_",
+            )
+        ):
             monkeypatch.delenv(name, raising=False)
     monkeypatch.setattr(httpx, "get", lambda *args, **kwargs: _FakeResponse())
     yield

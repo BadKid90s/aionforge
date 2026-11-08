@@ -70,15 +70,34 @@ gemini extensions install https://github.com/BadKid90s/aionforge
 
 ### 3. 配置图片模型 Key
 
-至少配一个，任选其一：
+至少配一个。一等供应商用各自的 Key + 可选 Base URL；其余 OpenAI 兼容网关走通用三件套。
 
-| 供应商 | 环境变量 | 默认模型 | 获取 Key |
+| 供应商 | Key | Base URL（可选） | 默认模型 |
 | --- | --- | --- | --- |
-| xAI Grok | `XAI_API_KEY` | `grok-imagine-image-2.0` | [console.x.ai](https://console.x.ai) |
-| OpenAI | `OPENAI_API_KEY` | `gpt-image-2.5-sunburst` | [platform.openai.com](https://platform.openai.com/api-keys) |
-| 阿里通义万相 | `DASHSCOPE_API_KEY` | `wanx2.1-imageedit` | [阿里云百炼](https://bailian.console.aliyun.com) |
-| 火山引擎豆包 Seedream | `ARK_API_KEY` | `seedream-4.0` | [火山方舟](https://console.volcengine.com/ark) |
-| OpenAI 兼容网关 | `AIONFORGE_API_BASE` + `AIONFORGE_API_KEY` | 用 `AIONFORGE_IMAGE_MODEL` 指定 | 你的网关 |
+| xAI Grok | `XAI_API_KEY` | `XAI_BASE_URL` | `grok-imagine-image-2.0` |
+| OpenAI | `OPENAI_API_KEY` | `OPENAI_BASE_URL` | `gpt-image-2.5-sunburst` |
+| Google Gemini | `GEMINI_API_KEY` | `GOOGLE_GEMINI_BASE_URL` | `gemini-3-pro-image` |
+| 阿里通义万相 | `DASHSCOPE_API_KEY` | `DASHSCOPE_BASE_URL` | `wanx2.1-imageedit` |
+| 火山引擎豆包 | `ARK_API_KEY` | `ARK_BASE_URL` | `seedream-4.0` |
+| 腾讯混元 | `HUNYUAN_API_KEY` | `HUNYUAN_BASE_URL` | `hy-image-v3` |
+| 百度千帆 | `QIANFAN_API_KEY` | `QIANFAN_BASE_URL` | `ernie-image` |
+| 其它 OpenAI 兼容 | `AIONFORGE_API_KEY` | `AIONFORGE_API_BASE` | `AIONFORGE_IMAGE_MODEL` |
+
+两套写法：
+
+```bash
+# 一等（例：阿里）
+DASHSCOPE_API_KEY=...
+DASHSCOPE_BASE_URL=https://dashscope.aliyuncs.com/api/v1
+AIONFORGE_IMAGE_MODEL=wanx2.1-imageedit
+
+# 通用 OpenAI 兼容
+AIONFORGE_API_BASE=https://xxx/v1
+AIONFORGE_API_KEY=...
+AIONFORGE_IMAGE_MODEL=模型名
+```
+
+硅基流动、智谱、MiniMax 以及任意中转站只用第二套。
 
 **方式 A：写进 shell 配置（推荐，所有项目通用）**
 
@@ -99,7 +118,7 @@ XAI_API_KEY=xai-你的key
 
 完整模板见 [`.env.example`](skills/aionforge/.env.example)。别把 `.env` 提交到 git。
 
-> 配了多个 Key 时按 网关 > Grok > OpenAI > 通义万相 > 豆包 的顺序自动选；想指定就加 `AIONFORGE_PROVIDER=openai`（可选 `grok` / `openai` / `dashscope` / `ark` / `custom`），换模型用 `AIONFORGE_IMAGE_MODEL`。
+> 配了多个 Key 时按 Grok > OpenAI > Gemini > 通义万相 > 豆包 > 混元 > 千帆 的顺序自动选；都没有一等 Key、且同时配了 `AIONFORGE_API_BASE` + `AIONFORGE_API_KEY` 时才走其它 OpenAI 兼容网关。换模型用 `AIONFORGE_IMAGE_MODEL`。
 
 ### 4. 开始出图
 
@@ -139,14 +158,20 @@ Agent 会先让你确认商品细节和出图计划，确认后逐张生成。�
 
 | 变量 | 默认 | 说明 |
 | --- | --- | --- |
-| `AIONFORGE_PROVIDER` | 自动 | 强制使用某个供应商 |
+| `XAI_BASE_URL` | `https://api.x.ai/v1` | xAI 接口地址 |
+| `OPENAI_BASE_URL` | `https://api.openai.com/v1` | OpenAI 接口地址 |
+| `GOOGLE_GEMINI_BASE_URL` | `https://generativelanguage.googleapis.com/v1beta` | Gemini 接口地址 |
+| `DASHSCOPE_BASE_URL` | `https://dashscope.aliyuncs.com/api/v1` | 通义万相接口地址 |
+| `ARK_BASE_URL` | `https://ark.cn-beijing.volces.com/api/v3` | 豆包接口地址 |
+| `HUNYUAN_BASE_URL` | `https://api.hunyuan.cloud.tencent.com/v1` | 混元接口地址 |
+| `QIANFAN_BASE_URL` | `https://qianfan.baidubce.com/v2` | 千帆接口地址 |
 | `AIONFORGE_IMAGE_MODEL` | 见上表 | 覆盖默认模型 |
-| `AIONFORGE_API_BASE` | — | OpenAI 兼容网关地址 |
+| `AIONFORGE_API_BASE` | — | 其它 OpenAI 兼容网关地址（仅 custom） |
 | `AIONFORGE_STORAGE_ROOT` | `~/.aionforge` | 数据目录 |
 | `AIONFORGE_LOG_LEVEL` | `INFO` | 日志级别 |
 | `AIONFORGE_LOG_FILE` | `logs/forge.log` | 日志文件（相对当前目录） |
 
-读取顺序：环境变量 > 当前目录 `.env` > Skill 根目录 `.env`。
+读取顺序：进程环境 > 当前目录 `.env` > Skill `.env`。一等供应商的专用 Base 优先于 `AIONFORGE_API_BASE`（后者只用于其它 OpenAI 兼容网关）。
 
 ### forge CLI
 
