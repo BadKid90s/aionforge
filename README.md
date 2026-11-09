@@ -2,6 +2,8 @@
 
 女装电商 AI 出图插件。把衣服照片、模特照片、竞品参考图或印花丢给 Agent，它会看图锁定商品细节、写出图计划、逐张生成并自己质检。
 
+一组可互相引用的 Skill：入口 `aionforge` 负责调度、锁事实和质检；具体步骤在 `aionforge-extract`、`aionforge-compose`、`aionforge-tryon`、`aionforge-vary`、`aionforge-sku`、`aionforge-deconstruct`、`aionforge-pdp`。
+
 - **印花提取**：从衣服照片抠出透明底图案
 - **印花合成**：把图案印回白底成衣
 - **模特换衣**：把成衣穿到指定模特身上，五官不变
@@ -66,7 +68,7 @@ codex plugin marketplace add BadKid90s/aionforge
 gemini extensions install https://github.com/BadKid90s/aionforge
 ```
 
-> 其他 Agent：从 [Releases](https://github.com/BadKid90s/aionforge/releases) 下载 `skill.zip`，解压到 Agent 的 skills 目录（如 `~/.claude/skills/`）。
+> 其他 Agent：从 [Releases](https://github.com/BadKid90s/aionforge/releases) 下载 `skills.zip`，解压到 Agent 的 skills 目录（如 `~/.claude/skills/`），会得到入口 `aionforge` 和一组 `aionforge-*` 工作流 Skill。
 
 ### 3. 配置图片模型 Key
 
@@ -201,13 +203,23 @@ plugin.json               # 通用 Agent Plugins 清单（Codex 新格式）
 gemini-extension.json     # Gemini CLI 扩展清单，上下文入口 GEMINI.md
 scripts/
   bump-version.sh         # 统一修改版本号
-skills/aionforge/
-  SKILL.md                # 入口：流程、全局规则、资源地图
-  .env.example            # 配置模板
-  evals/                  # 触发与行为回归评测集
-  references/             # 工作流步骤、Prompt 模板、姿势/场景/风格/字体目录
-  scripts/                # forge CLI（uv 项目）
+skills/
+  aionforge/              # 入口：调度、标准流程、全局规则、forge CLI
+    SKILL.md
+    .env.example
+    evals/
+    references/           # 共享 Prompt 模板、姿势/场景/风格/字体目录
+    scripts/              # forge CLI（uv 项目）
+  aionforge-extract/
+  aionforge-compose/
+  aionforge-tryon/
+  aionforge-vary/
+  aionforge-sku/
+  aionforge-deconstruct/
+  aionforge-pdp/
 ```
+
+入口 Skill `aionforge` 先选工作流，再加载对应的 `aionforge-*` Skill。共享资料和 `forge` 只放在入口目录。
 
 ## 开发
 
@@ -224,8 +236,8 @@ uv run ruff check .
 scripts/bump-version.sh            # 查看各清单当前版本是否一致
 scripts/bump-version.sh X.Y.Z      # 统一改版本号并刷新 uv.lock
 git commit -am "chore: release vX.Y.Z" && git tag -a vX.Y.Z -m vX.Y.Z && git push --follow-tags
-git archive --format=zip -o dist/skill.zip HEAD:skills aionforge
-gh release create vX.Y.Z dist/skill.zip --title vX.Y.Z --generate-notes
+git archive --format=zip -o dist/skills.zip HEAD:skills
+gh release create vX.Y.Z dist/skills.zip --title vX.Y.Z --generate-notes
 ```
 
 ## License

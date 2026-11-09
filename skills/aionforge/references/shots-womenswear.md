@@ -6,11 +6,11 @@
 
 ## 写计划优先级
 
-目标张数：用户点名 > 主图默认 5、详情默认 6（用户说只要主图则详情为 0）。比例：主图按 `platforms.md`（国内默认 `1:1`），详情默认 `3:4`。抽对规则见 `workflows/vary.md` 与 `catalog/poses.json`。
+目标张数：用户点名 > 主图默认 5、详情默认 6（用户说只要主图则详情为 0）。比例：主图按 `platforms.md`（国内默认 `1:1`），详情默认 `3:4`。抽对规则见 `aionforge-vary` 与 `catalog/poses.json`。
 
 1. **先映射参考图**：每一张单屏主图 / lookbook / 详情分屏，记下图型（上身、侧身、卖点信息、人台、微距、分屏…）、景别和动作，映射到下方菜单的 `id` + `poses.json` 最接近的 `camera` × `pose`，输出 1 张。衣服用自家成衣，不抄参考图款式。
-2. **不够再补**：已映射张数少于目标时，先补还没回答的买家问题（见「组装」），模特镜头按 `vary.md` 从 `poses.json` 随机抽不重复的 `camera` × `pose`；已占用的 camera id、pose id 不再抽。
-3. **选锚点**：已排好的模特镜头里，选一张正面露脸的半身或七分做 `main-hero`（`tryon.md`），其余模特图用 `vary.md` 从 hero 派生。
+2. **不够再补**：已映射张数少于目标时，先补还没回答的买家问题（见「组装」），模特镜头按 `aionforge-vary` 从 `poses.json` 随机抽不重复的 `camera` × `pose`；已占用的 camera id、pose id 不再抽。
+3. **选锚点**：已排好的模特镜头里，选一张正面露脸的半身或七分做 `main-hero`（`tryon.md`），其余模特图用 `aionforge-vary` 从 hero 派生。
 4. **卖点图 / 人台**：参考里有、或用户点名、或组装时还缺「卖点 / 净版」才加入。不要为了凑旧的 G1–G5 去替换已经映射的姿势槽。
 
 ## 图型菜单
@@ -37,7 +37,7 @@ Amazon 首图（若用 `main-hero`）纯白 `#FFFFFF`、无字无徽章，见 `p
 
 | id | 买家问题 | Prompt 模板 | 构图要点 |
 | --- | --- | --- | --- |
-| `detail-infographic` | 三个卖点一眼看懂 | `infographic.md`（按卖点选板式） | 留白 ≥45%，板式见 `workflows/pdp.md` |
+| `detail-infographic` | 三个卖点一眼看懂 | `infographic.md`（按卖点选板式） | 留白 ≥45%，板式见 `aionforge-pdp` |
 | `detail-multi-scene` | 一衣多穿 | `infographic.md` 多场景分屏 | 场景取自 `facts.target_scenes` |
 | `detail-benefit` | 穿着利益（显瘦、亲肤、百搭） | `infographic.md` 的 `icon-list` | 左衣右签 |
 | `detail-craft` | 领、袖、下摆、车线 | `infographic.md` 标注线或放大镜 | 对着 `selling_points[].visual_keywords` |
@@ -45,7 +45,7 @@ Amazon 首图（若用 `main-hero`）纯白 `#FFFFFF`、无字无徽章，见 `p
 | `detail-ghost` | 净版立体 | `ghost-mannequin.md` | 无真人四肢 |
 | `detail-scene` | 生活场景收尾 | `vary.md` | 全身或七分，场景来自 `target_scenes` |
 
-信息图板式（放大镜 / 图标列表 / 标注线 / 60:40 分屏）在真正选了信息图时再按 `workflows/pdp.md` 挑，不要每套详情都六种板式出一遍。
+信息图板式（放大镜 / 图标列表 / 标注线 / 60:40 分屏）在真正选了信息图时再按 `aionforge-pdp` 挑，不要每套详情都六种板式出一遍。
 
 ## 组装
 

@@ -31,11 +31,38 @@ def test_tryon_template_uses_roles() -> None:
     assert "模特图" in text
 
 
+PACK_SKILLS = (
+    "aionforge",
+    "aionforge-extract",
+    "aionforge-compose",
+    "aionforge-tryon",
+    "aionforge-vary",
+    "aionforge-sku",
+    "aionforge-deconstruct",
+    "aionforge-pdp",
+)
+SKILLS_ROOT = SKILL_DIR.parent
+
+
 def test_skill_md_links_resolve() -> None:
     text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
     assert text.startswith("---\nname: aionforge\n")
     for ref in re.findall(r"`(references/[^`<{]+?\.(?:md|json))`", text):
         assert (SKILL_DIR / ref).is_file(), ref
+
+
+def test_pack_skills_exist_and_link_hub() -> None:
+    for name in PACK_SKILLS:
+        skill_md = SKILLS_ROOT / name / "SKILL.md"
+        text = skill_md.read_text(encoding="utf-8")
+        assert text.startswith(f"---\nname: {name}\n"), name
+        if name == "aionforge":
+            for sibling in PACK_SKILLS[1:]:
+                assert f"`{sibling}`" in text, sibling
+            continue
+        assert "../aionforge/SKILL.md" in text
+        for ref in re.findall(r"`(\.\./aionforge/references/[^`<{]+?\.(?:md|json))`", text):
+            assert (SKILLS_ROOT / name / ref).resolve().is_file(), f"{name}: {ref}"
 
 
 def test_vary_and_compose_templates_use_roles() -> None:

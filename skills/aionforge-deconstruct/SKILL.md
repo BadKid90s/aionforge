@@ -1,19 +1,25 @@
-# 工作流：竞品参考图反推与视觉迁移（deconstruct）
+---
+name: aionforge-deconstruct
+description: >
+  女装竞品参考图反推与视觉迁移：借版式、光影和排版，换成自家成衣出图。
+  用户说照这个感觉做、参考这张的排版/光影出我的衣服、反推这张图并迁移到我的商品上时使用。
+  Use when the user runs /aionforge-deconstruct.
+---
 
-当用户给出一张或一组优秀的竞品主图、详情单屏或爆款参考图，说「照这个感觉做」「参考这张的排版/光影出我的衣服」「反推这张图并迁移到我的商品上」时使用。出图只调用 `forge generate`。
+# 竞品参考图反推与视觉迁移
 
-- Prompt 骨架：`references/prompts/deconstruct.md`
-- 视觉资产解耦协议：`references/analysis.md`「三轴视觉参考资产协议」与「长图隔离红线」
-- 风格锁定：`references/style-lock.md`
-- 平台字体与排版：`references/typography.md` + `references/catalog/typography.json`
+当用户给出一张或一组优秀的竞品主图、详情单屏或爆款参考图，要求照着它的构图、色调、信息图板式或氛围，给自己的女装商品出 1 张或 1 组同级别新图时使用。出图只调用 `forge generate`。
+
+未加载入口时先读 `../aionforge/SKILL.md`。`forge` = `uv run --project <入口目录>/scripts forge`，入口目录是本 SKILL.md 同级的 `../aionforge`。标准流程按入口 Skill。
+
+- Prompt 骨架：`../aionforge/references/prompts/deconstruct.md`
+- 视觉资产解耦协议：`../aionforge/references/analysis.md`「三轴视觉参考资产协议」与「长图隔离红线」
+- 风格锁定：`../aionforge/references/style-lock.md`
+- 平台字体与排版：`../aionforge/references/typography.md` + `../aionforge/references/catalog/typography.json`
 
 核心原则：**借机制，不借身份。** 竞品参考图只贡献版式骨架（L）、光影色调（S）和排版层级（T）；商品的版型、颜色、面料、印花文字、卖点主张 100% 来自用户的成衣图和 `facts.json`。
 
-## 何时用
-
-用户给了竞品图 / 优秀案例图，要求照着它的构图、色调、信息图板式或氛围，给自己的女装商品出 1 张或 1 组同级别新图。
-
-没有竞品参考图、只想把同一张成片换机位 → `vary`。从零规划整套主图 + 详情 → `pdp`。
+没有竞品参考图、只想把同一张成片换机位 → `aionforge-vary`。从零规划整套主图 + 详情 → `aionforge-pdp`。
 
 ## 输入
 
@@ -33,16 +39,19 @@
 1. **构图与机位（Camera & Framing）**：景别（全身 / 七分 / 半身 / 局部微距）、机位角度（平视 / 10° 微俯 / 15° 微仰）、人物或服装在画面中的占比（`55%–85%`）及重心位置（居中 / 三分法偏左 / 偏右）。
 2. **留白与网格（Layout & Whitespace）**：留白占比（`20%–45%`）、留白方位（左 / 右 / 上 / 对角）、信息图组件结构（放大镜圆窗 / 图标列表 / 细线批注 / 60:40 分栏）。
 3. **光影与色温（Lighting & Palette）**：主光方向与软硬、背景主色与次背景色的 6 位 Hex 色值（如 `#F7F5F2`）、整体色温倾向。
-4. **字体与标签美学（Typography & Badges）**：标题与正文字重对比、字色 Hex、胶囊角标或分割线样式（若用户指定了目标平台，优先对齐 `references/catalog/typography.json` 对应平台规范，例如拼多多自动升级为莫兰迪圆角胶囊轻杂志风）。
+4. **字体与标签美学（Typography & Badges）**：标题与正文字重对比、字色 Hex、胶囊角标或分割线样式（若用户指定了目标平台，优先对齐 `typography.json` 对应平台规范，例如拼多多自动升级为莫兰迪圆角胶囊轻杂志风）。
 5. **转化钩子类型（Conversion Hook）**：这张图靠什么打动买家？（版型显瘦对比 / 面料微距触感 / 穿搭氛围代入 / 一衣多穿高性价比）。
 
 ## 两种生成模式
 
 ### 模式 A：1:1 版式与氛围迁移（单张）
+
 复刻参考图的构图网格、留白方位、光影色温和信息层级，但将画面主体 100% 替换为用户成衣（若含模特则用指定 `model` 或契合风格的亚洲女模），文案替换为 `facts.json` 中的真实卖点。
 
 ### 模式 B：4 向同源裂变（4 张组图）
+
 基于同一张优秀参考图的视觉语言，一次性衍生 4 个互补方向的生图方案：
+
 - `deconstruct-01-layout`：**忠实版式迁移**（复刻原参考图的构图比例、留白方位与光影，替换成衣与卖点）
 - `deconstruct-02-angle`：**构图景别升级**（保持原图光影色板，切换机位景别，如全身改半身微侧或 15° 仰拍显腿长）
 - `deconstruct-03-scene`：**场景叙事代入**（提取原图色调与穿搭气质，延展到高契合度的真实生活场景）
@@ -52,10 +61,10 @@
 
 1. `forge doctor --json`。
 2. `forge job init --workflow deconstruct --slug <短名> --json`。
-3. 看用户成衣图写 `facts.json`（含 `garment_position`、`conversion_driver`、`selling_points`）。写完按 `SKILL.md`「锁商品事实」给用户核对，通过后再进入下一步。
+3. 看用户成衣图写 `facts.json`（含 `garment_position`、`conversion_driver`、`selling_points`）。写完按入口 Skill「锁商品事实」给用户核对，通过后再进入下一步。
 4. 看竞品参考图，判断 `SINGLE_POSTER` 还是 `LONG_PAGE`，拆解五维视觉机制。
-5. 写入 `plan.json`，按 `SKILL.md`「生图前确认」向用户确认缺口（如 1 张还是 4 张、是否印字、目标平台）。
-6. 按 `references/prompts/deconstruct.md` 逐张编写 `work/prompts/<name>.txt`，显式列出 **借用机制** 与 **隔离禁区**。
+5. 写入 `plan.json`，按入口 Skill「生图前确认」向用户确认缺口（如 1 张还是 4 张、是否印字、目标平台）。
+6. 按 `../aionforge/references/prompts/deconstruct.md` 逐张编写 `work/prompts/<name>.txt`，显式列出 **借用机制** 与 **隔离禁区**。
 7. 调用 `forge generate`：
 
 ```bash

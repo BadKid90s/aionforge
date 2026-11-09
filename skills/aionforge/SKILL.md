@@ -1,66 +1,64 @@
 ---
 name: aionforge
 description: >
-  女装电商 AI 出图编排：看图锁商品事实、写计划与逐图 Prompt、调用 `forge generate` 出图并逐张质检。
-  覆盖印花提取（抠出透明底图案）、印花合成（图案贴回白衣）、模特换衣（成衣穿到指定模特、锁五官）、
-  电商图裂变（同一成片多机位多姿势）、SKU 配色规格图（母版产品图 + 多张配色白底生成规格图）、
-  竞品参考图反推迁移（借版式与光影出自家衣服）、
-  主图 + 详情整套上架图（拼多多 / 淘宝 / 京东 / 抖音 / Amazon / Shopify 等，含 4 类卖点信息图与 3D 隐形人台）。
-  只要用户想用衣服照片、模特照片、竞品参考图或印花做任何电商图，就使用本 Skill，即使没说「套图」或「工作流」：
+  女装电商 AI 出图入口：看图锁商品事实、调度工作流 Skill、调用 `forge generate` 出图并逐张质检。
+  只要用户想用衣服照片、模特照片、竞品参考图或印花做任何电商图，就使用本 Skill，即使没说「套图」或「工作流」。
+  命中更具体的 `aionforge-*` 工作流 Skill 时，先加载那个 Skill 再执行。
   例如「提取胸前印花」「把这个图案印到白T上」「把成衣穿到这个模特身上」「这张再裂变 6 个机位」
   「照这张竞品图的排版和色调做我的连衣裙」「这件吊带出一套拼多多主图」「换个姿势再来几张」
-  「SKU裂变」「SKU套图」「按这张母版出黑、藏青、浅灰规格图」。
+  「SKU裂变」「SKU套图」「按这张母版出黑、藏青、浅灰规格图」「检查 aionforge 环境」。
   只是讨论或修改 AionForge 代码、聊电商运营而不需要出图时不要使用。
 ---
 
-# AionForge 女装出图
+# AionForge 入口
+
+有对应工作流 Skill 时必须先加载再执行，不要只凭记忆走流程。宣布 `Using [skill] to [purpose]`，然后严格按该 Skill。
+
+## 选 Skill
+
+| 用户意图 | Skill |
+| --- | --- |
+| 从衣服照片上取出平面印花 | `aionforge-extract` |
+| 把已有印花贴到白底成衣 | `aionforge-compose`（还没有印花文件就先 `aionforge-extract`） |
+| 把成衣穿到某个模特身上 | `aionforge-tryon` |
+| 基于一张通过的成片，多机位 / 多姿势 | `aionforge-vary` |
+| SKU 裂变 / SKU 套图 / SKU 母版 / 电商 SKU / SKU 图 / 批量规格图：母版产品图 + 多张配色白底 | `aionforge-sku` |
+| 参考竞品图 / 标杆海报的版式与光影，迁移到自家成衣 | `aionforge-deconstruct` |
+| 主图 + 详情整套上架图（含卖点信息图、3D 隐形人台） | `aionforge-pdp`（内部会用到 tryon / vary / extract） |
+
+用户已经点名就直接用。一句话里有多步（合成再换装、换装再裂变）时按顺序调用多个 Skill，共用同一个 `job-dir`。商品事实核对见第 4 步；生图前确认只问一次整单缺口。
+
+工作流 Skill 与本 Skill 同级：`../aionforge-<id>/SKILL.md`。
 
 ## 运行要求
 
 需要 `uv` 和至少一个图片模型 Key。出图 CLI 随本 Skill 放在 `scripts/`，看图分析由宿主 Agent 完成。
 
-本 Skill 里所有 `forge ...` 都指 `uv run --project <skill目录>/scripts forge ...`，`<skill目录>` 是本 SKILL.md 所在目录的绝对路径。在用户的工作目录执行，不要 cd 进 Skill 目录——任务目录和 `.env` 都按当前目录解析。首次运行 uv 会自动装依赖。
+所有 `forge ...` 都指 `uv run --project <skill目录>/scripts forge ...`，`<skill目录>` 是**本** SKILL.md 所在目录的绝对路径（`skills/aionforge`）。工作流 Skill 里的 `forge` 也指向这里，不要用工作流 Skill 自己的目录。在用户的工作目录执行，不要 cd 进 Skill 目录——任务目录和 `.env` 都按当前目录解析。首次运行 uv 会自动装依赖。
 
-你是编排器，不是画师。你负责看图、锁定商品事实、写计划、等人确认、逐张写 Prompt、逐张质检；真正出图只交给 `forge generate`。这样分工是因为图片模型擅长画、不擅长记事实：领口、袖口、印花文字这些一旦在 Prompt 里没写死，模型就会"自由发挥"，而电商图画错一处就是错款。
+你是编排器，不是画师。你负责看图、锁定商品事实、写计划、等人确认、逐张写 Prompt、逐张质检；真正出图只交给 `forge generate`。图片模型擅长画、不擅长记事实：领口、袖口、印花文字一旦没写死就会自由发挥，电商图画错一处就是错款。
 
 一套图 = 一个任务目录 + 一份 `plan.json` + 多次 `forge generate`（每次一张）。
 
 ## 资源地图
 
-按需读取，不要一次全读：
+按需读取，不要一次全读。路径相对本 Skill 目录。
 
 | 什么时候读 | 文件 |
 | --- | --- |
-| 选定工作流后，照着走步骤 | `references/workflows/<workflow>.md` |
 | 写某类 Prompt 时复制模板 | `references/prompts/{extract,compose,tryon,vary,sku,infographic,ghost-mannequin,deconstruct}.md` |
 | 看图写 `facts.json`（含正反面路由、三轴参考协议） | `references/analysis.md` |
 | 多图任务锁风格（含 6 位 Hex 色板与量化占比） | `references/style-lock.md` + `references/catalog/styles.json` |
 | 图内印字、6 大平台字体与排版美学 | `references/typography.md` + `references/catalog/typography.json` |
-| 换装多机位 / 裂变选姿势 | `references/workflows/vary.md` + `references/catalog/poses.json`（`cameras` × `poses`） |
+| 换装多机位 / 裂变选姿势 | `aionforge-vary` + `references/catalog/poses.json`（`cameras` × `poses`） |
 | 整套图选图型、姿势映射、主图/详情菜单与组装 | `references/shots-womenswear.md` |
-| SKU 配色规格图（母版 + 多色白底） | `references/workflows/sku.md` |
-| 竞品参考图反推与视觉机制迁移 | `references/workflows/deconstruct.md` + `references/prompts/deconstruct.md` |
 | 用户点名平台、需要比例与风格映射 | `references/platforms.md` |
 | 查 CLI 全部参数、信封格式 | `references/cli.md` |
 | 用户要新增姿势 / 场景 / 风格 / 字体美学 | `references/catalog/README.md` |
 
-## 选工作流
-
-| 用户意图 | 工作流 |
-| --- | --- |
-| 从衣服照片上取出平面印花 | `extract` |
-| 把已有印花贴到白底成衣 | `compose`（还没有印花文件就先 `extract`） |
-| 把成衣穿到某个模特身上 | `tryon` |
-| 基于一张通过的成片，多机位 / 多姿势 | `vary` |
-| SKU 裂变 / SKU 套图 / SKU 母版 / 电商 SKU / SKU 图 / 批量规格图：母版产品图 + 多张配色白底 | `sku` |
-| 参考竞品图 / 标杆海报的版式与光影，迁移到自家成衣 | `deconstruct` |
-| 主图 + 详情整套上架图（含卖点信息图、3D 隐形人台） | `pdp`（内部会调用 tryon / vary / extract） |
-
-用户已经点名就直接用。一句话里有多步（合成再换装、换装再裂变）时按顺序串成一条流水线，共用同一个 `job-dir`。商品事实核对见第 4 步；生图前确认只问一次整单缺口。
-
 ## 标准流程
 
-每个工作流都走这条主线，细节差异看对应 workflow 文件。
+每个工作流都走这条主线，细节差异看对应工作流 Skill。
 
 1. **环境检查**：`forge doctor --json`。任一项 `pass: false` 就把 `suggestion` 转告用户并停下——Key 或网络不通时出图只会浪费用户的额度和时间。
 2. **建任务目录**：`forge job init --workflow <id> --slug <短名> --json`，记下 `run_dir`，之后所有命令带同一个 `--job-dir`，这样中断后能续跑。
@@ -71,7 +69,7 @@ description: >
    - **长图隔离红线**：若参考图是竖长条详情页拼接图（`H / W >= 2.2`），标记 `LONG_PAGE`，**只看图文字反推，严禁传给 `--ref`**。
 4. **锁商品事实**：按 `references/analysis.md` 写 `facts.json`（含 `garment_position` 合理搭配推导、`conversion_driver` 转化钩子、`selling_points` 卖点视觉化）。这是整套图的"真相源"，后面每张 Prompt 都从这里抄。看不清的写入 `facts.uncertain`。写完立刻把关键事实列给用户核对：品类、主色、领口、袖型/袖口、下摆、衣长、印花文字与位置、`uncertain`。用户说没问题之前，禁止写计划、禁止 `forge generate`。用户改正则先改 `facts.json` 再继续。说「你决定 / 直接出」只跳过第 7 步的缺口提问，不跳过本步——领口袖口看错一次，后面整套都错款。
 5. **锁风格与字体美学**（多图任务）：按 `references/style-lock.md` 与 `references/typography.md`。用户点名则用 `styles.json` + `typography.json` 原文（必须包含 6 位 Hex 色号、主体占比与留白占比）；没点名则跟参考图写 `style_lock`，贴进每一张，一字不差。
-6. **写计划**：sku 按 `references/workflows/sku.md` 一色一任务；其余按 `references/shots-womenswear.md` 写 `plan.json`（`name` / `ratio` / 一句话目标；图型从菜单组装，姿势先映射参考图，不够再从姿势库补齐）。
+6. **写计划**：sku 按 `aionforge-sku` 一色一任务；其余按 `references/shots-womenswear.md` 写 `plan.json`（`name` / `ratio` / 一句话目标；图型从菜单组装，姿势先映射参考图，不够再从姿势库补齐）。
 7. **生图前确认**：只问缺口。用户已经点名的直接采用，不要再确认。
    - 缺口：`facts.uncertain`、技能 Default、用户两句话互相打架、以及比例 / 张数 / 场景 / 印花位置 / 露脸与配饰 / 素材角色里用户没说的项。姿势按 `references/shots-womenswear.md` 写入计划，不必再问。模特图脸被挡或看不清，也是缺口（换露脸图 / 允许生成五官 / 保持挡脸）。
    - 有缺口：一次问完，每项给选项和建议；用户回答或说「你决定 / 直接出」之前禁止 `forge generate`。

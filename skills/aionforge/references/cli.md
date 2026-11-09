@@ -82,4 +82,4 @@ forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/print.tx
 {"ok": true, "run_dir": "...", "images": ["..."], "error": null}
 ```
 
-`ok: false` 时看 `error` 的 reason 分诊（见 SKILL.md「错误分诊」）。失败只重试该张 1 次。
+`ok: false` 时看 `error` 的 reason 分诊（见入口 Skill `aionforge`「错误分诊」）。失败只重试该张 1 次。

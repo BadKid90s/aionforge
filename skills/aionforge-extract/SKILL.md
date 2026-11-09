@@ -1,0 +1,49 @@
+---
+name: aionforge-extract
+description: >
+  女装印花提取：从成衣或实拍抠出透明底平面图案。
+  用户说提取印花、抠图案、透明底 logo、胸前印花、单独图案文件时使用。
+  Use when the user runs /aionforge-extract.
+---
+
+# 印花提取
+
+从服装实拍 / 成衣上取出平面印花，输出白底（再经 `--cutout` 变透明底）。出图只调用 `forge generate`。
+
+未加载入口时先读 `../aionforge/SKILL.md`。`forge` = `uv run --project <入口目录>/scripts forge`，入口目录是本 SKILL.md 同级的 `../aionforge`。Prompt 模板：`../aionforge/references/prompts/extract.md`。标准流程（doctor / 锁事实 / 生图前确认 / 质检）按入口 Skill。
+
+方法来自电商出图工作流的「商品事实锁定」：图案、文字、颜色以照片为准，不重绘、不补全。
+
+## 输入
+
+| 素材 | 角色 | 必填 |
+| --- | --- | --- |
+| 服装或商品照片 | 印花所在的成衣/实拍 | 是 |
+| 用户指定哪一块 | 「只要左胸小狗」等 | 否 |
+
+不要把风格参考图、海报、详情长图当提取源。
+
+## 步骤
+
+1. `forge doctor --json`。失败则停。
+2. `forge job init --workflow extract --slug <短名> --json`。
+3. 看图登记：印花位置、文字原文、主色、是否多块印花。写入 `facts.json` 的 `print` 段。文字必须逐字来自图。写完按入口 Skill「锁商品事实」给用户核对印花文字与块数，通过后再进入下一步。
+4. 多块印花时问用户提取哪一块；用户说「都要」则每块一个任务。
+5. 把 `../aionforge/references/prompts/extract.md` 模板写入 `work/prompts/print.txt`，补充说明写位置。
+6. 只有一块印花且用户已指定（或图上只有一块）则不必再问。多块或位置不清时按入口 Skill「生图前确认」问要提取哪块。
+7. 出图：
+
+```
+forge generate --job-dir <run_dir> \
+  --prompt-file <run_dir>/work/prompts/print.txt \
+  --ref <照片> --name print --cutout --json
+```
+
+8. 质检（必须看图）：
+   - 只有图案，没有袖子、领口、衣架、人脸
+   - 文字完整、未镜像、未改字
+   - 颜色与原图一致
+   - 图案已放平，没有褶皱透视
+   - `--cutout` 后背景透明，边缘没有一圈白边脏点
+9. 失败：改补充说明或去掉 `--cutout`，同一 `--name` 重跑 1 次。
+10. 交付 `images/print.png`。需要贴回衣服时交给 `aionforge-compose`。

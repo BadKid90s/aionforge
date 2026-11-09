@@ -1,16 +1,26 @@
-# 工作流：女装主图 + 详情（pdp）
+---
+name: aionforge-pdp
+description: >
+  女装主图 + 详情整套上架图：G1–G5 高转化主图漏斗与详情（卖点信息图、3D 隐形人台），适配拼多多 / 淘宝 / 京东 / 抖音 / Amazon / Shopify。
+  用户说出一套主图、详情页套图、上架图、拼多多主图、带卖点放大的详情时使用。
+  Use when the user runs /aionforge-pdp.
+---
+
+# 女装主图 + 详情（pdp）
 
 日常主力工作流。输入至少一张成衣图（支持正面 + 背面双图）。采用**「两阶段模特锚点锁定」**与**「摄影 + 卖点信息图组合」**，全部走 `forge generate`。
 
+未加载入口时先读 `../aionforge/SKILL.md`。`forge` = `uv run --project <入口目录>/scripts forge`，入口目录是本 SKILL.md 同级的 `../aionforge`。标准流程按入口 Skill。图型菜单与组装：`../aionforge/references/shots-womenswear.md`。平台比例：`../aionforge/references/platforms.md`。
+
 ## 默认交付
 
-- 主图 5 张，比例 `1:1`（拼多多 / 淘宝）或按 `references/platforms.md`
+- 主图 5 张，比例 `1:1`（拼多多 / 淘宝）或按 `../aionforge/references/platforms.md`
 - 详情 6 张，比例 `3:4`
-- 图型、张数与顺序以 `references/shots-womenswear.md` 的菜单和组装规则为准（先参考图，不够再补；不要套死 5 槽主图或 6 张固定详情）
+- 图型、张数与顺序以 `shots-womenswear.md` 的菜单和组装规则为准（先参考图，不够再补；不要套死 5 槽主图或 6 张固定详情）
 
 ## 核心卖点图（`main-selling-point` / `detail-infographic`）板式智能推荐
 
-写计划时根据 `facts.selling_points` 的特征，从 `references/prompts/infographic.md` 选最契合的板式（不再千篇一律）：
+写计划时根据 `facts.selling_points` 的特征，从 `../aionforge/references/prompts/infographic.md` 选最契合的板式（不再千篇一律）：
 
 | 商品卖点特征 | 推荐板式 | 视觉结构说明 |
 | --- | --- | --- |
@@ -24,10 +34,10 @@
 当任务包含真人模特（提供了 `--ref model=`）且有多张模特出镜图（如 `main-hero`、`main-three-quarter`、`detail-silhouette`、`detail-scene`）时，**严禁一次性盲目并发生成所有模特图**：
 
 1. **阶段一（生成并锁定首张模特锚点图）**：
-   - 先用 `--ref garment=<正面成衣> --ref model=<模特>` 跑出第 1 张 `main-hero`（正面全身主图）。
+   - 先用 `--ref garment=<正面成衣> --ref model=<模特>` 跑出第 1 张 `main-hero`（正面全身主图）。Prompt 与质检按 `aionforge-tryon`。
    - 立即看图质检（五官眼神、衣服领口/袖口/下摆/印花是否 100% 正确）。
 2. **阶段二（以锚点图派生其余模特镜头）**：
-   - `main-hero` 质检通过后，后续所有需要同一模特出镜的正面/侧面/场景图，统一把 `<run_dir>/images/main-hero.png` 作为 `--ref source=`（连同 `--ref garment=`）传入，走 `references/prompts/vary.md` 骨架。
+   - `main-hero` 质检通过后，后续所有需要同一模特出镜的正面/侧面/场景图，统一把 `<run_dir>/images/main-hero.png` 作为 `--ref source=`（连同 `--ref garment=`）传入，走 `../aionforge/references/prompts/vary.md` 骨架（规则见 `aionforge-vary`）。
    - 这样整套主图和详情页里的模特面孔、发型、衣服合身度与光线逻辑 100% 锁定同一人同一件衣服。
 
 ## 正背面成衣双图路由
@@ -40,9 +50,9 @@
 
 1. `forge doctor --json`
 2. `forge job init --workflow pdp --slug <商品短名> --json`，记下 `run_dir`
-3. 看图写 `facts.json` 到 `run_dir`（含 `conversion_driver`、`garment_position`、`input_image_type`、`selling_points[].visual_keywords`）。写完按 `SKILL.md`「锁商品事实」给用户核对，通过后再进入下一步。
-4. 按 `references/style-lock.md` 与 `references/typography.md` 锁定 `style_lock` 与平台排版美学，写入 `facts.json`
-5. 按 `references/shots-womenswear.md` 写 `plan.json`（从图型菜单组装，先映射参考图，不够再补；无连续 3 张同角度）：
+3. 看图写 `facts.json` 到 `run_dir`（含 `conversion_driver`、`garment_position`、`input_image_type`、`selling_points[].visual_keywords`）。写完按入口 Skill「锁商品事实」给用户核对，通过后再进入下一步。
+4. 按 `../aionforge/references/style-lock.md` 与 `../aionforge/references/typography.md` 锁定 `style_lock` 与平台排版美学，写入 `facts.json`
+5. 按 `../aionforge/references/shots-womenswear.md` 写 `plan.json`（从图型菜单组装，先映射参考图，不够再补；无连续 3 张同角度）：
 
 ```json
 {
@@ -97,6 +107,6 @@ forge generate --job-dir <run_dir> \
 
 ## 素材不齐时的降级策略
 
-- **无模特图**：主图 G1 优先改用 `references/prompts/ghost-mannequin.md`（**3D 立体隐形人台**，自然撑起胸省、腰线与裙摆垂坠）或净版平铺；详情页用売点信息图 + 放大镜气泡 + 面料/工艺微距 + 平铺搭配组合，并告知用户。
+- **无模特图**：主图 G1 优先改用 `../aionforge/references/prompts/ghost-mannequin.md`（**3D 立体隐形人台**，自然撑起胸省、腰线与裙摆垂坠）或净版平铺；详情页用卖点信息图 + 放大镜气泡 + 面料/工艺微距 + 平铺搭配组合，并告知用户。
 - **无白底成衣、只有挂拍或街拍**：仍可 `generate`，Prompt 中写明以该图为衣服唯一标准、忽略原图衣架或杂乱背景，并标 Assumption。
-- **有印花且用户要单独印花文件**：先跑 `references/workflows/extract.md`，再继续本流程。
+- **有印花且用户要单独印花文件**：先调用 `aionforge-extract`，再继续本流程。

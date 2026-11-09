@@ -18,7 +18,7 @@
 1. 新镜头写入 `poses.json` → `cameras`。  
 2. 新身体动作写入 `poses`。  
 3. 可选：在 `recipes` 为某一对写整段 `prompt`，出图时优先用。  
-出图按 `workflows/vary.md` 从入池的 `cameras` × `poses` 随机配对。
+出图按 `aionforge-vary` 从入池的 `cameras` × `poses` 随机配对。
 
 **场景**
 
@@ -32,7 +32,7 @@
 
 在 `typography.json` → `platforms` 追加一条，填 `id` / `name` / `aesthetic` / `headline_font` / `body_font` / `badge_style` / `palette` / `prompt` / `avoid`。
 
-多机位一律按 `workflows/vary.md` 随机配对镜头与姿势。用户点名校园场景时用 `campus-quad` / `dorm-desk` / `campus-stairs`。模特按女大学生/青年女性来写。
+多机位一律按 `aionforge-vary` 随机配对镜头与姿势。用户点名校园场景时用 `campus-quad` / `dorm-desk` / `campus-stairs`。模特按女大学生/青年女性来写。
 
 加完后在 `scripts/` 目录执行：
 
