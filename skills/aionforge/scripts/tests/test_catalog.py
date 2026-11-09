@@ -18,7 +18,9 @@ def test_catalog_json_validates() -> None:
     validate_catalog(data)
     assert catalog_path() == catalog_dir() / "looks.json"
     assert "studio" in data["packs"]
-    assert len(pack_shots(data, "studio")) == 5
+    assert len(pack_shots(data, "studio")) == 10
+    assert len(pack_shots(data, "walk")) == 6
+    assert len(pack_shots(data, "lifestyle")) == 6
 
 
 def test_detail_pack_skips_print() -> None:
