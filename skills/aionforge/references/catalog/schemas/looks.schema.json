@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aionforge.local/schemas/looks.schema.json",
+  "title": "女装展示套餐",
+  "description": "镜头、场景、风格写在同一段 prompt 里，按万象进阶公式。出图抽套餐，不拆配。",
+  "type": "object",
+  "required": ["version", "packs"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer", "minimum": 1 },
+    "formula": { "type": "string" },
+    "default_pack": { "type": "string" },
+    "packs": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "$ref": "#/$defs/pack" }
+    }
+  },
+  "$defs": {
+    "pack": {
+      "type": "object",
+      "required": ["name", "shots"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "keywords": { "type": "array", "items": { "type": "string" } },
+        "shots": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/shot" }
+        }
+      }
+    },
+    "shot": {
+      "type": "object",
+      "required": ["id", "name", "prompt"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "name": { "type": "string" },
+        "ratio": { "type": "string" },
+        "requires": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["print"] }
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 40,
+          "description": "须含【场景】【风格】【镜头语言】【主体动作】"
+        }
+      }
+    }
+  }
+}

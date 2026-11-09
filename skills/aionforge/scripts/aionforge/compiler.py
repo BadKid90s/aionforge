@@ -1,11 +1,8 @@
-"""五层结构化 Prompt 编译与静态校验器。
+"""按公式组装生图 Prompt 并做静态校验。
 
-组装顺序：
-1. Campaign Style Lock（含 6 位 Hex 色板、光线、色调）
-2. Garment Facts Lock（从 facts.json 提取版型、材质、印花文字、部位搭配与 uncertain 禁令）
-3. Reference Roles Protocol（显式声明传入参考图角色与长图/竞品图隔离边界）
-4. Shot Delta（本张机位、姿势、场景、主体占比与留白方位）
-5. Visible Text Block & Negative Constraints（VISIBLE_TEXT_BLOCK 印字隔离块与反 AI 塑料感约束）
+组段顺序见 `references/prompts/formula.md`：
+用途 → 主体（Garment Facts Lock）→ 场景 → 风格（Campaign Style Lock）
+→ 镜头语言 → 氛围与细节 → 参考图角色 → VISIBLE_TEXT_BLOCK → 约束。
 """
 
 from __future__ import annotations
@@ -26,6 +23,7 @@ ROLE_LABELS: dict[str, str] = {
     "source": "锚点成片（source，跨镜头同一模特与场景参考源）",
     "style": "风格参考图（style，仅借光线与色调，严禁复制其服装款式与文字）",
     "layout": "版式参考图（layout，仅借构图网格与留白比例，严禁复制其服装款式、人脸与品牌 Logo）",
+    "pose": "姿势参考图（pose，只借身体姿态、手脚与头朝向；五官跟模特图或成片，衣服跟成衣图）",
 }
 
 
@@ -148,6 +146,7 @@ def compile_prompt(
     roles: Sequence[str],
     shot_delta: str,
     garment_scale: str = "主体占画面 70%–80%，保留 20%–30% 干净呼吸留白",
+    scene: str = "",
     typography_prompt: str = "",
     headline: str = "",
     subheadline: str = "",
@@ -156,23 +155,32 @@ def compile_prompt(
         "85mm 定焦镜头质感，真实织物经纬线与自然垂坠重力褶皱，真实皮肤微纹理，拒绝塑料磨皮感。"
     ),
 ) -> str:
-    """组装五层结构化生图 Prompt。"""
+    """按 formula.md 组段顺序组装生图 Prompt。"""
+    scene_line = scene.strip() or (
+        "场景与空间按风格锁定及参考图（成片 / 模特图）还原，不要另起一套房间。"
+    )
     sections = [
         f"一张女装电商视觉图：{shot_title.strip()}。",
-        f"【整套统一风格锁定（Campaign Style Lock）】\n- {style_lock.strip()}",
         compile_garment_facts(facts),
-        compile_reference_roles(roles),
+        f"【场景】\n- {scene_line}",
+        f"【风格（Campaign Style Lock）】\n- {style_lock.strip()}",
         (
-            "【本张镜头、姿态与构图占比（Shot Delta）】\n"
+            "【镜头语言】\n"
             f"- 画面占比与留白：{garment_scale.strip()}\n"
             f"- 机位与姿态：{shot_delta.strip()}"
         ),
-        f"【镜头质感与真实度】\n- {anti_ai_tips.strip()}",
+        f"【氛围与细节】\n- {anti_ai_tips.strip()}",
+        compile_reference_roles(roles),
         compile_visible_text_block(
             typography_prompt=typography_prompt,
             headline=headline,
             subheadline=subheadline,
             badges=badges,
+        ),
+        (
+            "【约束】\n"
+            "- 只输出一张照片。无水印、无边框、无拼图。\n"
+            "- 用成衣图 / 模特图 / 印花图 / 锚点成片指代参考图，不要写图序号。"
         ),
     ]
     return "\n\n".join(sections) + "\n"

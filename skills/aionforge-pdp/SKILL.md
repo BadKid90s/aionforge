@@ -80,7 +80,7 @@ description: >
 ```
 
 6. 生图前确认缺口；无缺口或用户已确认后进入生成
-7. 为每张写 `work/prompts/<name>.txt`（遵循五层结构：Style Lock + 商品事实锁 + 参考图角色 + 本张构图/机位 + 图内文字契约与否定清单）
+7. 为每张写 `work/prompts/<name>.txt`（按 `../aionforge/references/prompts/formula.md`：用途 → 主体 → 场景 → 风格 → 镜头语言 → 氛围与细节 → 参考图角色 → 图内文字 → 约束）
 8. 执行出图：
 
 ```bash

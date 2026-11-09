@@ -7,6 +7,9 @@ SKILL_DIR = ROOT.parents[1]
 
 
 def test_skill_prompt_templates_exist() -> None:
+    formula = (ROOT / "formula.md").read_text(encoding="utf-8")
+    assert "主体" in formula
+    assert "镜头语言" in formula
     for name in (
         "extract.md",
         "compose.md",
@@ -70,7 +73,7 @@ def test_vary_and_compose_templates_use_roles() -> None:
     assert "source=" in vary
     assert "人物锁定" in vary
     assert "服装锁定" in vary
-    assert "本张机位与姿势" in vary
+    assert "looks.json" in vary
     assert "把头钉死" in vary
     tryon = (ROOT / "tryon.md").read_text(encoding="utf-8")
     assert "眼部细节" in tryon or "眼神光" in tryon

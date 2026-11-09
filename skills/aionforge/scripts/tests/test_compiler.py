@@ -34,6 +34,10 @@ def test_compile_prompt_five_layers_and_validate() -> None:
     )
     assert "Campaign Style Lock" in prompt
     assert "Garment Facts Lock" in prompt
+    assert "【场景】" in prompt
+    assert "【镜头语言】" in prompt
+    assert "【氛围与细节】" in prompt
+    assert "【约束】" in prompt
     assert "LUMIERE" in prompt
     assert "合理搭配补全" in prompt
     assert "后背隐形拉链头部样式" in prompt

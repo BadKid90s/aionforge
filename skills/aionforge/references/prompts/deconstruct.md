@@ -1,6 +1,6 @@
 # Prompt 模板：竞品参考图反推与视觉迁移（deconstruct）
 
-把竞品/标杆参考图的版式骨架、光影色调与排版节奏迁移到用户自己的女装成衣上。写进 `<run_dir>/work/prompts/deconstruct-<序号>.txt`。
+按 `references/prompts/formula.md` 组段。把竞品/标杆参考图的版式骨架、光影色调与排版节奏迁移到用户自己的女装成衣上。写进 `<run_dir>/work/prompts/deconstruct-<序号>.txt`。
 
 ## 填写规则
 

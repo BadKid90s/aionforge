@@ -46,11 +46,12 @@ description: >
 
 | 什么时候读 | 文件 |
 | --- | --- |
+| 写任何 Prompt 时先看组段公式 | `references/prompts/formula.md` |
 | 写某类 Prompt 时复制模板 | `references/prompts/{extract,compose,tryon,vary,sku,infographic,ghost-mannequin,deconstruct}.md` |
 | 看图写 `facts.json`（含正反面路由、三轴参考协议） | `references/analysis.md` |
-| 多图任务锁风格（含 6 位 Hex 色板与量化占比） | `references/style-lock.md` + `references/catalog/styles.json` |
-| 图内印字、6 大平台字体与排版美学 | `references/typography.md` + `references/catalog/typography.json` |
-| 换装多机位 / 裂变选姿势 | `aionforge-vary` + `references/catalog/poses.json`（`cameras` × `poses`） |
+| 女装展示套餐（镜头+场景+风格+动作） | `references/catalog/looks.json` |
+| 图内印字、6 大平台字体与配色 | `references/typography.md` + `references/catalog/typography.json` |
+| 信息图写 style_lock 的规则 | `references/style-lock.md` |
 | 整套图选图型、姿势映射、主图/详情菜单与组装 | `references/shots-womenswear.md` |
 | 用户点名平台、需要比例与风格映射 | `references/platforms.md` |
 | 查 CLI 全部参数、信封格式 | `references/cli.md` |
@@ -68,14 +69,14 @@ description: >
    - 视觉机制源：`style`（只借光线色调）、`layout`（只借版式构图，严禁复制参考图上的衣服款式与竞品 Logo）
    - **长图隔离红线**：若参考图是竖长条详情页拼接图（`H / W >= 2.2`），标记 `LONG_PAGE`，**只看图文字反推，严禁传给 `--ref`**。
 4. **锁商品事实**：按 `references/analysis.md` 写 `facts.json`（含 `garment_position` 合理搭配推导、`conversion_driver` 转化钩子、`selling_points` 卖点视觉化）。这是整套图的"真相源"，后面每张 Prompt 都从这里抄。看不清的写入 `facts.uncertain`。写完立刻把关键事实列给用户核对：品类、主色、领口、袖型/袖口、下摆、衣长、印花文字与位置、`uncertain`。用户说没问题之前，禁止写计划、禁止 `forge generate`。用户改正则先改 `facts.json` 再继续。说「你决定 / 直接出」只跳过第 7 步的缺口提问，不跳过本步——领口袖口看错一次，后面整套都错款。
-5. **锁风格与字体美学**（多图任务）：按 `references/style-lock.md` 与 `references/typography.md`。用户点名则用 `styles.json` + `typography.json` 原文（必须包含 6 位 Hex 色号、主体占比与留白占比）；没点名则跟参考图写 `style_lock`，贴进每一张，一字不差。
+5. **锁展示套餐与字体美学**：模特/裂变图用 `references/catalog/looks.json` 对应 shot 的【风格】段，不要另配一套。信息图按 `references/style-lock.md` 与 `typography.json` 写 `style_lock`（必须含 6 位 Hex）。
 6. **写计划**：sku 按 `aionforge-sku` 一色一任务；其余按 `references/shots-womenswear.md` 写 `plan.json`（`name` / `ratio` / 一句话目标；图型从菜单组装，姿势先映射参考图，不够再从姿势库补齐）。
 7. **生图前确认**：只问缺口。用户已经点名的直接采用，不要再确认。
    - 缺口：`facts.uncertain`、技能 Default、用户两句话互相打架、以及比例 / 张数 / 场景 / 印花位置 / 露脸与配饰 / 素材角色里用户没说的项。姿势按 `references/shots-womenswear.md` 写入计划，不必再问。模特图脸被挡或看不清，也是缺口（换露脸图 / 允许生成五官 / 保持挡脸）。
    - 有缺口：一次问完，每项给选项和建议；用户回答或说「你决定 / 直接出」之前禁止 `forge generate`。
    - 没有缺口：跳过提问，直接出图。
 8. **两阶段模特锚点锁定（多张含模特图时）**：先生成第 1 张核心上身主图（`main-hero`），质检通过后，后续所有含模特的镜头必须把这张成片作为 `--ref source=<run_dir>/images/main-hero.png` 传入，实现跨机位同一人物、同一场景锚定。sku 每张都用原始母版做 `--ref source=`，不要把上一色的生成图当母版。
-9. **逐张出图**：Prompt 写进 `work/prompts/<name>.txt`，再 `forge generate --prompt-file`。需要画面内文字时必须使用 `VISIBLE_TEXT_BLOCK` 隔离块。
+9. **逐张出图**：按 `references/prompts/formula.md` 组段，把 Prompt 写进 `work/prompts/<name>.txt`，再 `forge generate --prompt-file`。需要画面内文字时必须使用 `VISIBLE_TEXT_BLOCK` 隔离块。
 10. **逐张质检**：自己看图，对照下方清单。不合格只重做那一张。
 11. **交付**：报告 `run_dir`、`images/` 下的文件、失败项。若用户说了「你决定」，把当时代选的项列为 Assumptions。
 
@@ -89,7 +90,7 @@ forge job init --workflow pdp --slug <短名> --json
 forge generate --job-dir <run_dir> --prompt-file <txt> --ref <图> --name <id> --ratio 1:1 --json
 ```
 
-- 参考图带角色名，让模型按文件名认图：`--ref garment=<成衣> --ref model=<模特>`、`--ref print=<印花> --ref garment=<白衣>`、`--ref source=<锚点成片>`、`--ref garment_back=<背面图>`、`--ref layout=<单屏版式参考>`、`--ref style=<风格参考>`。
+- 参考图带角色名，让模型按文件名认图：`--ref garment=<成衣> --ref model=<模特>`、`--ref print=<印花> --ref garment=<白衣>`、`--ref source=<锚点成片>`、`--ref garment_back=<背面图>`、`--ref layout=<单屏版式参考>`、`--ref style=<风格参考>`、`--ref pose=<姿势参考图>`。
 - 印花提取加 `--cutout`（本地把白底转透明并裁切）。
 - 返回 `{ok, run_dir, images, error}`。完整参数见 `references/cli.md`。
 
@@ -129,6 +130,9 @@ CLI 只有 `doctor` / `job init` / `generate` 三个命令。换装、提取、�
 
 ## 写 Prompt 的底线
 
+组段顺序与镜头词典见 `references/prompts/formula.md`：用途 → 主体 → 场景 → 风格 → 镜头语言 → 氛围与细节 → 参考图角色 → 图内文字 → 约束。
+
 - 用「成衣图 / 背面成衣图 / 模特图 / 印花图 / 锚点成片 / 版式参考图」指代参考图，不要写「图1 / 图2」——多图输入时模型不保证顺序。
 - 只写图上看得见的事实。不编造品牌、认证、销量、面料成分；看不清的写进 `facts.uncertain`，并在 Prompt 里要求那些部位不要臆造。
 - 印花文字逐字照抄，包括大小写；图内排版文案一律放进 `VISIBLE_TEXT_BLOCK` 并用 `「...」` 包裹。
+- 光线写具体方向与软硬（如「左侧窗来的柔和自然光」），不要写「美丽的光线」。裂变或编辑写死「只改 X，其余与成片一致」。

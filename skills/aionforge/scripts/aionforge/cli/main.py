@@ -23,7 +23,7 @@ _FIT_HELP = "比例不符时：expand 扩图铺满（默认，禁止留白），
 _JSON_HELP = "以 JSON 信封输出（ok / run_dir / images / error）。"
 _JOB_DIR_HELP = "已有任务目录；不给则在 --output-dir 下新建。"
 _NAME_HELP = "结果图文件名（不含扩展名），写入 images/<name>.png。"
-_REF_HELP = "参考图。可重复。角色写法 garment=./a.png、model=./b.jpg。"
+_REF_HELP = "参考图。可重复。角色写法 garment=./a.png、model=./b.jpg、pose=./pose.jpg。"
 
 
 def _fail(exc: Exception, json_output: bool, stage: str = "execution") -> None:

@@ -31,7 +31,7 @@ description: >
 3. 看图锁商品事实（版型、领口、袖口、下摆、面料、颜色、印花位置与文字）写入 `facts.json`。写完按入口 Skill「锁商品事实」给用户核对，通过后再进入下一步。
 4. 看模特图记下：五官、眼部细节、发型发色、下装、包、房间光线。身体和头按本张姿势重新摆，不要把正面脸贴到走、坐、回眸上。
 5. 列出模特原上衣有、成衣没有的结构（罗纹袖口、帽兜、袋鼠兜等），写进 prompt 补充说明的「必须去掉」。
-6. 多机位按 `aionforge-vary` 从镜头×姿势随机组对后写入计划。单张且用户已写清姿势则按该姿势写 Prompt。风格按 `../aionforge/references/style-lock.md`。
+6. 多机位按 `aionforge-vary` 选用 `looks.json` 套餐（默认 `studio`）。单张且用户已写清姿势则按该姿势写 Prompt。
 7. 复制 `../aionforge/references/prompts/tryon.md` 到 `work/prompts/<name>.txt`，贴上 Style Lock（若有）、facts 锁定项、本张姿势。
 8. 出图（参考图必须带角色名）：
 

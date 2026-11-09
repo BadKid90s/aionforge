@@ -1,6 +1,6 @@
 # 3D 立体隐形人台 Prompt 模板（`ghost-mannequin`）
 
-当用户未提供真人模特图、模特脸部不便出镜，或需要在主图收口（`main-ghost`）/ Amazon 白底主图中展示**立体胸腰剪裁与自然垂坠感**时使用。比平面平铺（Flat Lay）更能体现女装的立体廓形与肩袖结构。
+按 `references/prompts/formula.md` 组段。当用户未提供真人模特图、模特脸部不便出镜，或需要在主图收口（`main-ghost`）/ Amazon 白底主图中展示**立体胸腰剪裁与自然垂坠感**时使用。比平面平铺（Flat Lay）更能体现女装的立体廓形与肩袖结构。
 
 写入 `work/prompts/<name>.txt` 后执行：
 

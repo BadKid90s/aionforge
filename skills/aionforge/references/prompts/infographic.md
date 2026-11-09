@@ -1,5 +1,7 @@
 # 电商卖点信息图与拼图 Prompt 模板（`infographic`）
 
+按 `references/prompts/formula.md` 组段：主体=成衣事实，场景=板式背景，风格=Style Lock，镜头语言=板式构图，图内文字=`VISIBLE_TEXT_BLOCK`，约束=负面清单。
+
 用于 `pdp` 工作流中的核心卖点副图（`main-selling-point`）、详情页信息图（`detail-infographic`）、多角度拼图（`detail-three-angle`）和一衣多穿多场景分屏（`detail-multi-scene`）。
 
 写入 `work/prompts/<name>.txt`，按目标平台从 `references/typography.md`（及 `references/catalog/typography.json`）选取排版美学与配色，再调用 `forge generate`：

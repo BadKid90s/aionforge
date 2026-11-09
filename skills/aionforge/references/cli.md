@@ -44,7 +44,7 @@ forge job init --workflow <extract|compose|tryon|vary|sku|pdp|deconstruct> --slu
 | --- | --- |
 | `--prompt` / `-p` | 提示词字符串，与 `--prompt-file` 二选一 |
 | `--prompt-file` | 从文件读提示词（推荐，放在 `work/prompts/`） |
-| `--ref` / `-r` | 参考图，可重复；带角色写 `garment=./a.png`、`garment_back=./a_back.png`、`model=./b.jpg`、`print=`、`source=`、`style=`、`layout=`（严禁传入 `LONG_PAGE` 竖长条拼接图） |
+| `--ref` / `-r` | 参考图，可重复；带角色写 `garment=./a.png`、`garment_back=./a_back.png`、`model=./b.jpg`、`print=`、`source=`、`style=`、`layout=`、`pose=`（姿势参考图；严禁传入 `LONG_PAGE` 竖长条拼接图） |
 | `--name` / `-n` | 结果文件名（不含扩展名），默认 `image` |
 | `--ratio` | `W:H`，输出宽高均大于 480px |
 | `--fit` | 比例不符时的处理：`expand`（默认，扩图铺满）/ `crop`（居中裁切）/ `pad`（不要用） |
