@@ -104,6 +104,7 @@ async def run_generate(
     fit: FitMode | str = FitMode.expand,
     cutout: bool = False,
     padding: int = 8,
+    background: str = "white",
 ) -> Path:
     if not prompt.strip():
         raise ValueError("prompt 不能为空")
@@ -124,7 +125,7 @@ async def run_generate(
     if cutout:
         cutout_background(saved, padding=padding)
     elif ratio:
-        saved = await _apply_ratio(saved, ratio, mode, image, product, name)
+        saved = await _apply_ratio(saved, ratio, mode, image, product, name, background)
     product.record_task(
         name,
         "ok",
@@ -150,11 +151,12 @@ async def _apply_ratio(
     image: ImageEditor,
     product: Product,
     name: str,
+    background: str = "white",
 ) -> Path:
     size = target_size(ratio)
     if mode is FitMode.crop or not needs_expand(path, ratio):
-        return fit_image(path, size, FitMode.crop)
+        return fit_image(path, size, FitMode.crop, background=background)
     canvas = product.tmp / f"{name}-expand-in.png"
     prepare_expand_canvas(path, canvas, size)
     await image.edit(EXPAND_PROMPT.format(ratio=ratio), [canvas], path)
-    return fit_image(path, size, FitMode.crop)
+    return fit_image(path, size, FitMode.crop, background=background)

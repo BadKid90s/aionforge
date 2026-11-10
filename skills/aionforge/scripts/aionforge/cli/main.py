@@ -171,6 +171,11 @@ def generate_command(
     ),
     ratio: str | None = typer.Option(None, "--ratio", help=_RATIO_HELP),
     fit: FitMode = typer.Option(FitMode.expand, "--fit", help=_FIT_HELP),
+    background: str = typer.Option(
+        "white",
+        "--background",
+        help="模型返回透明底时铺的底色，默认 white；详情图可用 #F7F5F2。",
+    ),
     cutout: bool = typer.Option(
         False, "--cutout/--no-cutout", help="白底转透明并按图案裁切（印花提取用）。"
     ),
@@ -233,6 +238,7 @@ def generate_command(
                 fit=fit,
                 cutout=cutout,
                 padding=padding,
+                background=background,
             )
         finally:
             await image.aclose()

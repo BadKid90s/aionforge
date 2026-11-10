@@ -103,13 +103,17 @@ def prepare_expand_canvas(source: Path, dest: Path, size: tuple[int, int]) -> Pa
 
 
 def fit_image(
-    path: Path, size: tuple[int, int], fit: FitMode | str = FitMode.crop
+    path: Path,
+    size: tuple[int, int],
+    fit: FitMode | str = FitMode.crop,
+    *,
+    background: str = "white",
 ) -> Path:
     mode = FitMode(fit) if not isinstance(fit, FitMode) else fit
     with Image.open(path) as source:
         if source.size == size:
             return path
-        image = flatten_to_rgb(source)
+        image = flatten_to_rgb(source, background)
     if mode is FitMode.expand:
         prepare_expand_canvas(path, path, size)
         return path

@@ -116,6 +116,17 @@ def test_fit_image_keeps_transparent_area_white(tmp_path: Path) -> None:
         assert result.getpixel((150, 150)) == (255, 0, 0)
 
 
+def test_fit_image_uses_custom_background(tmp_path: Path) -> None:
+    path = tmp_path / "rgba.png"
+    image = Image.new("RGBA", (600, 600), (0, 0, 0, 0))
+    image.paste((255, 0, 0, 255), (200, 200, 400, 400))
+    image.save(path)
+
+    fit_image(path, (300, 300), FitMode.crop, background="#F7F5F2")
+    with Image.open(path) as result:
+        assert result.getpixel((0, 0)) == (247, 245, 242)
+
+
 def test_flatten_to_rgb_composites_alpha_on_white() -> None:
     image = Image.new("RGBA", (10, 10), (0, 0, 0, 0))
     image.paste((0, 128, 0, 255), (4, 4, 6, 6))
