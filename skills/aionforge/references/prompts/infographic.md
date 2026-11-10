@@ -2,16 +2,18 @@
 
 按 `references/prompts/formula.md` 组段：主体=成衣事实，场景=板式背景，风格=Style Lock，镜头语言=板式构图，图内文字=`VISIBLE_TEXT_BLOCK`，约束=负面清单。
 
-用于 `pdp` 工作流中的核心卖点副图（`main-selling-point`）、详情页信息图（`detail-infographic`）、多角度拼图（`detail-three-angle`）和一衣多穿多场景分屏（`detail-multi-scene`）。
+用于 `aionforge-detail` 工作流中的核心卖点图（`detail-infographic`）、多角度拼图（`detail-three-angle`）和一衣多穿多场景分屏（`detail-multi-scene`）。
 
-写入 `work/prompts/<name>.txt`，按目标平台从 `references/typography.md`（及 `references/catalog/typography.json`）选取排版美学与配色，再调用 `forge generate`：
+写入 `<product_dir>/prompts/detail/<product>-<color>-<detail-id>.txt`，按目标平台从 `references/typography.md`（及 `references/catalog/typography.json`）选取排版美学与配色，再调用 `forge generate`：
 
 ```bash
-forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/<name>.txt \
-  --ref garment=<成衣> --name <name> --ratio 3:4 --json
+forge generate --product-dir <product_dir> --bucket detail \
+  --prompt-file <product_dir>/prompts/detail/<product>-<color>-<detail-id>.txt \
+  --ref garment=<output/<logo>/bg_white/<product>-<color>.png> \
+  --name <product>-<color>-<detail-id> --ratio 3:4 --json
 ```
 
-若本张信息图内需要已确认的真人模特上身形象，同时传入 `--ref source=<已通过的 main-hero.png> --ref garment=<成衣>`。
+若本张信息图内需要已确认的真人模特上身形象，同时传入 `--ref source=<output/<logo>/main/<product>-<color>-hero.png> --ref garment=<bg_white>`，这样详情和主图是同一个人、同一件衣服。成品落在 `output/<logo>/detail/<product>-<color>-<detail-id>.png`。
 
 ---
 

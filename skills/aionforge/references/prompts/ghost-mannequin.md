@@ -2,11 +2,23 @@
 
 按 `references/prompts/formula.md` 组段。当用户未提供真人模特图、模特脸部不便出镜，或需要在主图收口（`main-ghost`）/ Amazon 白底主图中展示**立体胸腰剪裁与自然垂坠感**时使用。比平面平铺（Flat Lay）更能体现女装的立体廓形与肩袖结构。
 
-写入 `work/prompts/<name>.txt` 后执行：
+写入 `<product_dir>/prompts/<store 或 bucket>/<product>-<用途>.txt` 后执行。按用途选落点：
 
 ```bash
-forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/<name>.txt \
-  --ref garment=<成衣> --name <name> --ratio 1:1 --json
+# 白底合成前的干净衣身：中间产物
+forge generate --product-dir <product_dir> --store tmp \
+  --prompt-file <product_dir>/prompts/tmp/<product>-<color>-clean.txt \
+  --ref garment=<该色成衣图> --name <product>-<color>-clean --ratio 1:1 --json
+
+# 没有模特时 main 的净版主图
+forge generate --product-dir <product_dir> --bucket main \
+  --prompt-file <product_dir>/prompts/main/<product>-ghost.txt \
+  --ref garment=<bg_white> --name <product>-ghost --ratio 1:1 --json
+
+# 详情净版
+forge generate --product-dir <product_dir> --bucket detail \
+  --prompt-file <product_dir>/prompts/detail/<product>-<color>-detail-ghost.txt \
+  --ref garment=<bg_white> --name <product>-<color>-detail-ghost --ratio 3:4 --json
 ```
 
 ```

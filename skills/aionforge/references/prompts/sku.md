@@ -1,11 +1,18 @@
 # SKU 配色 Prompt
 
-按 `references/prompts/formula.md` 组段。每张配色单独一份 `work/prompts/sku-<slug>.txt`。母版锁人与构图，本张配色白底锁衣服。只换上衣颜色，其余与母版一致。
+按 `references/prompts/formula.md` 组段。每张配色单独一份 `<product_dir>/prompts/sku/<product>-<color>.txt`。母版锁人与构图，本张配色白底锁衣服。只换上衣颜色，其余与母版一致。
 
+母版优先用已通过的 `main/<product>-<color>-hero.png`；没有 main 时才用产品图或隐形人台成片。
+
+```bash
+forge generate --product-dir <product_dir> --bucket sku \
+  --prompt-file <product_dir>/prompts/sku/<product>-<color>.txt \
+  --ref source=<母版：main 锚点 / 产品图> \
+  --ref garment=<output/<logo>/bg_white/<product>-<color>.png> \
+  --name <product>-<color> --ratio 1:1 --json
 ```
-forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/sku-<slug>.txt \
-  --ref source=<母版> --ref garment=<该色白底> --name sku-<slug> --ratio 1:1 --json
-```
+
+成品落在 `output/<logo>/sku/<product>-<color>.png`。
 
 ```
 一张女装 SKU 配色规格图，可上架，不是插画、不是拼图、不是九宫格。
@@ -31,7 +38,7 @@ forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/sku-<slu
 空间、道具左右位置、地面、主光、色温与母版同一张。禁止换房间。
 
 【风格（Campaign Style Lock）】
-（粘贴 facts.style_lock。没点名则跟母版写光线、色温、背景。）
+（粘贴 facts.style_lock。没点名则跟母版写光线、色温、背景。必须含 6 位 Hex 色号。）
 
 【镜头语言】
 机位、取景、占比与母版一致，不要改景别。铺满画布，禁止白边、黑边、letterbox。

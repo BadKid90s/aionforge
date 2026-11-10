@@ -1,13 +1,18 @@
 # 裂变 Prompt
 
-按 `references/prompts/formula.md` 组段。每张单独一份 `work/prompts/<name>.txt`。**禁止**只写两三句「同一人同一件衣服 + 走两步」。人物和印花从成片抄进【主体】；【场景】【风格】【镜头语言】【主体动作】整段粘贴 `looks.json` 该张 shot。
+按 `references/prompts/formula.md` 组段。每张单独一份 `<product_dir>/prompts/main/<product>-<color>-<pose>.txt`。**禁止**只写两三句「同一人同一件衣服 + 走两步」。人物和印花从成片抄进【主体】；【场景】【风格】【镜头语言】【主体动作】整段粘贴 `looks.json` 该张 shot。
 
-有成衣图时 `--ref source=` 与 `--ref garment=` 一起传：
+`--ref source=` 必须是本张同色已通过的 `hero`，`--ref garment=` 必须是本张同色的 `bg_white`。有姿势参考图时再加 `--ref pose=`：
 
+```bash
+forge generate --product-dir <product_dir> --bucket main \
+  --prompt-file <product_dir>/prompts/main/<product>-<color>-<pose>.txt \
+  --ref source=<output/<logo>/main/<product>-<color>-hero.png> \
+  --ref garment=<output/<logo>/bg_white/<product>-<color>.png> \
+  --name <product>-<color>-<pose> --ratio <计划比例，默认 1:1> --json
 ```
-forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/<name>.txt \
-  --ref source=<参考成片> --ref garment=<成衣> --name <name> --ratio 2:3 --json
-```
+
+成品落在 `output/<logo>/main/<product>-<color>-<pose>.png`。
 
 ---
 

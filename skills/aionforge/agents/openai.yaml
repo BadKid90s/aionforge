@@ -1,4 +1,4 @@
 interface:
   display_name: "AionForge 女装出图"
-  short_description: "编排女装电商图的分析、Prompt、生成与质检"
+  short_description: "推断 logo 与商品，出白底、模特换衣、姿势、SKU 与详情图"
   default_prompt: "使用 $aionforge 根据我提供的商品和模特素材生成女装电商图。"

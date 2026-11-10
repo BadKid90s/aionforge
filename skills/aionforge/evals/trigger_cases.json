@@ -1,36 +1,36 @@
 {
-  "version": 1,
+  "version": 2,
   "description": "AionForge Skill 触发回归评测集：验证核心电商出图意图命中与非出图请求过滤。",
   "cases": [
     {
-      "id": "trigger-extract-print",
+      "id": "trigger-white-extract-print",
       "user_prompt": "帮我把这件黑色卫衣胸前的胶印图案抠出来，要透明底 PNG",
       "should_trigger": true,
-      "expected_workflow": "extract"
+      "expected_workflow": "white"
     },
     {
-      "id": "trigger-compose-print",
-      "user_prompt": "把这个提取好的小熊图案印到这件米白色纯色 T 恤胸口正中央",
+      "id": "trigger-white-compose-print",
+      "user_prompt": "把这个提取好的小熊图案印到这件米白色纯色 T 恤胸口正中央，出白底图",
       "should_trigger": true,
-      "expected_workflow": "compose"
+      "expected_workflow": "white"
     },
     {
-      "id": "trigger-tryon-model",
+      "id": "trigger-white-all-colors",
+      "user_prompt": "这件卫衣有黑、白、藏青三个颜色，每个颜色都合成一张白底衣图",
+      "should_trigger": true,
+      "expected_workflow": "white"
+    },
+    {
+      "id": "trigger-main-tryon-model",
       "user_prompt": "把这件法式方领碎花连衣裙穿到这个模特身上，保留模特的脸和眼神",
       "should_trigger": true,
-      "expected_workflow": "tryon"
+      "expected_workflow": "main"
     },
     {
-      "id": "trigger-vary-angles",
+      "id": "trigger-main-vary-angles",
       "user_prompt": "这张换装成片很不错，保持同一个房间和模特，再给我裂变 6 个不同机位和姿势",
       "should_trigger": true,
-      "expected_workflow": "vary"
-    },
-    {
-      "id": "trigger-pdp-suite",
-      "user_prompt": "这件针织开衫我要上架拼多多，帮我出一套高转化主图和带卖点放大的详情页套图",
-      "should_trigger": true,
-      "expected_workflow": "pdp"
+      "expected_workflow": "main"
     },
     {
       "id": "trigger-sku-colorways",
@@ -39,10 +39,10 @@
       "expected_workflow": "sku"
     },
     {
-      "id": "trigger-deconstruct-competitor",
-      "user_prompt": "参考这张竞品爆款主图的版式构图和暖调光影，换成我自己的白底醋酸半身裙出一组图",
+      "id": "trigger-detail-infographic",
+      "user_prompt": "这件针织开衫上架拼多多，帮我出 3 张带卖点放大的详情图",
       "should_trigger": true,
-      "expected_workflow": "deconstruct"
+      "expected_workflow": "detail"
     },
     {
       "id": "no-trigger-code-debug",

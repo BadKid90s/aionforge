@@ -1,42 +1,130 @@
 {
-  "version": 1,
-  "description": "AionForge Skill 行为契约回归评测集：验证关键防翻车规则与排版美学不退化。",
+  "version": 2,
+  "description": "AionForge Skill 行为契约回归评测集：验证事实锁定、canonical 路由、颜色策略与排版美学不退化。",
   "cases": [
     {
       "id": "behavior-no-image-index-reference",
-      "scenario": "多参考图输入（如成衣图 + 模特图 + 版式参考图）编写 Prompt",
-      "must_include": ["成衣图", "模特图"],
-      "must_not_include": ["图1", "图2", "第一张图", "第二张图"]
+      "scenario": "多参考图输入（bg_white 成衣图 + 模特图 + 姿势参考图）编写 Prompt",
+      "must_include": [
+        "成衣图",
+        "模特图"
+      ],
+      "must_not_include": [
+        "图1",
+        "图2",
+        "第一张图",
+        "第二张图"
+      ]
     },
     {
-      "id": "behavior-long-page-isolation",
-      "scenario": "用户上传 H/W >= 2.2 的竞品详情长图作为参考",
-      "must_include": ["LONG_PAGE", "只看图", "不传进 --ref"],
-      "must_not_include": ["--ref layout=long_page", "--ref style=long_page"]
+      "id": "behavior-logo-is-design-not-watermark",
+      "scenario": "素材 logo/1.jpg 这类带素材站水印的图案稿，需要推断 logo 名并合成白底",
+      "must_include": [
+        "图案",
+        "主标题",
+        "水印"
+      ],
+      "must_not_include": [
+        "千图网"
+      ]
+    },
+    {
+      "id": "behavior-bg-white-canonical",
+      "scenario": "完成白底合成后继续出 main / sku / detail",
+      "must_include": [
+        "bg_white",
+        "canonical.garment",
+        "唯一真相源"
+      ],
+      "must_not_include": [
+        "直接拿模特原衣",
+        "用原始成衣图当 main 的 garment"
+      ]
     },
     {
       "id": "behavior-two-stage-model-anchor",
-      "scenario": "pdp 套图包含多张同模特主图与场景图",
-      "must_include": ["main-hero", "--ref source="],
+      "scenario": "main 包含多张同模特主图与场景图",
+      "must_include": [
+        "hero",
+        "--ref source=",
+        "bg_white"
+      ],
       "must_not_include": []
     },
     {
+      "id": "behavior-all-colors-default",
+      "scenario": "用户给了多个颜色的成衣图，但没有说只出主色",
+      "must_include": [
+        "所有颜色",
+        "colors[]"
+      ],
+      "must_not_include": [
+        "只出主色",
+        "默认只出一个颜色"
+      ]
+    },
+    {
+      "id": "behavior-sku-detail-use-main-source",
+      "scenario": "main 已有通过质检的锚点成片，用户点名要 SKU 和详情图",
+      "must_include": [
+        "--ref source=",
+        "main",
+        "bg_white"
+      ],
+      "must_not_include": [
+        "只能用 bg_white 当 source"
+      ]
+    },
+    {
       "id": "behavior-pinduoduo-modern-typography",
-      "scenario": "拼多多女装卖点主图与信息图排版",
-      "must_include": ["#F7F5F2", "#EFECE6", "#2D2D2D", "#8C6A56", "VISIBLE_TEXT_BLOCK"],
-      "must_not_include": ["爆炸贴", "红底黄字", "粗黑描边", "#E02E24", "#FFD700"]
+      "scenario": "拼多多女装卖点详情图排版",
+      "must_include": [
+        "#F7F5F2",
+        "#EFECE6",
+        "#2D2D2D",
+        "#8C6A56",
+        "VISIBLE_TEXT_BLOCK"
+      ],
+      "must_not_include": [
+        "爆炸贴",
+        "红底黄字",
+        "粗黑描边",
+        "#E02E24",
+        "#FFD700"
+      ]
     },
     {
       "id": "behavior-sku-colorway-lock",
       "scenario": "SKU 母版 + 多张配色白底图生成规格图",
-      "must_include": ["--ref source=", "--ref garment=", "sku-"],
-      "must_not_include": ["图1", "图2"]
+      "must_include": [
+        "--ref source=",
+        "--ref garment=",
+        "<product>-<color>"
+      ],
+      "must_not_include": [
+        "图1",
+        "图2"
+      ]
     },
     {
       "id": "behavior-front-back-garment-routing",
       "scenario": "同时拥有正面成衣图与背面成衣图，生成背面展示图或三视角图",
-      "must_include": ["garment_back"],
+      "must_include": [
+        "garment_back"
+      ],
       "must_not_include": []
+    },
+    {
+      "id": "behavior-hidden-face-stays-hidden",
+      "scenario": "模特图里脸被手机或手遮挡，派生多个姿势与机位",
+      "must_include": [
+        "遮挡",
+        "禁止补全完整五官"
+      ],
+      "must_not_include": [
+        "生成完整正脸",
+        "补全五官"
+      ]
     }
   ]
 }

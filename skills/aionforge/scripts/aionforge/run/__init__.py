@@ -1,3 +1,3 @@
-from aionforge.run.job import Job
+from aionforge.run.workspace import BUCKETS, STORE_DIRS, Product, Workspace
 
-__all__ = ["Job"]
+__all__ = ["BUCKETS", "STORE_DIRS", "Product", "Workspace"]

@@ -4,6 +4,23 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2] / "references" / "prompts"
 SKILL_DIR = ROOT.parents[1]
+SKILLS_ROOT = SKILL_DIR.parent
+
+PACK_SKILLS = (
+    "aionforge",
+    "aionforge-white",
+    "aionforge-main",
+    "aionforge-sku",
+    "aionforge-detail",
+)
+REMOVED_SKILLS = (
+    "aionforge-extract",
+    "aionforge-compose",
+    "aionforge-tryon",
+    "aionforge-vary",
+    "aionforge-pdp",
+    "aionforge-deconstruct",
+)
 
 
 def test_skill_prompt_templates_exist() -> None:
@@ -18,7 +35,6 @@ def test_skill_prompt_templates_exist() -> None:
         "sku.md",
         "infographic.md",
         "ghost-mannequin.md",
-        "deconstruct.md",
     ):
         text = (ROOT / name).read_text(encoding="utf-8")
         assert "forge generate" in text
@@ -32,19 +48,6 @@ def test_tryon_template_uses_roles() -> None:
     assert "model=" in text
     assert "成衣图" in text
     assert "模特图" in text
-
-
-PACK_SKILLS = (
-    "aionforge",
-    "aionforge-extract",
-    "aionforge-compose",
-    "aionforge-tryon",
-    "aionforge-vary",
-    "aionforge-sku",
-    "aionforge-deconstruct",
-    "aionforge-pdp",
-)
-SKILLS_ROOT = SKILL_DIR.parent
 
 
 def test_skill_md_links_resolve() -> None:
@@ -68,6 +71,13 @@ def test_pack_skills_exist_and_link_hub() -> None:
             assert (SKILLS_ROOT / name / ref).resolve().is_file(), f"{name}: {ref}"
 
 
+def test_removed_skills_are_gone_and_not_referenced() -> None:
+    entry = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+    for name in REMOVED_SKILLS:
+        assert not (SKILLS_ROOT / name).exists(), name
+        assert name not in entry, name
+
+
 def test_vary_and_compose_templates_use_roles() -> None:
     vary = (ROOT / "vary.md").read_text(encoding="utf-8")
     assert "source=" in vary
@@ -83,17 +93,14 @@ def test_vary_and_compose_templates_use_roles() -> None:
     sku = (ROOT / "sku.md").read_text(encoding="utf-8")
     assert "source=" in sku
     assert "garment=" in sku
-    assert "sku-" in sku
+    assert "<product>-<color>" in sku
     assert "图1" not in sku
 
 
-def test_infographic_and_deconstruct_templates_have_visible_text_block() -> None:
+def test_infographic_template_has_visible_text_block() -> None:
     info = (ROOT / "infographic.md").read_text(encoding="utf-8")
     assert "VISIBLE_TEXT_BLOCK" in info
     assert "garment_back" in info
-    deconstruct = (ROOT / "deconstruct.md").read_text(encoding="utf-8")
-    assert "VISIBLE_TEXT_BLOCK" in deconstruct
-    assert "layout=" in deconstruct
 
 
 def test_evals_json_files_valid() -> None:
@@ -102,3 +109,5 @@ def test_evals_json_files_valid() -> None:
     behavior = json.loads((evals_dir / "behavior_cases.json").read_text(encoding="utf-8"))
     assert len(trigger["cases"]) >= 6
     assert len(behavior["cases"]) >= 4
+    workflows = {case["expected_workflow"] for case in trigger["cases"] if case["should_trigger"]}
+    assert workflows == {"white", "main", "sku", "detail"}

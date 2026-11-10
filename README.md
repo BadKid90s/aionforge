@@ -1,16 +1,16 @@
 # AionForge
 
-女装电商 AI 出图插件。把衣服照片、模特照片、竞品参考图或印花丢给 Agent，它会看图锁定商品细节、写出图计划、逐张生成并自己质检。
+女装电商 AI 出图插件。把 logo 图案稿、空白成衣、模特照片丢给 Agent，它会从图案主标题推断 logo、从空白衣文件夹推断款式，锁定商品细节，按颜色合成白底成衣、把成衣穿到模特身上、派生姿势，并在你点名时补 SKU 规格图和详情图。
 
-一组可互相引用的 Skill：入口 `aionforge` 负责调度、锁事实和质检；具体步骤在 `aionforge-extract`、`aionforge-compose`、`aionforge-tryon`、`aionforge-vary`、`aionforge-sku`、`aionforge-deconstruct`、`aionforge-pdp`。
+一组可互相引用的 Skill：入口 `aionforge` 负责调度、锁事实和质检；具体步骤在 `aionforge-white`、`aionforge-main`、`aionforge-sku`、`aionforge-detail`。
 
-- **印花提取**：从衣服照片抠出透明底图案
-- **印花合成**：把图案印回白底成衣
-- **模特换衣**：把成衣穿到指定模特身上，五官不变
-- **多机位裂变**：同一张成片扩展出多个机位 / 姿势
-- **SKU 配色规格图**：母版产品图 + 多张配色白底，生成同构图规格图
-- **竞品参考反推迁移**：拆解标杆海报的构图、留白与光影色调，1:1 或 4 向裂变迁移到自家成衣
-- **整套上架图**：G1–G5 高转化主图漏斗 + 详情图（含 4 类高审美卖点信息图、3D 隐形人台立体陈列、6 大平台独立字体与排版美学），适配拼多多 / 淘宝 / 京东 / 抖音小红书 / Amazon / Shopify
+- **白底商品图**：把 logo 图案合成到每个颜色的白底空白成衣，按颜色输出 `bg_white`
+- **模特换衣**：保留模特原脸和眼神，把白底成衣穿到模特身上，输出 `main`
+- **姿势展示**：基于锚点主图派生多个机位 / 姿势，跨图锁同一张脸、同一件衣
+- **SKU 配色规格图**：用 main 主图或产品图当母版，把每个颜色的白底成衣套进同一构图
+- **详情图**：卖点信息图、放大镜气泡、标注线、60:40 分屏、三角度、一衣多穿、3D 隐形人台
+
+输出以 **logo 为第一层目录**，每个 logo 下固定四个交付目录：`bg_white` / `main` / `sku` / `detail`。提示词、参考图、事实和 manifest 收在 `.forge`，不污染成品目录。
 
 支持 **Claude Code**、**Codex**、**Cursor**、**Gemini CLI**、**Grok Build**，以及其他支持 Agent Skills 的工具。
 
@@ -132,25 +132,70 @@ XAI_API_KEY=xai-你的key
 
 Agent 会跑 `forge doctor`，Key、网络、目录都通过就可以用了。然后把图片拖进对话框：
 
-- 「提取这件 T 恤胸前的印花」
-- 「把这个图案印到这件白 T 上」
-- 「把这件成衣穿到这个模特身上」
-- 「这张再裂变 6 个机位」
-- 「这张当 SKU 母版，按黑、藏青、浅灰白底出规格图」
-- 「参考这张竞品海报的排版和色调，出我的连衣裙」
-- 「这件吊带出一套拼多多主图和卖点信息图」
+- 「把这个 logo 图案合成到这件短袖的黑、白、浅灰三个颜色上」
+- 「保留这个模特的脸，把这张白底成衣穿上去，再出 6 个姿势」
+- 「用这张 main 主图当母版，出黑、白、浅灰的 SKU 规格图」
+- 「给这个图案的短袖出一套详情卖点图，平台是拼多多」
 
-Agent 会先让你确认商品细节和出图计划，确认后逐张生成。成品在当前目录的 `output/<工作流>/<任务>/images/`。说「你决定，直接出」可以跳过确认。
+Agent 会先看图、从图案主标题推断 logo、从空白衣文件夹推断款式，把商品事实列给你确认；确认后先出白底，再出模特图，SKU / 详情只在你点名时生成。
+
+## 输出目录
+
+```text
+output/
+  锁定目标/
+    bg_white/
+      short-black.png
+      short-白.png
+      short-浅灰.png
+    main/
+      short-black-hero.png
+      short-black-walk.png
+      short-black-studio-3q.png
+    sku/
+      short-black.png
+      short-白.png
+    detail/
+      short-black-craft.png
+    .forge/
+      products/
+        short/
+          facts.json
+          refs/
+          prompts/
+          manifest.json
+          history/
+```
+
+- `bg_white` 是印花合成后的白底成衣，也是后续 main / sku / detail 的衣服唯一真相源。
+- `main` 是模特换衣与姿势展示；先出 `hero`，后续姿势从它派生。
+- `sku` / `detail` 只有用户点名才生成。
+- 同名重跑覆盖成品，旧图自动进 `history/`；不会堆出一串时间戳目录。
+
+## 工作流
+
+| 意图 | Skill | 输出 |
+| --- | --- | --- |
+| 提取印花、合成白底、每个颜色一张白底衣图 | `aionforge-white` | `bg_white/<product>-<color>.png` |
+| 模特换衣、保留原脸、多机位 / 多姿势 | `aionforge-main` | `main/<product>-<color>-<pose>.png` |
+| SKU 规格图、按母版套多个配色 | `aionforge-sku` | `sku/<product>-<color>.png` |
+| 详情图、卖点信息图、多场景、隐形人台 | `aionforge-detail` | `detail/<product>-<detail-id>.png` |
+
+默认所有颜色都出；用户点名只出一个颜色时只跑该色。SKU 和详情可以用 `bg_white` 当衣服参考，也可以把 main 的锚点成片当 `source` 或母版。
 
 ## 常见问题
 
 **doctor 提示没有可用 Key**：Key 没被读到。环境变量方式要重启 Agent；`.env` 方式要确认文件在 Agent 的当前工作目录。
 
+**成品带素材站水印**：`logo/` 里的预览稿水印不会被当成图案的一部分。换有授权的无水印源文件再跑，不要把带水印的预览图直接上架。
+
 **401 / 403**：Key 无效、过期，或账户没开通图片模型权限。
 
 **找不到 uv**：安装后重开终端，或把 `~/.local/bin` 加进 `PATH`。
 
-**中断了想续跑**：告诉 Agent 继续上次的任务，它会沿用同一个任务目录接着出剩下的图。
+**中断了想续跑**：告诉 Agent 继续上次的任务。商品工作区、`facts.json`、`manifest.json` 都在 `output/<logo>/.forge/products/<product>/`，会沿用同一个 `product_dir` 接着出剩下的图。
+
+**想换 logo / 商品名**：重新跑 `forge workspace init` / `forge product init`；已存在的 `facts.json` 不会被覆盖。
 
 **更新插件**：`npx skills update`；Claude Code 里 `/plugin marketplace update aionforge`；Grok 用 `grok plugin update aionforge`；Gemini 用 `gemini extensions update aionforge`。
 
@@ -182,8 +227,14 @@ Agent 会自动调用，一般不用手动跑。手动调用：`uv run --project
 | 命令 | 作用 |
 | --- | --- |
 | `forge doctor --json` | 检查配置、Key、连通性、数据目录 |
-| `forge job init --workflow <id> --slug <短名> --json` | 创建任务目录 |
-| `forge generate --job-dir <run_dir> --prompt-file <txt> --ref <图> --name <id> --json` | prompt + 参考图 → 一张图 |
+| `forge workspace init --logo <logo> --json` | 创建 logo 工作区和四个交付目录 |
+| `forge product init --logo <logo> --product <product> --json` | 创建商品工作区、facts 模板、manifest |
+| `forge cutout --input <logo稿> --product-dir <dir> --name <id> --json` | 本地抠平面 logo 稿，输出透明底到 `refs/` |
+| `forge generate --product-dir <dir> --bucket <bucket> --prompt-file <txt> --ref <图> --name <id> --json` | prompt + 参考图 → 一张成品，落到 bucket |
+| `forge generate --product-dir <dir> --store refs --prompt-file <txt> --ref <图> --name <id> --json` | 中间产物（印花 / 白底素材）落到商品工作区 |
+| `forge verify --image <图> --ratio 1:1 --white-bg --json` | 校验尺寸、比例、白底、alpha |
+| `forge prompt check --file <txt> --facts <facts.json> --json` | 检查 Hex、图序号、VISIBLE_TEXT_BLOCK、印花原文 |
+| `forge list --logo <logo> --json` | 列出四个 bucket 的成品 |
 
 完整参数见 [`references/cli.md`](skills/aionforge/references/cli.md)。
 
@@ -210,16 +261,13 @@ skills/
     evals/
     references/           # 共享 Prompt 模板、姿势/场景/风格/字体目录
     scripts/              # forge CLI（uv 项目）
-  aionforge-extract/
-  aionforge-compose/
-  aionforge-tryon/
-  aionforge-vary/
-  aionforge-sku/
-  aionforge-deconstruct/
-  aionforge-pdp/
+  aionforge-white/        # 印花提取 + 白底合成
+  aionforge-main/         # 模特换衣 + 姿势裂变
+  aionforge-sku/          # SKU 配色规格图
+  aionforge-detail/       # 详情图与卖点信息图
 ```
 
-入口 Skill `aionforge` 先选工作流，再加载对应的 `aionforge-*` Skill。共享资料和 `forge` 只放在入口目录。
+入口 Skill `aionforge` 先定 logo / 商品、锁事实，再加载对应的 `aionforge-*` Skill。共享资料和 `forge` 只放在入口目录。
 
 ## 开发
 

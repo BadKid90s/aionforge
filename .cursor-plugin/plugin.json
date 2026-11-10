@@ -1,8 +1,8 @@
 {
   "name": "aionforge",
   "displayName": "AionForge 女装出图",
-  "description": "女装电商 AI 出图 Skill 包：入口调度 + 印花提取 / 合成 / 换衣 / 裂变 / SKU / 竞品反推 / 主图详情",
-  "version": "0.1.1",
+  "description": "女装电商 AI 出图 Skill 包：logo / 商品工作区 + 白底合成 / 模特换衣 / 姿势裂变 / SKU / 详情",
+  "version": "0.2.0",
   "author": {
     "name": "BadKid90s"
   },

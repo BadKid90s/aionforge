@@ -1,13 +1,18 @@
 # 换装 Prompt
 
-按 `references/prompts/formula.md` 组段。把下面模板写入 `work/prompts/<name>.txt`，把本张姿势/机位写进「镜头语言」，把 `facts.json` 里必须锁定的版型/印花写进「主体」。比例按计划改 `1:1` 或 `3:4`。
+按 `references/prompts/formula.md` 组段。把下面模板写入 `<product_dir>/prompts/main/<product>-<color>-hero.txt`，把本张姿势 / 机位写进「镜头语言」，把 `facts.json` 里必须锁定的版型 / 印花写进「主体」。比例按计划改 `1:1` 或 `3:4`。
 
-参考图必须带角色名，让文件名成为 garment / model：
+参考图必须带角色名，让文件名成为 garment / model。`garment` 用已通过的 `bg_white`，不要用原始成衣图：
 
+```bash
+forge generate --product-dir <product_dir> --bucket main \
+  --prompt-file <product_dir>/prompts/main/<product>-<color>-hero.txt \
+  --ref garment=<output/<logo>/bg_white/<product>-<color>.png> \
+  --ref model=<模特图> \
+  --name <product>-<color>-hero --ratio <计划比例，默认 1:1> --json
 ```
-forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/<name>.txt \
-  --ref garment=<成衣> --ref model=<模特> --name <name> --ratio 1:1 --json
-```
+
+成品落在 `output/<logo>/main/<product>-<color>-hero.png`。这张通过质检后，才能作为后续姿势图的 `--ref source=`。
 
 ```
 一张女装电商换装图。
@@ -22,11 +27,11 @@ forge generate --job-dir <run_dir> --prompt-file <run_dir>/work/prompts/<name>.t
 房间、光线、下装、鞋、包以模特图为准，不要换空间。
 
 【风格（Campaign Style Lock）】
-（粘贴 facts.style_lock。）
+（粘贴 facts.style_lock；为空时粘贴本张 looks.json shot 的【风格】段。必须含 6 位 Hex 色号。）
 
 【镜头语言】
 - 景别 / 视角 / 镜头：（本张计划）
-- 机位与姿态：（本张姿势；头必须跟着身体转）
+- 机位与姿态：（默认复刻模特图原有姿势、机位和手部动作；用户点名换姿势时才改。头必须跟着身体转）
 
 【氛围与细节】
 商业女装实拍，真实织物与皮肤微纹理，拒绝塑料磨皮。
