@@ -59,7 +59,6 @@ def verify_image(
     *,
     ratio: str | None = None,
     white_bg: bool = False,
-    alpha: bool = False,
     print_quality: bool = False,
     min_side: int = MIN_SIDE,
 ) -> list[dict[str, Any]]:
@@ -107,7 +106,7 @@ def verify_image(
                     f"四边近白像素 {coverage:.2%}",
                     "重新出图，要求纯白 #FFFFFF 无缝背景，四边铺满",
                 )
-            if alpha or print_quality:
+            if print_quality:
                 bands = image.getbands()
                 if "A" not in bands:
                     check(
@@ -123,9 +122,9 @@ def verify_image(
                         "alpha",
                         alpha_ok,
                         f"alpha {low}-{high}",
-                        "检查 --cutout 是否真的把背景转成了透明",
+                        "检查 forge cutout 是否已将背景转为透明",
                     )
-                    if print_quality and alpha_ok:
+                    if alpha_ok:
                         border_ratio = alpha_border_white_ratio(image)
                         check(
                             "print.white_edge",

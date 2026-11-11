@@ -1,68 +1,77 @@
 ---
 name: aionforge-detail
 description: >
-  女装详情图与卖点信息图：基于已通过的 bg_white 成衣和 main 模特成片，生成放大镜气泡、图标列表、标注线、60:40 分屏、三角度、多场景、3D 隐形人台等详情图。
-  用户说详情图、详情页、卖点信息图、卖点放大、面料微距、一衣多穿、三角度、隐形人台时使用。
+  阶段 4 详情卖点图生成：按「思考 → 事实锁定 → 生成 → 检查」四步闭环，
+  基于已通过质检的 T 恤实拍合成图（bg_white 正面/背面）和模特主图（main），
+  生成放大镜细节图、正反双面/三角度对比图、60:40 主次分屏、左衣右签卖点图与多场景穿搭详情图。
+  用户说根据主图和商品图生成详情图、详情页、卖点信息图、正反细节对比、面料微距时使用。
   Use when the user runs /aionforge-detail.
 ---
 
-# 详情图与卖点信息图（detail）
+# 阶段 4：基于主图与商品实拍图生成详情图（detail）
 
-用户点名才生成。详情回答主图没讲完的问题：版型、做工、面料、一衣多穿、多角度。不要用整屏印花微距充数，也不要每套详情都把四种信息图板式出一遍。
+本流程结合阶段 2 产出的 **T 恤正反面实拍合成图（`bg_white` / `bg_white_back`）** 和阶段 3 产出的 **模特主图（`main`）**，生成一套视觉统一、信息层级清晰的电商详情图，把主图没讲完的「正反面印花呼应、印花与面料微距、版型剪裁、多场景上身效果」讲清楚。
 
-未加载入口时先读 `../aionforge/SKILL.md`。`forge` = `uv run --project <入口目录>/scripts forge`，入口目录是本 SKILL.md 同级的 `../aionforge`。Prompt 模板：`../aionforge/references/prompts/infographic.md`、`../aionforge/references/prompts/ghost-mannequin.md`、`../aionforge/references/prompts/vary.md`。图型菜单：`../aionforge/references/shots-womenswear.md`。平台排版：`../aionforge/references/typography.md` + `../aionforge/references/catalog/typography.json`。标准流程按入口 Skill。
+未加载入口时先读 `../aionforge/SKILL.md`。工具只按名称引用，参数见工具卡；本文件不写命令。Prompt 模板见 [infographic.md](../aionforge/references/prompts/infographic.md) 与 [vary.md](../aionforge/references/prompts/vary.md)。
 
-## 输入
+## 输入与输出
 
-| 素材 | 角色 | 必填 |
+| 方向 | 内容 | 说明 |
 | --- | --- | --- |
-| 各颜色 `bg_white` 成衣 | `garment` | 是 |
-| 已通过的 main 锚点 / 模特成片 | `source` | 否；详情里出现模特时强烈建议 |
-| 卖点、目标场景、平台 | `facts.json` | 是 |
-| 详情图型 | 计划 | 否；按卖点推荐 |
+| **输入** | 正面商品图 `bg_white`（`garment`）、背面商品图 `bg_white_back`（`garment_back`）、已通过的模特主图 `main`（`source`）、`facts.json` | 模特详情镜头强制复用 `main` 成片作为 `source`，确保详情与主图同一模特、同一件 T 恤 |
+| **输出文件** | `output/<logo>/detail/<product>-<color>-<detail-id>.png` | 默认比例 `3:4`；指定平台时按 [platforms.md](../aionforge/references/platforms.md) |
+| **输出事实** | `facts.selling_points`、`facts.target_scenes`、`facts.style_lock` | 锁死整套详情页的配色、字体与卖点文案 |
 
-详情图里的模特镜头优先用 main 的锚点成片当 `--ref source=`，这样详情和主图是同一个人、同一件衣服。没有 main 时，用 `bg_white` + 隐形人台，或先走 `aionforge-main`。
+---
 
-## 输出
+## 四步闭环执行流程
 
-- `output/<logo>/detail/<product>-<color>-<detail-id>.png`
-- 单色商品可省略 color：`<product>-<detail-id>.png`
-- 默认比例 `3:4`；用户点名平台时按 `../aionforge/references/platforms.md`。
-- 同名重跑时旧图自动进 `<product_dir>/history/`。
+### 第一步：思考（Think —— 提炼 T 恤卖点与匹配详情板式）
 
-## 步骤
+1. **结合主图与商品图提炼卖点**：
+   - 观察 `bg_white`（正背面实拍合成图）与 `main`（模特主图），避免用无意义的整屏纯图案充数，每张详情图必须回答买家的一个具体问题：
+     - **有背面大印花 + 左胸小标时**：优先规划 **「正反双面 / 三角度同框 (`detail-three-angle`)」**（同屏展示正面左胸小标与背面大主印花的呼应）或 **「60:40 非对称主次分屏 (`asymmetric`)」**（左栏模特上身主视觉，右栏上下分格特写左胸小标与背面大印花/领口工艺）。
+     - **突出印花质感与 T 恤做工时**：选 **「放大镜气泡 (`magnifier`)」**（微距放大圆领螺纹包边、纯棉平纹肌理、胶印/印花清晰边缘）。
+     - **突出面料舒适度与百搭属性时**：选 **「左衣右签图标列表 (`icon-list`)」** 或 **「版型标注线 (`annotation`)」**（落肩袖、宽松直筒遮肉、克重透气）。
+     - **突出实穿氛围时**：选 **「一衣多穿多场景分屏 (`detail-multi-scene`)」**。
+2. **排版与配色思考**：
+   - 根据目标平台从 [typography.md](../aionforge/references/typography.md) 与 `catalog/typography.json` 选取现代克制的色板（主底色、副底色、文字 Hex、强调色 Hex），拒绝廉价红黄爆炸贴和粗黑描边字。
 
-1. `forge doctor --json`。
-2. 复用已有商品工作区。没有 `bg_white` 时先走 `aionforge-white`；要出带模特的详情但还没有 main 锚点时，先走 `aionforge-main` 或改用隐形人台。
-3. 看 `facts.json` 的 `selling_points`、`target_scenes`、`style_lock`、`conversion_driver`，按 `../aionforge/references/shots-womenswear.md` 的详情菜单选图型。用户点名图型 / 张数时照做；没点名时每张只回答一个还没回答的买家问题。
-4. 按卖点特征选信息图板式：
-   - 面料、刺绣、蕾丝、领袖局部工艺 → `magnifier` 放大镜气泡。
-   - 防晒、透气、弹力、高支棉参数 → `icon-list` 图标列表。
-   - 连衣裙剪裁、法式领口、高腰线、荷叶边 → `annotation` 标注线。
-   - 同屏兼顾全身廓形与两处微距 → `asymmetric` 60:40 分屏。
-5. 按平台锁定 `style_lock` 与字体：从 `../aionforge/references/catalog/typography.json` 抄 6 位 Hex 和 `prompt` 片段，整套图最多 2 种字体。连续详情可在 `background` 与 `background_alt` 之间交替。
-6. 写 Prompt 到 `<product_dir>/prompts/detail/<product>-<color>-<detail-id>.txt`：
-   - 纯产品图：`--ref garment=<bg_white>`。
-   - 带模特：再加 `--ref source=<main/<product>-<color>-hero.png>`。
-   - 三角度 / 背面：有背面成衣时用 `--ref garment_back=`，没有就按同色素面处理。
-   - 有文字时写 `VISIBLE_TEXT_BLOCK`，文案用 `「...」` 包裹，并写清字体、字重、Hex、位置和字数上限。
-7. 出图并做两层校验：
-   ```bash
-   forge prompt check --file <product_dir>/prompts/detail/<product>-<color>-<detail-id>.txt \
-     --facts <product_dir>/facts.json --visible-text --json
-   forge generate --product-dir <product_dir> --bucket detail \
-     --prompt-file <product_dir>/prompts/detail/<product>-<color>-<detail-id>.txt \
-     --ref garment=<output/<logo>/bg_white/<product>-<color>.png> \
-     --ref source=<可选：main 锚点> \
-     --name <product>-<color>-<detail-id> --ratio 3:4 --json
-   forge verify --image <output/<logo>/detail/<product>-<color>-<detail-id>.png> \
-     --ratio 3:4 --json
-   ```
-8. **看图质检**（必须看）：
-   - 衣服 100% 是 bg_white 那一件：颜色、领口、袖口、下摆、印花；有模特时五官与 main 锚点同一人。
-   - 信息图板式成立，留白 ≥45%，文字在留白区，没有压住人脸、领口、袖口、下摆或印花。
-   - 放大 200% 检查汉字笔画完整、无乱码、无黑边描边、没有把字号 / 色号 / 排版元指令画进画面。
-   - 三角度图的背面栏不扭头露正脸；后背按 `garment_back` 或同色素面，不把胸前印花画到后背。
-   - 一衣多穿的每个分屏都是同一件衣服、同一个人。
-9. 失败时改 Prompt 点名出错部位或精简文案，同一个 `--name` 重跑一次。
-10. 交付 `detail/` 文件列表；说明每张回答了哪个买家问题、用了哪张 main 成片当 source。
+### 第二步：事实锁定（Lock —— 锁定详情页菜单、文案与参考图映射）
+
+1. 在 `facts.json` 中锁定：
+   - `selling_points[]`：每条含类型、短标题（`≤10` 字）及 `visual_keywords`。
+   - `target_scenes[]`：符合该 T 恤风格的 2–3 个真实穿着场景（如日常街拍、周末咖啡馆、通勤休闲）。
+   - `style_lock`：包含色温、主副背景 6 位 Hex、文字 Hex 与字体规范（见 [style-lock.md](../aionforge/references/style-lock.md)）。
+2. 明确每张详情图的参考图角色绑定：
+   - 凡出现模特的板式（如 `asymmetric`、`detail-three-angle`、`detail-multi-scene`），必须同时传入 `source=模特主图` + `garment=正面商品图`（涉及背面展示时加传 `garment_back=背面商品图`）。
+   - 纯平铺/静物特写板式（如纯成衣 `magnifier`、`icon-list`），传入 `garment=正面商品图`（或 `garment_back`）。
+
+### 第三步：生成（Generate —— 逐屏编写 Prompt、静态检查并出图）
+
+1. 按 [infographic.md](../aionforge/references/prompts/infographic.md) 对应板式编写 `<product_dir>/prompts/detail/<product>-<color>-<detail-id>.txt`：
+   - 所有需要在画面中渲染的中文文案必须放入 `【VISIBLE_TEXT_BLOCK】` 并用中文引号 `「」` 包裹；单屏主标题 `≤12` 字，短签 `≤6` 字，总字数不超过 40 字。
+   - 严禁把字号数值（如 `28pt`）、色号代码（如 `#2D2D2D`）当成画面可见文字渲染出来。
+2. 调用 [prompt check](../aionforge/references/tools/prompt-check.md)（带可见文字时开启文字块检查），确认无「图1/图2」指代、Hex 色号齐全、印花原文一致。
+3. 逐张调用 [generate](../aionforge/references/tools/generate.md) 生成详情图至 `detail/`。
+
+### 第四步：检查（Verify —— 客观校验与排版/商品一致性检查）
+
+1. **客观检查**：调用 [verify](../aionforge/references/tools/verify.md) 检查尺寸与 `3:4`（或平台指定）画幅比例。
+2. **看图质检清单**：
+   - **货不对板零容忍**：详情图里的 T 恤颜色、领口、袖口、正面左胸小标、背面主印花必须与 `bg_white` 100% 一致；模特五官与 `main` 主图完全同一人。
+   - **正背面逻辑正确**：三角度图或正反对比图中，背面栏只展示后脑与后背大印花，绝不扭头露正脸，也绝不把胸前小标画到后背。
+   - **排版呼吸感与文字清晰度**：版式留白充足（信息图留白 `≥45%`），文字与指示线全部落在留白区，未压挡人脸、领口或印花；放大 200% 检查汉字无乱码、无漏笔画、未把排版元指令画进画面。
+3. **交付汇总**：列出 `detail/` 下生成的全部详情图文件，说明每张图回答的核心卖点及引用的主图/商品图来源。
+
+---
+
+## 失败路由
+
+| 现象 | 处置 |
+| --- | --- |
+| 画面内汉字乱码或笔画粘连 | 精简标签字数（控制在 4–6 字）、替换为笔画简单的同义词，同一名称重跑一次 |
+| 字号 / Hex 色码被画进了画面里 | 从 Prompt 描述中移除裸露的参数式写法，只保留 `「文案内容」` 与定性描述后重跑 |
+| 详情图模特与主图不是同一人 | 检查是否漏传了 `source=main锚点图`，补齐角色参考后重跑 |
+| 背面栏出现了正面印花或正脸 | 检查是否传入了 `garment_back`，在负面约束中加固「背面严禁露正脸、严禁出现左胸小标」 |
+| 文字或放大镜压住了胸前/后背印花 | 在构图段明确指定气泡/标签分布在画面四周留白区，避开衣身中心 |

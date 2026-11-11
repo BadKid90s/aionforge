@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "description": "AionForge Skill 行为契约回归评测集：验证事实锁定、canonical 路由、颜色策略与排版美学不退化。",
+  "version": 3,
+  "description": "AionForge Skill 行为契约回归评测集：验证「思考-事实锁定-生成-检查」闭环、工具与流程分离、正反面左胸联动与撞色适配。",
   "cases": [
     {
       "id": "behavior-no-image-index-reference",
@@ -18,7 +18,7 @@
     },
     {
       "id": "behavior-logo-is-design-not-watermark",
-      "scenario": "素材 logo/1.jpg 这类带素材站水印的图案稿，需要推断 logo 名并合成白底",
+      "scenario": "素材 logo/1.jpg 这类带素材站水印的图案稿，需要推断 logo 名并合成",
       "must_include": [
         "图案",
         "主标题",
@@ -30,7 +30,7 @@
     },
     {
       "id": "behavior-bg-white-canonical",
-      "scenario": "完成白底合成后继续出 main / sku / detail",
+      "scenario": "完成 T 恤实拍合成后继续出 main 主图与 detail 详情图",
       "must_include": [
         "bg_white",
         "canonical.garment",
@@ -43,17 +43,17 @@
     },
     {
       "id": "behavior-two-stage-model-anchor",
-      "scenario": "main 包含多张同模特主图与场景图",
+      "scenario": "main 包含多张同模特主图与多姿势展示图",
       "must_include": [
         "hero",
-        "--ref source=",
+        "source",
         "bg_white"
       ],
       "must_not_include": []
     },
     {
       "id": "behavior-all-colors-default",
-      "scenario": "用户给了多个颜色的成衣图，但没有说只出主色",
+      "scenario": "用户给了多个颜色的 T 恤实拍图，但没有说只出主色",
       "must_include": [
         "所有颜色",
         "colors[]"
@@ -64,10 +64,10 @@
       ]
     },
     {
-      "id": "behavior-sku-detail-use-main-source",
-      "scenario": "main 已有通过质检的锚点成片，用户点名要 SKU 和详情图",
+      "id": "behavior-detail-uses-main-and-product",
+      "scenario": "根据生成的模特主图和 T 恤商品图生成详情图",
       "must_include": [
-        "--ref source=",
+        "source",
         "main",
         "bg_white"
       ],
@@ -77,7 +77,7 @@
     },
     {
       "id": "behavior-pinduoduo-modern-typography",
-      "scenario": "拼多多女装卖点详情图排版",
+      "scenario": "拼多多卖点详情图排版",
       "must_include": [
         "#F7F5F2",
         "#EFECE6",
@@ -94,36 +94,62 @@
       ]
     },
     {
-      "id": "behavior-sku-colorway-lock",
-      "scenario": "SKU 母版 + 多张配色白底图生成规格图",
-      "must_include": [
-        "--ref source=",
-        "--ref garment=",
-        "<product>-<color>"
-      ],
-      "must_not_include": [
-        "图1",
-        "图2"
-      ]
-    },
-    {
       "id": "behavior-front-back-garment-routing",
-      "scenario": "同时拥有正面成衣图与背面成衣图，生成背面展示图或三视角图",
+      "scenario": "同时拥有正面成衣图与背面成衣图，生成背面展示主图或三角度详情图",
       "must_include": [
         "garment_back"
       ],
       "must_not_include": []
     },
     {
-      "id": "behavior-hidden-face-stays-hidden",
-      "scenario": "模特图里脸被手机或手遮挡，派生多个姿势与机位",
+      "id": "behavior-back-print-requires-badge",
+      "scenario": "主印花判断为背面印刷，需要在左胸前加核心元素小印花",
       "must_include": [
-        "遮挡",
-        "禁止补全完整五官"
+        "左胸",
+        "核心图标",
+        "背面"
       ],
       "must_not_include": [
-        "生成完整正脸",
-        "补全五官"
+        "整张印花缩小"
+      ]
+    },
+    {
+      "id": "behavior-print-color-contrast",
+      "scenario": "深色 T 恤实拍图上的深色印花存在颜色冲突，需要做颜色调整适配",
+      "must_include": [
+        "对比度",
+        "print adapt",
+        "3:1"
+      ],
+      "must_not_include": [
+        "重绘印花",
+        "改字"
+      ]
+    },
+    {
+      "id": "behavior-back-photo-required",
+      "scenario": "用户要背面印花，但没有提供背面 T 恤实拍",
+      "must_include": [
+        "背面实拍",
+        "补图"
+      ],
+      "must_not_include": [
+        "从正面推断背面",
+        "镜像正面"
+      ]
+    },
+    {
+      "id": "behavior-tool-flow-separation-and-four-steps",
+      "scenario": "工作流区分工具与流程，每个阶段遵循思考、事实锁定、生成、检查闭环",
+      "must_include": [
+        "思考",
+        "事实锁定",
+        "生成",
+        "检查",
+        "工具卡"
+      ],
+      "must_not_include": [
+        "流程卡里写命令"
       ]
     }
   ]

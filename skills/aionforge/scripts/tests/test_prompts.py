@@ -8,9 +8,9 @@ SKILLS_ROOT = SKILL_DIR.parent
 
 PACK_SKILLS = (
     "aionforge",
-    "aionforge-white",
+    "aionforge-print",
+    "aionforge-product",
     "aionforge-main",
-    "aionforge-sku",
     "aionforge-detail",
 )
 REMOVED_SKILLS = (
@@ -20,6 +20,8 @@ REMOVED_SKILLS = (
     "aionforge-vary",
     "aionforge-pdp",
     "aionforge-deconstruct",
+    "aionforge-white",
+    "aionforge-sku",
 )
 
 
@@ -32,20 +34,29 @@ def test_skill_prompt_templates_exist() -> None:
         "compose.md",
         "tryon.md",
         "vary.md",
-        "sku.md",
         "infographic.md",
-        "ghost-mannequin.md",
     ):
         text = (ROOT / name).read_text(encoding="utf-8")
-        assert "forge generate" in text
+        assert "forge " not in text
+        assert "```bash" not in text
         assert "图1" not in text
         assert "图2" not in text
+    assert not (ROOT / "sku.md").exists()
+    assert not (ROOT / "ghost-mannequin.md").exists()
+
+
+def test_prompt_templates_are_command_free() -> None:
+    for path in ROOT.glob("*.md"):
+        text = path.read_text(encoding="utf-8")
+        assert "forge " not in text, path.name
+        assert "```bash" not in text, path.name
+        assert not re.search(r"--[a-z][a-z-]+", text), path.name
 
 
 def test_tryon_template_uses_roles() -> None:
     text = (ROOT / "tryon.md").read_text(encoding="utf-8")
-    assert "garment=" in text
-    assert "model=" in text
+    assert "garment" in text
+    assert "model" in text
     assert "成衣图" in text
     assert "模特图" in text
 
@@ -80,7 +91,7 @@ def test_removed_skills_are_gone_and_not_referenced() -> None:
 
 def test_vary_and_compose_templates_use_roles() -> None:
     vary = (ROOT / "vary.md").read_text(encoding="utf-8")
-    assert "source=" in vary
+    assert "source" in vary
     assert "人物锁定" in vary
     assert "服装锁定" in vary
     assert "looks.json" in vary
@@ -88,13 +99,8 @@ def test_vary_and_compose_templates_use_roles() -> None:
     tryon = (ROOT / "tryon.md").read_text(encoding="utf-8")
     assert "眼部细节" in tryon or "眼神光" in tryon
     compose = (ROOT / "compose.md").read_text(encoding="utf-8")
-    assert "print=" in compose
-    assert "garment=" in compose
-    sku = (ROOT / "sku.md").read_text(encoding="utf-8")
-    assert "source=" in sku
-    assert "garment=" in sku
-    assert "<product>-<color>" in sku
-    assert "图1" not in sku
+    assert "print" in compose
+    assert "garment" in compose
 
 
 def test_infographic_template_has_visible_text_block() -> None:
@@ -110,4 +116,4 @@ def test_evals_json_files_valid() -> None:
     assert len(trigger["cases"]) >= 6
     assert len(behavior["cases"]) >= 4
     workflows = {case["expected_workflow"] for case in trigger["cases"] if case["should_trigger"]}
-    assert workflows == {"white", "main", "sku", "detail"}
+    assert workflows == {"print", "product", "main", "detail"}

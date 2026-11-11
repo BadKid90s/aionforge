@@ -15,6 +15,10 @@ htmlcov/
 .aionforge/
 *.local.yaml
 .env
+.mcp.json
+.grok/
+logo/
+平口/
 
 # 编辑器 / 系统
 .DS_Store

@@ -2,7 +2,6 @@ import json
 from collections.abc import Sequence
 from pathlib import Path
 
-import pytest
 from PIL import Image, ImageDraw
 
 from aionforge.core.images import FitMode, target_size
@@ -95,22 +94,6 @@ async def test_generate_without_refs_uses_generate(tmp_path: Path) -> None:
     )
     assert saved == product.workspace.root / "bg_white" / "dress-black.png"
     assert fake.calls[0][0] == "generate"
-
-
-async def test_generate_intermediate_goes_to_refs(tmp_path: Path) -> None:
-    product = _product(tmp_path)
-    fake = FakeImage()
-    ref = _png(tmp_path / "photo.png")
-    saved = await run_generate(
-        "extract", [Ref(ref)], product, fake, name="print", store="refs", cutout=False
-    )
-    assert saved == product.refs / "print.png"
-
-
-async def test_generate_requires_bucket_or_store(tmp_path: Path) -> None:
-    product = _product(tmp_path)
-    with pytest.raises(ValueError, match="二选一"):
-        await run_generate("x", [], product, FakeImage(), name="x")
 
 
 def test_stage_refs_renames_roles_and_deduplicates_same_role(tmp_path: Path) -> None:

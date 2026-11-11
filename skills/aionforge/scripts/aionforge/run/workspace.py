@@ -3,10 +3,10 @@
 交付目录只暴露业务结构：
 
     output/<logo>/
-      bg_white/  main/  sku/  detail/
+      bg_white/  main/  detail/
 
 提示词、参考图、facts、manifest、历史版本都收在 `.forge/products/<product>/`，
-不污染运营浏览的四个 bucket。
+不污染运营浏览的三个 bucket。
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from uuid import uuid4
 
 BEIJING_TZ = timezone(timedelta(hours=8), name="Asia/Shanghai")
 HIDDEN_DIR = ".forge"
-BUCKETS: tuple[str, ...] = ("bg_white", "main", "sku", "detail")
+BUCKETS: tuple[str, ...] = ("bg_white", "main", "detail")
 STORE_DIRS: tuple[str, ...] = ("refs", "tmp")
 _IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
 
@@ -64,15 +64,15 @@ def _load(path: Path) -> dict[str, Any]:
 
 
 def default_facts(logo: str, product: str) -> dict[str, Any]:
-    """新商品的事实模板；字段与 references/facts.md 保持一致。"""
+    """新商品的事实模板；字段与 references/contracts/facts.md 保持一致。"""
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "logo": logo,
         "product": product,
         "product_name": "",
-        "category": "",
-        "garment_position": "full_body",
-        "input_image_type": "",
+        "category": "T恤",
+        "garment_position": "top",
+        "input_image_type": "flat_lay",
         "visual_features": {
             "silhouette": "",
             "length": "",
@@ -80,22 +80,27 @@ def default_facts(logo: str, product: str) -> dict[str, Any]:
             "sleeve": "",
             "cuff": "",
             "hem": "",
-            "closure": "",
-            "pockets": "",
-            "waist_hip": "",
+            "closure": "无",
+            "pockets": "无",
+            "waist_hip": "直筒",
         },
         "colors": [],
         "materials_visible": [],
         "print": {
             "has_print": False,
-            "placement": "",
+            "source": "",
             "text_exact": "",
             "technique": "",
+            "palette": [],
+            "elements": [],
+            "placements": [],
+            "analysis": {},
+            "color_adaptation": {},
         },
         "selling_points": [],
         "target_scenes": [],
         "style_lock": "",
-        "conversion_driver": "visual",
+        "conversion_driver": "pattern",
         "model": {
             "ref": "",
             "face": "",
@@ -109,6 +114,7 @@ def default_facts(logo: str, product: str) -> dict[str, Any]:
         },
         "canonical": {
             "garment": "",
+            "garment_back": "",
             "anchor": "",
         },
         "uncertain": [],
@@ -116,7 +122,7 @@ def default_facts(logo: str, product: str) -> dict[str, Any]:
 
 
 class Workspace:
-    """一个 logo 的交付工作区：四个 bucket + 隐藏的商品数据。"""
+    """一个 logo 的交付工作区：三个 bucket + 隐藏的商品数据。"""
 
     def __init__(self, root: Path, logo: str) -> None:
         self.root = Path(root).expanduser().resolve()
@@ -158,41 +164,8 @@ class Workspace:
             )
         return workspace
 
-    @classmethod
-    def open(cls, output_root: Path, logo: str) -> Workspace:
-        slug = safe_slug(logo, "logo")
-        workspace = cls(Path(output_root) / slug, slug)
-        if not workspace.workspace_path.is_file():
-            raise ValueError(
-                f"工作区不存在：{workspace.root}。先运行 forge workspace init --logo {slug}"
-            )
-        workspace.prepare()
-        return workspace
-
     def product(self, product: str) -> Product:
         return Product(self, safe_slug(product, "product"))
-
-    def list_assets(self) -> dict[str, list[dict[str, Any]]]:
-        result: dict[str, list[dict[str, Any]]] = {}
-        for bucket in BUCKETS:
-            files: list[dict[str, Any]] = []
-            directory = self.bucket_dir(bucket)
-            for path in sorted(directory.iterdir()):
-                if not path.is_file() or path.suffix.lower() not in _IMAGE_SUFFIXES:
-                    continue
-                stat = path.stat()
-                files.append(
-                    {
-                        "name": path.name,
-                        "path": str(path),
-                        "size": stat.st_size,
-                        "mtime": datetime.fromtimestamp(
-                            stat.st_mtime, tz=BEIJING_TZ
-                        ).isoformat(timespec="seconds"),
-                    }
-                )
-            result[bucket] = files
-        return result
 
 
 class Product:
@@ -266,6 +239,19 @@ class Product:
             return str(path.resolve().relative_to(self.workspace.root))
         except ValueError:
             return str(path)
+
+    def resolve(self, value: str | Path) -> Path:
+        """解析 facts 里的相对路径：先商品根（refs/...），再 logo 根（bg_white/...）。"""
+        path = Path(value).expanduser()
+        if path.is_absolute():
+            return path
+        product_relative = self.root / path
+        if product_relative.exists():
+            return product_relative.resolve()
+        workspace_relative = self.workspace.root / path
+        if workspace_relative.exists():
+            return workspace_relative.resolve()
+        return product_relative.resolve()
 
     def facts(self) -> dict[str, Any]:
         return _load(self.facts_path)

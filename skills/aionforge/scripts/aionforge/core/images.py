@@ -15,7 +15,6 @@ _ALPHA_SUFFIXES = {".png", ".webp"}
 
 class FitMode(StrEnum):
     crop = "crop"
-    pad = "pad"
     expand = "expand"
 
 
@@ -117,10 +116,7 @@ def fit_image(
     if mode is FitMode.expand:
         prepare_expand_canvas(path, path, size)
         return path
-    if mode is FitMode.pad:
-        result = ImageOps.pad(image, size, method=Image.Resampling.LANCZOS, color="white")
-    else:
-        result = ImageOps.fit(image, size, method=Image.Resampling.LANCZOS)
+    result = ImageOps.fit(image, size, method=Image.Resampling.LANCZOS)
     if path.suffix.lower() in {".jpg", ".jpeg"}:
         result.save(path, format="JPEG", quality=95)
     else:
@@ -380,7 +376,6 @@ def prepare_logo(
     padding: int = 8,
     threshold: int = 238,
     tolerance: int = 18,
-    clean_white: bool = True,
     remove_enclosed_white: bool = False,
     denoise: int = 0,
 ) -> Path:
@@ -388,7 +383,7 @@ def prepare_logo(
 
     平面稿不需要经过图片模型重画，直接本地处理能保证文字和形状不被改。
     原稿自带 alpha 时也会清理与透明区域外围连通的白底 / 白边；图案内部的
-    白色（白色文字、高光、留白）不受影响。`clean_white=False` 可退回旧行为。
+    白色（白色文字、高光、留白）不受影响。
     `remove_enclosed_white=True` 会把封闭白区（字母孔洞、镂空）也清成透明；
     `denoise>0` 会删除面积小于该像素数的 alpha 孤岛。
     """
@@ -402,15 +397,14 @@ def prepare_logo(
         image = img.convert("RGBA")
     dest.parent.mkdir(parents=True, exist_ok=True)
     if image.getchannel("A").getextrema()[0] < 255:
-        if clean_white:
-            cleaned = _trim_alpha_white(
-                image,
-                threshold=threshold,
-                tolerance=tolerance,
-                remove_enclosed_white=remove_enclosed_white,
-            )
-            if cleaned is not None:
-                image = cleaned
+        cleaned = _trim_alpha_white(
+            image,
+            threshold=threshold,
+            tolerance=tolerance,
+            remove_enclosed_white=remove_enclosed_white,
+        )
+        if cleaned is not None:
+            image = cleaned
         if denoise > 0:
             image = remove_small_alpha_islands(image, min_pixels=denoise)
         bbox = image.getchannel("A").getbbox()

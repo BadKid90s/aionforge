@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+SCRIPTS_DIR="$REPO_ROOT/skills/aionforge/scripts"
+
+echo "[pre-commit] Running ruff check..."
+if [ -x "$SCRIPTS_DIR/.venv/bin/ruff" ]; then
+  "$SCRIPTS_DIR/.venv/bin/ruff" check "$SCRIPTS_DIR"
+else
+  uv run --project "$SCRIPTS_DIR" ruff check "$SCRIPTS_DIR"
+fi

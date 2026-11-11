@@ -1,6 +1,6 @@
 {
   "name": "aionforge",
-  "description": "女装电商 AI 出图 Skill 包：logo / 商品工作区 + 白底合成 / 模特换衣 / 姿势裂变 / SKU / 详情",
-  "version": "0.2.0",
+  "description": "T 恤印花电商 AI 出图 Skill 包：印花提取 / 正反面分析与左胸小标 / 实拍撞色适配与合成 / 模特主图 / 详情图",
+  "version": "0.3.0",
   "contextFileName": "GEMINI.md"
 }

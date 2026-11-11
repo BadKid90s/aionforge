@@ -1,26 +1,12 @@
 # 印花合成 Prompt
 
-**平面印花优先用本地 `forge composite`**，不经过图片模型重画，文字和颜色逐像素保留：
-
-```bash
-forge composite --garment <白底成衣> --print <透明印花> \
-  --product-dir <product_dir> --bucket bg_white \
-  --name <product>-<color> --x 0.5 --y 0.45 --width 0.35 --ink auto --json
-```
+**平面印花优先用本地 [composite](../tools/composite.md)**，不经过图片模型重画，文字和颜色逐像素保留。调用方式见工具卡。
 
 只有需要把印花贴合复杂褶皱、透视，或成衣实拍没有对应白底图时，才用下面的模型合成模板。
 
 按 `references/prompts/formula.md` 组段。把提取好的透明底印花合到白底成衣上。写入 `<product_dir>/prompts/bg_white/<product>-<color>.txt`，位置和尺寸写进「镜头语言」。
 
-```bash
-forge generate --product-dir <product_dir> --bucket bg_white \
-  --prompt-file <product_dir>/prompts/bg_white/<product>-<color>.txt \
-  --ref print=<product_dir>/refs/<product>-print.png \
-  --ref garment=<白底成衣> \
-  --name <product>-<color> --ratio 1:1 --json
-```
-
-成品落在 `output/<logo>/bg_white/<product>-<color>.png`。每个颜色单独一份 Prompt、单独一次 generate。
+调用 [generate](../tools/generate.md)，把印花和成衣按角色传入。成品落在 `output/<logo>/bg_white/<product>-<color>.png`。每个颜色单独一份 Prompt、单独一次调用。
 
 ```
 一张女装印花合成图，棚拍成衣照片。

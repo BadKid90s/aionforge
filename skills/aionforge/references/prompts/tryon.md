@@ -2,17 +2,7 @@
 
 按 `references/prompts/formula.md` 组段。把下面模板写入 `<product_dir>/prompts/main/<product>-<color>-hero.txt`，把本张姿势 / 机位写进「镜头语言」，把 `facts.json` 里必须锁定的版型 / 印花写进「主体」。比例按计划改 `1:1` 或 `3:4`。
 
-参考图必须带角色名，让文件名成为 garment / model。`garment` 用已通过的 `bg_white`，不要用原始成衣图：
-
-```bash
-forge generate --product-dir <product_dir> --bucket main \
-  --prompt-file <product_dir>/prompts/main/<product>-<color>-hero.txt \
-  --ref garment=<output/<logo>/bg_white/<product>-<color>.png> \
-  --ref model=<模特图> \
-  --name <product>-<color>-hero --ratio <计划比例，默认 1:1> --json
-```
-
-成品落在 `output/<logo>/main/<product>-<color>-hero.png`。这张通过质检后，才能作为后续姿势图的 `--ref source=`。
+参考图必须带角色名，让文件名成为 garment / model。`garment` 用已通过的 `bg_white`，不要用原始成衣图。调用 [generate](../tools/generate.md)，成品落在 `output/<logo>/main/<product>-<color>-hero.png`。这张通过质检后，才能作为后续姿势图的 `source` 参考。
 
 ```
 一张女装电商换装图。

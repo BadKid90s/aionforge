@@ -2,17 +2,7 @@
 
 按 `references/prompts/formula.md` 组段。每张单独一份 `<product_dir>/prompts/main/<product>-<color>-<pose>.txt`。**禁止**只写两三句「同一人同一件衣服 + 走两步」。人物和印花从成片抄进【主体】；【场景】【风格】【镜头语言】【主体动作】整段粘贴 `looks.json` 该张 shot。
 
-`--ref source=` 必须是本张同色已通过的 `hero`，`--ref garment=` 必须是本张同色的 `bg_white`。有姿势参考图时再加 `--ref pose=`：
-
-```bash
-forge generate --product-dir <product_dir> --bucket main \
-  --prompt-file <product_dir>/prompts/main/<product>-<color>-<pose>.txt \
-  --ref source=<output/<logo>/main/<product>-<color>-hero.png> \
-  --ref garment=<output/<logo>/bg_white/<product>-<color>.png> \
-  --name <product>-<color>-<pose> --ratio <计划比例，默认 1:1> --json
-```
-
-成品落在 `output/<logo>/main/<product>-<color>-<pose>.png`。
+`source` 必须是本张同色已通过的 `hero`，`garment` 必须是本张同色的 `bg_white`。有姿势参考图时再加 `pose` 角色。调用 [generate](../tools/generate.md)，成品落在 `output/<logo>/main/<product>-<color>-<pose>.png`。
 
 ---
 
@@ -62,4 +52,4 @@ forge generate --product-dir <product_dir> --bucket main \
 2. looks 套餐四段整段粘贴，不要改写场景和风格。
 3. 印花有字就把原文写进 Prompt，并写颜色。
 4. 裂变改镜头、身体动作和头的朝向，不改五官与衣服。
-5. 有姿势参考图时 `--ref pose=`，身体和头跟该图。
+5. 有姿势参考图时加 `pose` 角色，身体和头跟该图。

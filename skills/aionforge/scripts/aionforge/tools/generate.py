@@ -10,7 +10,6 @@ from PIL import Image
 
 from aionforge.core.images import (
     FitMode,
-    cutout_background,
     fit_image,
     needs_expand,
     prepare_expand_canvas,
@@ -58,11 +57,7 @@ def parse_ref(raw: str) -> Ref:
 
 
 def _flatten_for_api(source: Path, dest: Path) -> Path:
-    """把透明参考图铺到白底再传给模型。
-
-    不少网关会把带 alpha 的参考图压成黑底，模型随即把黑色当成画面背景，
-    导致白底商品图变成黑底。铺白底既保留图案，也避免这种背景偏移。
-    """
+    """把透明参考图铺到白底再传给模型。"""
     with Image.open(source) as img:
         if "A" not in img.getbands():
             dest.write_bytes(source.read_bytes())
@@ -98,63 +93,33 @@ async def run_generate(
     image: ImageEditor,
     *,
     name: str,
-    bucket: str | None = None,
-    store: str | None = None,
+    bucket: str,
     ratio: str | None = None,
     fit: FitMode | str = FitMode.expand,
-    cutout: bool = False,
-    padding: int = 8,
-    threshold: int = 238,
-    tolerance: int = 18,
-    remove_enclosed_white: bool = False,
-    denoise: int = 0,
     background: str = "white",
 ) -> Path:
     if not prompt.strip():
         raise ValueError("prompt 不能为空")
-    if cutout and ratio:
-        raise ValueError("--cutout 与 --ratio 不能同时使用")
-    if bool(bucket) == bool(store):
-        raise ValueError("--bucket 与 --store 必须二选一：成品用 bucket，中间产物用 store")
-    dest = product.target_path(bucket, name) if bucket else product.store_path(store or "", name)
-    prompt_path = product.write_prompt(
-        name, prompt, bucket=bucket or "", store=store or ""
-    )
+    dest = product.target_path(bucket, name)
+    prompt_path = product.write_prompt(name, prompt, bucket=bucket)
     staged = stage_refs(product, refs)
     mode = FitMode(fit) if not isinstance(fit, FitMode) else fit
-    if mode is FitMode.pad:
-        mode = FitMode.expand
     if staged:
         saved = await image.edit(prompt, staged, dest)
     else:
         saved = await image.generate(prompt, dest)
-    if cutout:
-        cutout_background(
-            saved,
-            padding=padding,
-            threshold=threshold,
-            tolerance=tolerance,
-            remove_enclosed_white=remove_enclosed_white,
-            denoise=denoise,
-        )
-    elif ratio:
+    if ratio:
         saved = await _apply_ratio(saved, ratio, mode, image, product, name, background)
     product.record_task(
         name,
         "ok",
-        bucket=bucket or "",
-        store=store or "",
+        bucket=bucket,
         image=saved,
         prompt=prompt_path,
         refs=[item.path for item in refs],
         extra={
             "ratio": ratio or "",
             "fit": str(mode),
-            "cutout": cutout,
-            "threshold": threshold,
-            "tolerance": tolerance,
-            "remove_enclosed_white": remove_enclosed_white,
-            "denoise": denoise,
             "roles": [item.role or "" for item in refs],
         },
     )

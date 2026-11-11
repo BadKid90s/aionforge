@@ -108,18 +108,6 @@ def test_doctor_deep_runs_real_edit(monkeypatch) -> None:
     assert "1024x1024" in deep["detail"]
 
 
-def test_workspace_init_json() -> None:
-    result = runner.invoke(app, ["workspace", "init", "--logo", "品牌 A", "--json"])
-    assert result.exit_code == 0, result.output
-    payload = json.loads(result.output)
-    assert payload["ok"] is True
-    root = Path(payload["run_dir"])
-    assert root.name == "品牌-A"
-    for bucket in ("bg_white", "main", "sku", "detail"):
-        assert (root / bucket).is_dir()
-    assert (root / ".forge" / "workspace.json").is_file()
-
-
 def test_product_init_json() -> None:
     result = runner.invoke(
         app,
@@ -129,6 +117,10 @@ def test_product_init_json() -> None:
     payload = json.loads(result.output)
     assert payload["ok"] is True
     product_dir = Path(payload["product_dir"])
+    root = product_dir.parents[2]
+    for bucket in ("bg_white", "main", "detail"):
+        assert (root / bucket).is_dir()
+    assert (root / ".forge" / "workspace.json").is_file()
     assert (product_dir / "facts.json").is_file()
     assert (product_dir / "manifest.json").is_file()
     assert (product_dir / "refs").is_dir()
@@ -142,6 +134,13 @@ def _init_product() -> Path:
     )
     assert result.exit_code == 0, result.output
     return Path(json.loads(result.output)["product_dir"])
+
+
+def _write_placements(product_dir: Path, placements: list[dict]) -> None:
+    facts_path = product_dir / "facts.json"
+    facts = json.loads(facts_path.read_text(encoding="utf-8"))
+    facts["print"]["placements"] = placements
+    facts_path.write_text(json.dumps(facts, ensure_ascii=False), encoding="utf-8")
 
 
 def _fake_adapter(monkeypatch) -> None:
@@ -209,80 +208,6 @@ def test_generate_writes_into_bucket(tmp_path: Path, monkeypatch) -> None:
     assert Path(payload["images"][0]) == expected
     assert expected.is_file()
     assert (product_dir / "prompts" / "bg_white" / "dress-black.txt").is_file()
-
-
-def test_generate_writes_intermediate_to_refs(tmp_path: Path, monkeypatch) -> None:
-    product_dir = _init_product()
-    _fake_adapter(monkeypatch)
-    prompt = tmp_path / "p.txt"
-    prompt.write_text("extract print on #FFFFFF", encoding="utf-8")
-    result = runner.invoke(
-        app,
-        [
-            "generate",
-            "--product-dir",
-            str(product_dir),
-            "--store",
-            "refs",
-            "--prompt-file",
-            str(prompt),
-            "--name",
-            "print",
-            "--json",
-        ],
-    )
-    assert result.exit_code == 0, result.output
-    payload = json.loads(result.output)
-    assert Path(payload["images"][0]) == product_dir / "refs" / "print.png"
-
-
-def test_generate_rejects_bucket_and_store_together(tmp_path: Path) -> None:
-    product_dir = _init_product()
-    prompt = tmp_path / "p.txt"
-    prompt.write_text("x #FFFFFF", encoding="utf-8")
-    result = runner.invoke(
-        app,
-        [
-            "generate",
-            "--product-dir",
-            str(product_dir),
-            "--bucket",
-            "main",
-            "--store",
-            "refs",
-            "--prompt-file",
-            str(prompt),
-            "--json",
-        ],
-    )
-    assert result.exit_code != 0
-    payload = json.loads(result.output)
-    assert payload["ok"] is False
-
-
-def test_generate_rejects_cutout_with_ratio(tmp_path: Path) -> None:
-    product_dir = _init_product()
-    prompt = tmp_path / "p.txt"
-    prompt.write_text("x #FFFFFF", encoding="utf-8")
-    result = runner.invoke(
-        app,
-        [
-            "generate",
-            "--product-dir",
-            str(product_dir),
-            "--store",
-            "refs",
-            "--prompt-file",
-            str(prompt),
-            "--cutout",
-            "--ratio",
-            "1:1",
-            "--json",
-        ],
-    )
-    assert result.exit_code != 0
-    payload = json.loads(result.output)
-    assert "不能同时" in payload["error"]["reason"]
 
 
 def test_cutout_command_writes_refs(tmp_path: Path) -> None:
@@ -376,92 +301,6 @@ def test_cutout_command_ai_cleans_white_background(tmp_path: Path, monkeypatch) 
     assert task["mode"] == "ai-cutout"
 
 
-def test_generate_cutout_passes_threshold_and_tolerance(
-    tmp_path: Path, monkeypatch
-) -> None:
-    product_dir = _init_product()
-    _fake_logo_adapter(monkeypatch)
-    prompt = tmp_path / "p.txt"
-    prompt.write_text("extract print on #FFFFFF", encoding="utf-8")
-    ref = tmp_path / "logo.png"
-    Image.new("RGB", (100, 100), "white").save(ref)
-
-    result = runner.invoke(
-        app,
-        [
-            "generate",
-            "--product-dir",
-            str(product_dir),
-            "--store",
-            "refs",
-            "--prompt-file",
-            str(prompt),
-            "--ref",
-            f"source={ref}",
-            "--name",
-            "print",
-            "--cutout",
-            "--threshold",
-            "240",
-            "--tolerance",
-            "20",
-            "--json",
-        ],
-    )
-    assert result.exit_code == 0, result.output
-    manifest = json.loads((product_dir / "manifest.json").read_text(encoding="utf-8"))
-    task = next(item for item in manifest["tasks"] if item["name"] == "print")
-    assert task["threshold"] == 240
-    assert task["tolerance"] == 20
-
-
-def test_extract_element_command_writes_elements_and_catalog(tmp_path: Path) -> None:
-    product_dir = _init_product()
-    source = tmp_path / "print.png"
-    image = Image.new("RGBA", (100, 100), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(image)
-    draw.rectangle((10, 10, 29, 29), fill=(255, 0, 0, 255))
-    draw.rectangle((50, 50, 79, 79), fill=(0, 0, 255, 255))
-    image.save(source)
-
-    result = runner.invoke(
-        app,
-        [
-            "extract-element",
-            "--input",
-            str(source),
-            "--product-dir",
-            str(product_dir),
-            "--name",
-            "print",
-            "--min-pixels",
-            "16",
-            "--json",
-        ],
-    )
-    assert result.exit_code == 0, result.output
-    payload = json.loads(result.output)
-    assert payload["elements"] == 2
-    assert payload["incomplete"] == 0
-    assert len(payload["images"]) == 2
-    for path in payload["images"]:
-        assert Path(path).is_file()
-    catalog = Path(payload["catalog"])
-    data = json.loads(catalog.read_text(encoding="utf-8"))
-    assert len(data["elements"]) == 2
-    manifest = json.loads((product_dir / "manifest.json").read_text(encoding="utf-8"))
-    task = next(item for item in manifest["tasks"] if item["name"] == "print-elements")
-    assert task["mode"] == "element-extract"
-    assert task["elements"] == 2
-
-
-def test_extract_element_command_is_local_only() -> None:
-    """旧命令回归纯本地：不再接受 --ai，AI 提取只走独立命令。"""
-    result = runner.invoke(app, ["extract-element", "--help"])
-    assert result.exit_code == 0, result.output
-    assert "--ai" not in result.output
-
-
 def test_extract_core_element_command_is_ai_powered(
     tmp_path: Path, monkeypatch
 ) -> None:
@@ -553,6 +392,283 @@ def test_composite_command_writes_bucket(tmp_path: Path) -> None:
     task = next(item for item in manifest["tasks"] if item["name"] == "tee-red")
     assert task["mode"] == "composite"
     assert task["ink"] == "normal"
+
+
+def test_composite_placement_reads_facts(tmp_path: Path) -> None:
+    product_dir = _init_product()
+    print_file = product_dir / "refs" / "print.png"
+    print_file.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (10, 10), (255, 0, 0, 255)).save(print_file)
+    _write_placements(
+        product_dir,
+        [
+            {
+                "id": "front-badge",
+                "side": "front",
+                "source": "refs/print.png",
+                "x": 0.5,
+                "y": 0.5,
+                "width": 0.2,
+                "ink": "normal",
+            }
+        ],
+    )
+    garment = tmp_path / "garment.png"
+    Image.new("RGB", (100, 100), "white").save(garment)
+
+    result = runner.invoke(
+        app,
+        [
+            "composite",
+            "--product-dir",
+            str(product_dir),
+            "--placement",
+            "front-badge",
+            "--garment",
+            str(garment),
+            "--bucket",
+            "bg_white",
+            "--name",
+            "tee-red",
+            "--shading",
+            "0",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["placement"] == "front-badge"
+    dest = product_dir.parents[2] / "bg_white" / "tee-red.png"
+    with Image.open(dest) as image:
+        assert image.getpixel((50, 50)) == (255, 0, 0)
+    manifest = json.loads((product_dir / "manifest.json").read_text(encoding="utf-8"))
+    task = next(item for item in manifest["tasks"] if item["name"] == "tee-red")
+    assert task["placement_id"] == "front-badge"
+
+
+def test_composite_placement_with_color_adaptation(tmp_path: Path) -> None:
+    product_dir = _init_product()
+    raw_print = product_dir / "refs" / "print.png"
+    fit_print = product_dir / "refs" / "black-fit.png"
+    raw_print.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (10, 10), (10, 10, 10, 255)).save(raw_print)
+    Image.new("RGBA", (10, 10), (255, 255, 255, 255)).save(fit_print)
+    _write_placements(
+        product_dir,
+        [
+            {
+                "id": "back-main",
+                "side": "back",
+                "source": "refs/print.png",
+                "x": 0.5,
+                "y": 0.5,
+                "width": 0.2,
+                "ink": "multiply",
+                "adaptations": {
+                    "black": {
+                        "source": "refs/black-fit.png",
+                        "ink": "normal",
+                    }
+                },
+            }
+        ],
+    )
+    garment = tmp_path / "garment-black.png"
+    Image.new("RGB", (100, 100), "black").save(garment)
+
+    result = runner.invoke(
+        app,
+        [
+            "composite",
+            "--product-dir",
+            str(product_dir),
+            "--placement",
+            "back-main",
+            "--color",
+            "black",
+            "--garment",
+            str(garment),
+            "--bucket",
+            "bg_white",
+            "--name",
+            "tee-black-back",
+            "--shading",
+            "0",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    dest = product_dir.parents[2] / "bg_white" / "tee-black-back.png"
+    with Image.open(dest) as image:
+        assert image.getpixel((50, 50)) == (255, 255, 255)
+
+
+def test_composite_placement_missing_lists_ids(tmp_path: Path) -> None:
+    product_dir = _init_product()
+    _write_placements(product_dir, [{"id": "back-main", "source": "refs/print.png"}])
+    garment = tmp_path / "garment.png"
+    Image.new("RGB", (100, 100), "white").save(garment)
+
+    result = runner.invoke(
+        app,
+        [
+            "composite",
+            "--product-dir",
+            str(product_dir),
+            "--placement",
+            "nope",
+            "--garment",
+            str(garment),
+            "--bucket",
+            "bg_white",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 1
+    payload = json.loads(result.output)
+    assert "找不到 placement" in payload["error"]["reason"]
+    assert "back-main" in payload["error"]["reason"]
+
+
+def test_composite_placement_requires_planned_facts(tmp_path: Path) -> None:
+    product_dir = _init_product()
+    garment = tmp_path / "garment.png"
+    Image.new("RGB", (100, 100), "white").save(garment)
+
+    result = runner.invoke(
+        app,
+        [
+            "composite",
+            "--product-dir",
+            str(product_dir),
+            "--placement",
+            "front-badge",
+            "--garment",
+            str(garment),
+            "--bucket",
+            "bg_white",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 1
+    payload = json.loads(result.output)
+    assert "print.placements" in payload["error"]["reason"]
+
+
+def test_composite_requires_print_or_placement(tmp_path: Path) -> None:
+    product_dir = _init_product()
+    garment = tmp_path / "garment.png"
+    Image.new("RGB", (100, 100), "white").save(garment)
+
+    result = runner.invoke(
+        app,
+        [
+            "composite",
+            "--product-dir",
+            str(product_dir),
+            "--garment",
+            str(garment),
+            "--bucket",
+            "bg_white",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 1
+    payload = json.loads(result.output)
+    assert "必须提供" in payload["error"]["reason"]
+
+
+def test_print_metrics_command_json(tmp_path: Path) -> None:
+    print_file = tmp_path / "print.png"
+    image = Image.new("RGBA", (100, 50), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((10, 10, 29, 29), fill=(255, 0, 0, 255))
+    draw.rectangle((40, 10, 59, 29), fill=(0, 0, 255, 255))
+    image.save(print_file)
+
+    result = runner.invoke(
+        app, ["print", "metrics", "--input", str(print_file), "--json"]
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    metrics = payload["prints"][0]
+    assert metrics["has_alpha"] is True
+    assert metrics["bbox"] == [10, 10, 60, 30]
+    assert metrics["aspect"] == pytest.approx(2.5)
+    assert {entry["hex"] for entry in metrics["palette"]} == {"#FF0000", "#0000FF"}
+
+
+def test_print_adapt_command_writes_refs(tmp_path: Path) -> None:
+    product_dir = _init_product()
+    garment = tmp_path / "black.png"
+    Image.new("RGB", (100, 100), "black").save(garment)
+    print_file = tmp_path / "print.png"
+    Image.new("RGBA", (20, 20), (0, 0, 0, 255)).save(print_file)
+
+    result = runner.invoke(
+        app,
+        [
+            "print",
+            "adapt",
+            "--print",
+            str(print_file),
+            "--garment",
+            str(garment),
+            "--product-dir",
+            str(product_dir),
+            "--name",
+            "print-fit",
+            "--strategy",
+            "auto",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    dest = product_dir / "refs" / "print-fit.png"
+    assert Path(payload["images"][0]) == dest
+    assert payload["strategy"] == "white"
+    assert payload["contrast_after"] > payload["contrast_before"]
+    with Image.open(dest) as image:
+        assert image.getpixel((10, 10))[:3] == (255, 255, 255)
+    manifest = json.loads((product_dir / "manifest.json").read_text(encoding="utf-8"))
+    task = next(item for item in manifest["tasks"] if item["name"] == "print-fit")
+    assert task["mode"] == "print-adapt"
+
+
+def test_print_adapt_rejects_opaque_print(tmp_path: Path) -> None:
+    product_dir = _init_product()
+    garment = tmp_path / "white.png"
+    Image.new("RGB", (100, 100), "white").save(garment)
+    print_file = tmp_path / "print.png"
+    Image.new("RGB", (20, 20), "red").save(print_file)
+
+    result = runner.invoke(
+        app,
+        [
+            "print",
+            "adapt",
+            "--print",
+            str(print_file),
+            "--garment",
+            str(garment),
+            "--product-dir",
+            str(product_dir),
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 1
+    payload = json.loads(result.output)
+    assert payload["ok"] is False
+    assert "透明印花" in payload["error"]["reason"]
 
 
 def test_verify_white_background(tmp_path: Path) -> None:
@@ -652,13 +768,3 @@ def test_prompt_check_checks_print_text(tmp_path: Path) -> None:
     )
     assert result.exit_code == 1
     assert "LOVE" in json.loads(result.output)["issues"][0]
-
-
-def test_list_assets(tmp_path: Path) -> None:
-    product_dir = _init_product()
-    target = product_dir.parents[2] / "main" / "dress-black-hero.png"
-    Image.new("RGB", (32, 32), "white").save(target)
-    result = runner.invoke(app, ["list", "--logo", "brand-a", "--json"])
-    assert result.exit_code == 0, result.output
-    payload = json.loads(result.output)
-    assert payload["buckets"]["main"][0]["name"] == "dress-black-hero.png"

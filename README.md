@@ -1,16 +1,15 @@
 # AionForge
 
-女装电商 AI 出图插件。把 logo 图案稿、空白成衣、模特照片丢给 Agent，它会从图案主标题推断 logo、从空白衣文件夹推断款式，锁定商品细节，按颜色合成白底成衣、把成衣穿到模特身上、派生姿势，并在你点名时补 SKU 规格图和详情图。
+T 恤印花电商 AI 出图插件。把印花图案稿、T 恤正反面实拍图、模特照片丢给 Agent，它会严格遵循 **「思考 → 事实锁定 → 生成 → 检查」** 闭环：先提取透明印花、分析哪些适合印正面哪些适合印背面、为背面大图提取核心元素生成左胸小印花，再针对不同颜色 T 恤实拍底图做撞色调整适配并合成商品图，最后根据模特图生成锁脸主图与详情卖点图。
 
-一组可互相引用的 Skill：入口 `aionforge` 负责调度、锁事实和质检；具体步骤在 `aionforge-white`、`aionforge-main`、`aionforge-sku`、`aionforge-detail`。
+架构上严格区分**工具层（`forge` CLI 确定性原子工具）**与**流程层（Skills 业务编排）**：入口 `aionforge` 负责总控路由；四大核心流程依次为 `aionforge-print`、`aionforge-product`、`aionforge-main`、`aionforge-detail`。
 
-- **白底商品图**：把 logo 图案合成到每个颜色的白底空白成衣，按颜色输出 `bg_white`
-- **模特换衣**：保留模特原脸和眼神，把白底成衣穿到模特身上，输出 `main`
-- **姿势展示**：基于锚点主图派生多个机位 / 姿势，跨图锁同一张脸、同一件衣
-- **SKU 配色规格图**：用 main 主图或产品图当母版，把每个颜色的白底成衣套进同一构图
-- **详情图**：卖点信息图、放大镜气泡、标注线、60:40 分屏、三角度、一衣多穿、3D 隐形人台
+- **阶段 1 印花准备（`aionforge-print`）**：提取透明印花、客观体检分析正反面适用性、提取核心元素生成左胸小印花，锁定正反面位置计划
+- **阶段 2 实拍调色与合成（`aionforge-product`）**：检测印花与各颜色 T 恤实拍底图的颜色冲突，调整适配印花颜色，合成正面 / 背面 `bg_white` 商品图
+- **阶段 3 模特主图（`aionforge-main`）**：保留模特原脸五官与眼神，将合成好的正反面 T 恤穿到模特身上，先出锚点主图再派生正面与背面回眸多姿势主图
+- **阶段 4 详情卖点图（`aionforge-detail`）**：基于生成的模特主图和 T 恤商品图，生成放大镜微距、正反双面三角度对比、60:40 分屏与多场景详情图
 
-输出以 **logo 为第一层目录**，每个 logo 下固定四个交付目录：`bg_white` / `main` / `sku` / `detail`。提示词、参考图、事实和 manifest 收在 `.forge`，不污染成品目录。
+输出以 **logo 为第一层目录**，每个 logo 下固定三个成品交付目录：`bg_white` / `main` / `detail`。提示词、透明印花、适配印花、事实和 manifest 收在 `.forge`，不污染成品目录。
 
 支持 **Claude Code**、**Codex**、**Cursor**、**Gemini CLI**、**Grok Build**，以及其他支持 Agent Skills 的工具。
 
@@ -132,12 +131,12 @@ XAI_API_KEY=xai-你的key
 
 Agent 会跑 `forge doctor`，Key、网络、目录都通过就可以用了。然后把图片拖进对话框：
 
-- 「把这个 logo 图案合成到这件短袖的黑、白、浅灰三个颜色上」
-- 「保留这个模特的脸，把这张白底成衣穿上去，再出 6 个姿势」
-- 「用这张 main 主图当母版，出黑、白、浅灰的 SKU 规格图」
-- 「给这个图案的短袖出一套详情卖点图，平台是拼多多」
+- 「这批印花里哪些适合印在 T 恤正面，哪些适合印在背面？背面那几张在左胸前加个核心元素小印花」
+- 「把这个图案合成到黑色、白色 T 恤实拍图上，存在颜色冲突的话帮我调整适配印花颜色」
+- 「保留这个模特的脸，根据合成好的 T 恤图生成主图，并派生正面和背面回眸几个姿势」
+- 「根据生成的主图和商品图生成一套详情卖点图，平台是拼多多」
 
-Agent 会先看图、从图案主标题推断 logo、从空白衣文件夹推断款式，把商品事实列给你确认；确认后先出白底，再出模特图，SKU / 详情只在你点名时生成。
+Agent 会在每个阶段按 **「思考 → 事实锁定 → 生成 → 检查」** 推进：先锁定商品与印花事实，确认后提取印花与左胸小标，再按 T 恤底色调色合成商品图，接着生成模特主图与详情图。
 
 ## 输出目录
 
@@ -146,15 +145,13 @@ output/
   锁定目标/
     bg_white/
       short-black.png
+      short-black-back.png
       short-白.png
       short-浅灰.png
     main/
       short-black-hero.png
       short-black-walk.png
       short-black-studio-3q.png
-    sku/
-      short-black.png
-      short-白.png
     detail/
       short-black-craft.png
     .forge/
@@ -167,21 +164,21 @@ output/
           history/
 ```
 
-- `bg_white` 是印花合成后的白底成衣，也是后续 main / sku / detail 的衣服唯一真相源。
-- `main` 是模特换衣与姿势展示；先出 `hero`，后续姿势从它派生。
-- `sku` / `detail` 只有用户点名才生成。
+- `bg_white` 是印花调色并合成后的 T 恤实拍商品图，也是后续 `main` / `detail` 的唯一衣服真相源；`-back` 是背面商品图。
+- `main` 是模特锁脸换衣与多姿势主图；先出 `hero` 锚点，后续姿势从它派生。
+- `detail` 基于 `main` 模特主图与 `bg_white` 商品图生成详情卖点图。
 - 同名重跑覆盖成品，旧图自动进 `history/`；不会堆出一串时间戳目录。
 
 ## 工作流
 
-| 意图 | Skill | 输出 |
-| --- | --- | --- |
-| 提取印花、合成白底、每个颜色一张白底衣图 | `aionforge-white` | `bg_white/<product>-<color>.png` |
-| 模特换衣、保留原脸、多机位 / 多姿势 | `aionforge-main` | `main/<product>-<color>-<pose>.png` |
-| SKU 规格图、按母版套多个配色 | `aionforge-sku` | `sku/<product>-<color>.png` |
-| 详情图、卖点信息图、多场景、隐形人台 | `aionforge-detail` | `detail/<product>-<detail-id>.png` |
+| 阶段 | 意图 | Skill | 输出 |
+| --- | --- | --- | --- |
+| 阶段 1 | 提取印花、分析正反面、提取核心元素生成左胸小印花 | `aionforge-print` | `refs/*` + `facts.print.placements` |
+| 阶段 2 | 针对 T 恤实拍底色调整适配印花颜色、合成正反面实拍商品图 | `aionforge-product` | `bg_white/<product>-<color>[-back].png` |
+| 阶段 3 | 模特锁脸换衣、锚点主图与正背面多姿势主图 | `aionforge-main` | `main/<product>-<color>-<pose>.png` |
+| 阶段 4 | 基于主图和商品图生成放大镜、三角度、分屏等详情图 | `aionforge-detail` | `detail/<product>-<color>-<detail-id>.png` |
 
-默认所有颜色都出；用户点名只出一个颜色时只跑该色。SKU 和详情可以用 `bg_white` 当衣服参考，也可以把 main 的锚点成片当 `source` 或母版。
+默认所有颜色都出；用户点名只出一个颜色时只跑该色。详情图同时复用 `main` 的锚点成片（`source`）与 `bg_white` 正背面商品图（`garment` / `garment_back`）。
 
 ## 常见问题
 
@@ -195,7 +192,7 @@ output/
 
 **中断了想续跑**：告诉 Agent 继续上次的任务。商品工作区、`facts.json`、`manifest.json` 都在 `output/<logo>/.forge/products/<product>/`，会沿用同一个 `product_dir` 接着出剩下的图。
 
-**想换 logo / 商品名**：重新跑 `forge workspace init` / `forge product init`；已存在的 `facts.json` 不会被覆盖。
+**想换 logo / 商品名**：重新跑 `forge product init`；已存在的 `facts.json` 不会被覆盖。
 
 **更新插件**：`npx skills update`；Claude Code 里 `/plugin marketplace update aionforge`；Grok 用 `grok plugin update aionforge`；Gemini 用 `gemini extensions update aionforge`。
 
@@ -230,18 +227,17 @@ Agent 会自动调用，一般不用手动跑。手动调用：`uv run --project
 | 命令 | 作用 |
 | --- | --- |
 | `forge doctor --json` | 检查配置、Key、连通性、日志与数据目录；`--deep` 真实 POST 一次出图 |
-| `forge workspace init --logo <logo> --json` | 创建 logo 工作区和四个交付目录 |
-| `forge product init --logo <logo> --product <product> --json` | 创建商品工作区、facts 模板、manifest |
-| `forge cutout --input <logo稿> --product-dir <dir> --name <id> --ai --json` | 平面 logo 提取：模型清洗白底，本地生成透明通道到 `refs/` |
-| `forge extract-element --input <印花.png> --product-dir <dir> --name <id> --json` | 按 alpha 连通域拆独立元素，输出 `refs/<id>-element-*.png` 和触边目录 |
-| `forge composite --garment <成衣> --print <印花> --product-dir <dir> --bucket bg_white --name <id> --json` | 本地合成印花，正片叠底 / 深色衣白墨适配，不重画文字 |
-| `forge generate --product-dir <dir> --bucket <bucket> --prompt-file <txt> --ref <图> --name <id> --json` | prompt + 参考图 → 一张成品，落到 bucket |
-| `forge generate --product-dir <dir> --store refs --prompt-file <txt> --ref <图> --name <id> --json` | 中间产物（印花 / 白底素材）落到商品工作区 |
-| `forge verify --image <图> --ratio 1:1 --white-bg --json` | 校验尺寸、比例、白底、alpha |
+| `forge product init --logo <logo> --product <product> --json` | 创建 logo 工作区、三个交付目录、商品工作区、facts 模板、manifest |
+| `forge cutout --input <印花稿> --product-dir <dir> --name <id> --ai --json` | 平面印花提取：模型清洗白底，本地生成透明通道到 `refs/` |
+| `forge extract-core-element --input <印花稿> --product-dir <dir> --name <id> --element-hint "<描述>" --json` | AI 提取一枚完整核心图标，输出 `refs/<id>.png`，带 `complete` / `margin_ratio` |
+| `forge print metrics --input <印花> --json` | 印花客观体检：比例、色数、细节密度、笔画、透明孔洞；不写文件 |
+| `forge print adapt --print <印花> --garment <成衣> --product-dir <dir> --name <id> --json` | 按成衣底色重映射印花颜色，返回对比度与颜色映射 |
+| `forge composite --product-dir <dir> --placement <id> --color <color> --garment <成衣> --name <id> --json` | 按 facts 里的 placement 与颜色合成到成衣实拍；也可显式传 `--print` / `--x` / `--y` / `--width` / `--ink` |
+| `forge generate --product-dir <dir> --bucket <bucket> --prompt-file <txt> --ref <图> --name <id> --json` | prompt + 参考图 → 一张成品，落到 `bg_white` / `main` / `detail` |
+| `forge verify --image <图> --ratio 1:1 --white-bg --json` | 校验尺寸、比例、白底、印花透明通道与碎点 |
 | `forge prompt check --file <txt> --facts <facts.json> --json` | 检查 Hex、图序号、VISIBLE_TEXT_BLOCK、印花原文 |
-| `forge list --logo <logo> --json` | 列出四个 bucket 的成品 |
 
-完整参数见 [`references/cli.md`](skills/aionforge/references/cli.md)。
+完整参数见 [`references/tools/index.md`](skills/aionforge/references/tools/index.md)；全局调用方式、JSON 信封与 bucket / store 规则见 [`references/cli.md`](skills/aionforge/references/cli.md)。
 
 ### 项目结构
 
@@ -260,19 +256,24 @@ gemini-extension.json     # Gemini CLI 扩展清单，上下文入口 GEMINI.md
 scripts/
   bump-version.sh         # 统一修改版本号
 skills/
-  aionforge/              # 入口：调度、标准流程、全局规则、forge CLI
+  aionforge/              # 入口：路由、契约、工具卡、共享 Prompt、forge CLI
     SKILL.md
     .env.example
     evals/
-    references/           # 共享 Prompt 模板、姿势/场景/风格/字体目录
+    references/
+      contracts/          # 目录 / facts / 参考图角色 / 流程依赖
+      tools/              # 每个 forge 命令一张工具卡
+      print/              # 正反面、核心图标、撞色适配规则
+      prompts/            # Prompt 模板
+      catalog/            # 姿势、平台字体与配色
     scripts/              # forge CLI（uv 项目）
-  aionforge-white/        # 印花提取 + 白底合成
-  aionforge-main/         # 模特换衣 + 姿势裂变
-  aionforge-sku/          # SKU 配色规格图
-  aionforge-detail/       # 详情图与卖点信息图
+  aionforge-print/        # 阶段 1：印花提取、正反面分析、左胸核心小标
+  aionforge-product/      # 阶段 2：T 恤实拍底色冲突适配、正反面合成
+  aionforge-main/         # 阶段 3：模特锁脸换衣 + 正背面多姿势主图
+  aionforge-detail/       # 阶段 4：基于主图与商品图生成详情卖点图
 ```
 
-入口 Skill `aionforge` 先定 logo / 商品、锁事实，再加载对应的 `aionforge-*` Skill。共享资料和 `forge` 只放在入口目录。
+入口 Skill `aionforge` 先定 logo / 商品、锁事实，再按阶段调度对应的 `aionforge-*` 流程。流程 Skill 严格遵循「思考 → 事实锁定 → 生成 → 检查」四步闭环；命令参数在 `references/tools/` 的工具卡里，共享资料和 `forge` 只放在入口目录。
 
 ## 开发
 
@@ -281,6 +282,13 @@ cd skills/aionforge/scripts
 uv sync
 uv run pytest -q
 uv run ruff check .
+
+# 校验 SKILL.md 是否符合 Agent Skills 规范（在仓库根目录）
+cd ../..
+for d in skills/aionforge skills/aionforge-print skills/aionforge-product \
+  skills/aionforge-main skills/aionforge-detail; do
+  npx -y skills-ref validate "$d"
+done
 ```
 
 发布新版本：

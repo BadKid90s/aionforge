@@ -66,21 +66,34 @@ def test_store_path_only_allows_refs_and_tmp(tmp_path: Path) -> None:
     assert product.store_path("tmp", "white").parent == product.tmp
 
 
-def test_list_assets(tmp_path: Path) -> None:
-    workspace = Workspace.create(tmp_path, "brand")
-    product = Product.create(workspace, "dress")
-    product.target_path("main", "dress-black-hero").write_bytes(b"png")
-    assets = workspace.list_assets()
-    assert [item["name"] for item in assets["main"]] == ["dress-black-hero.png"]
-    assert assets["bg_white"] == []
-
-
 def test_manifest_keeps_same_name_in_different_buckets(tmp_path: Path) -> None:
     product = Product.create(Workspace.create(tmp_path, "brand"), "dress")
     product.record_task("dress-black", "ok", bucket="bg_white")
-    product.record_task("dress-black", "ok", bucket="sku")
+    product.record_task("dress-black", "ok", bucket="detail")
     tasks = json.loads(product.manifest_path.read_text(encoding="utf-8"))["tasks"]
     assert {(task["bucket"], task["name"]) for task in tasks} == {
         ("bg_white", "dress-black"),
-        ("sku", "dress-black"),
+        ("detail", "dress-black"),
     }
+
+
+def test_default_facts_schema_v3(tmp_path: Path) -> None:
+    product = Product.create(Workspace.create(tmp_path, "brand"), "dress")
+    facts = json.loads(product.facts_path.read_text(encoding="utf-8"))
+    assert facts["schema_version"] == 3
+    assert facts["print"]["placements"] == []
+    assert facts["print"]["elements"] == []
+    assert facts["canonical"]["garment_back"] == ""
+
+
+def test_product_resolve_prefers_product_then_workspace(tmp_path: Path) -> None:
+    workspace = Workspace.create(tmp_path, "brand")
+    product = Product.create(workspace, "dress")
+    ref = product.refs / "print.png"
+    ref.write_bytes(b"png")
+    bucket = workspace.bucket_dir("bg_white") / "dress-black.png"
+    bucket.write_bytes(b"png")
+
+    assert product.resolve("refs/print.png") == ref.resolve()
+    assert product.resolve("bg_white/dress-black.png") == bucket.resolve()
+    assert product.resolve(bucket) == bucket

@@ -13,4 +13,4 @@
 | TikTok Shop | `1:1` | `3:4` | 按站点语言 | `lifestyle` | `shopify` / `douyin_xhs` |
 | Shopee / Temu | `1:1` | `3:4` | 英文 | `studio` | `shopify` |
 
-`forge generate --ratio` 只接受 `W:H`。具体像素由模型决定，CLI 会把结果拟合到对应比例（长边约 1024，短边 > 480）。比例不符时默认 `--fit expand` 扩图铺满。
+出图比例用 `W:H`。具体像素由模型决定，CLI 会把结果拟合到对应比例（长边约 1024，短边 > 480）。比例不符时默认扩图铺满，不留白边、黑边或 letterbox。参数见 [tools/generate.md](tools/generate.md)。

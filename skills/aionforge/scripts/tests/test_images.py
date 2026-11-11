@@ -235,21 +235,6 @@ def test_prepare_logo_keeps_white_wordmark_touching_one_edge(tmp_path: Path) -> 
         assert result.getpixel((52, 32)) == (255, 255, 255, 255)
 
 
-def test_prepare_logo_can_skip_alpha_cleaning(tmp_path: Path) -> None:
-    source = tmp_path / "logo.png"
-    image = Image.new("RGBA", (100, 100), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(image)
-    draw.rectangle((10, 10, 89, 89), fill=(255, 255, 255, 255))
-    draw.rectangle((35, 35, 64, 64), fill=(255, 0, 0, 255))
-    image.save(source)
-
-    dest = tmp_path / "out.png"
-    prepare_logo(source, dest, padding=2, clean_white=False)
-    with Image.open(dest) as result:
-        assert result.size == (84, 84)
-        assert result.getpixel((2, 2))[3] == 255
-
-
 def test_prepare_logo_removes_enclosed_white_when_requested(tmp_path: Path) -> None:
     """字母孔洞里的封闭白区，显式开启后要清成透明。"""
     source = tmp_path / "logo.png"

@@ -1,81 +1,77 @@
 ---
 name: aionforge-main
 description: >
-  女装模特换衣与姿势展示：保留模特原脸和眼神，把 bg_white 成衣穿到模特身上，先出锚点主图，再派生多个机位和姿势。
-  用户说换装、换衣、把衣服穿到这个模特身上、保留模特的脸、锁脸出模特图、多机位、多姿势、lookbook、再出几张时使用。
+  阶段 3 模特锁脸换衣与主图生成：按「思考 → 事实锁定 → 生成 → 检查」四步闭环，
+  保留模特参考图的原脸五官与眼神，将阶段 2 合成好的正面/背面 T 恤实拍商品图（bg_white）穿到模特身上；
+  先生成锚点主图，再派生多个机位与姿势（含背面回眸展示背面印花与正面展示左胸小标）。
+  用户说根据模特图生成主图、把 T 恤穿到模特身上、保留模特的脸、多姿势主图时使用。
   Use when the user runs /aionforge-main.
 ---
 
-# 模特换衣与姿势展示（main）
+# 阶段 3：模特锁脸换衣与多姿势主图（main）
 
-把 `bg_white` 成衣穿到指定模特身上：锁五官和眼睛、锁衣服、锁场景，整件替换上衣。头随姿势转动，不要把头钉死。先出锚点主图，后续姿势全部从锚点派生。
+本流程将阶段 2 通过质检的 T 恤实拍合成图（`bg_white` 正面与背面）穿到指定模特身上：**锁五官与眼神、锁 T 恤版型与印花、锁场景光影**，先出锚点主图（`hero`），再派生多姿势主图。
 
-这里的「换脸」指**保留模特原来的脸**换我们的商品衣，不是把另一张脸换到模特身上。用户要给模特换一张脸时，先说明本工作流不支持人脸替换。
+未加载入口时先读 `../aionforge/SKILL.md`。工具只按名称引用，参数见工具卡；本文件不写命令。Prompt 模板见 [tryon.md](../aionforge/references/prompts/tryon.md) 与 [vary.md](../aionforge/references/prompts/vary.md)。
 
-未加载入口时先读 `../aionforge/SKILL.md`。`forge` = `uv run --project <入口目录>/scripts forge`，入口目录是本 SKILL.md 同级的 `../aionforge`。Prompt 模板：`../aionforge/references/prompts/tryon.md`、`../aionforge/references/prompts/vary.md`。姿势套餐：`../aionforge/references/catalog/looks.json`。标准流程按入口 Skill。
+## 输入与输出
 
-## 输入
-
-| 素材 | 角色 | 必填 |
+| 方向 | 内容 | 说明 |
 | --- | --- | --- |
-| 各颜色 bg_white 成衣 | `garment` | 是；没有就先走 `aionforge-white` |
-| 有完整人脸的模特图 | `model` | 是 |
-| 姿势套餐或关键词（自拍 / 户外 / 咖啡 / 半身 / 车内 / 平铺 / 走 / 窗光 / 特写） | 计划 | 否，默认 `studio` |
-| 单张姿势参考图 | `pose` | 否 |
+| **输入** | 正面合成商品图 `bg_white`（`garment`）、背面合成商品图 `bg_white_back`（`garment_back`，有背面印花时必填）、模特参考图（`model`）、透明印花（`print`，防糊字辅助） | 未生成 `bg_white` 时必须先跑 `aionforge-product` |
+| **输出文件** | 锚点主图 `main/<product>-<color>-hero.png`、多姿势主图 `main/<product>-<color>-<pose>.png` | 默认输出所有已合成颜色；用户点名某色则只跑该色 |
+| **输出事实** | `facts.model`、`colors[].hero`、`colors[].anchor`、`canonical.anchor` | 供阶段 4 详情图复用同一模特形象 |
 
-bg_white 成衣提供商品事实；模特图提供身份与场景，不提供商品版型。禁止只把图案贴到模特原衣上。
+---
 
-## 输出
+## 四步闭环执行流程
 
-- 锚点：`output/<logo>/main/<product>-<color>-hero.png`
-- 姿势：`output/<logo>/main/<product>-<color>-<pose-id>.png`
-- 默认所有颜色都出；用户点名只出一个颜色时，只跑该色。
-- 单色商品可以省略 color，例如 `<product>-hero.png`、`<product>-walk.png`。
+### 第一步：思考（Think —— 解析模特特征、旧衣擦除项与正背面姿势规划）
 
-## 步骤
+1. **解析模特与环境特征**：
+   - 仔细观察模特图，提取：脸型、五官比例、眼型、瞳色、双眼皮、眼神光位置、发型发色、肤色（若模特图是手机挡脸对镜自拍，记录遮挡物位置，后续保持挡脸不强行补全五官）。
+   - 提取模特图原有的下装（牛仔裤/休闲裤/半裙）、鞋包配饰、房间陈设与主光方向色温。
+2. **识别模特原上衣擦除清单**：
+   - 找出模特原身穿的上衣与目标 T 恤不同的结构（如旧衣领型、长袖、帽衫抽绳、口袋、旧图案），列入 Prompt 的「必须移除清单」，防止旧衣残留。
+3. **正反面印花与姿势联动思考**：
+   - **只有正面印花**：从 [shots-womenswear.md](../aionforge/references/shots-womenswear.md) 与 `catalog/looks.json` 挑选正面/微侧姿势套餐（如 `studio`、`mirror`、`outdoor`、`cafe`、`walk`）。
+   - **背面主印花 + 左胸核心小标**：必须同时规划**正面姿势**（展示左胸精致小图标与正面上身版型）和**侧背 / 过肩回眸姿势**（用 `garment_back` 重点展示后背大印花）。
 
-1. `forge doctor --json`。失败则停。
-2. 复用已有商品工作区；没有就先从素材推断 logo / product 并 `forge workspace init` + `forge product init`。没有通过质检的 `bg_white` 时，先走 `aionforge-white`，不要直接拿原始成衣图换装。
-3. 看模特图，在 `facts.json` 的 `model` 段记录：五官、眼型、瞳色、双眼皮、眼神光、发型发色、肤色、下装、鞋、包、房间光线。看不清的脸是缺口，按入口 Skill「生图前确认」问用户（换露脸图 / 允许生成五官 / 保持挡脸），不要默默生成。
-4. 列出模特原上衣有、成衣没有的结构（罗纹袖口、帽兜、袋鼠兜、旧图案等），写进 Prompt 的「必须去掉」。
-5. **阶段一：逐色出锚点**。每个颜色单独跑一张主图。锚点默认复刻模特图原有的姿势、机位、下装、鞋包和房间，只把上衣换成本色 `bg_white`；用户点名要新姿势时才改。每个颜色单独跑：
-   ```bash
-   forge prompt check --file <product_dir>/prompts/main/<product>-<color>-hero.txt \
-     --facts <product_dir>/facts.json --json
-   forge generate --product-dir <product_dir> --bucket main \
-     --prompt-file <product_dir>/prompts/main/<product>-<color>-hero.txt \
-     --ref garment=<output/<logo>/bg_white/<product>-<color>.png> \
-     --ref model=<模特图> \
-     --name <product>-<color>-hero --ratio <计划比例，默认 1:1> --json
-   forge verify --image <output/<logo>/main/<product>-<color>-hero.png> --ratio <计划比例，默认 1:1> --json
-   ```
-   Prompt 用 `tryon.md`，写死成衣的领口、袖口、下摆、印花文字和本张姿势；风格段从本张 `looks.json` shot 取，必须含 6 位 Hex 色号。
-   质检通过后，把这张路径写入 `facts.colors[].anchor`，主色写入 `canonical.anchor`。
-6. **阶段二：派生姿势**。锚点通过后，再逐张出姿势图：
-   ```bash
-   forge prompt check --file <product_dir>/prompts/main/<product>-<color>-<pose>.txt \
-     --facts <product_dir>/facts.json --json
-   forge generate --product-dir <product_dir> --bucket main \
-     --prompt-file <product_dir>/prompts/main/<product>-<color>-<pose>.txt \
-     --ref source=<output/<logo>/main/<product>-<color>-hero.png> \
-     --ref garment=<output/<logo>/bg_white/<product>-<color>.png> \
-     --name <product>-<color>-<pose> --ratio <计划比例，默认 1:1> --json
-   forge verify --image <output/<logo>/main/<product>-<color>-<pose>.png> --ratio <计划比例，默认 1:1> --json
-   ```
-   - 选 pack：自拍 / 对镜 / 挡脸 → `mirror`；户外 / 街拍 / 草坪 / 店门口 → `outdoor`；咖啡 / 吧台 / 窗边 / 居家 → `cafe`；半身 / 人像 / 扶发 / 抱臂 → `portrait`；车内 / 副驾 → `car`；平铺 / 挂拍 / 净版 → `flat`；走 / 动态 → `walk`；窗光 / 室内 / 种草 → `lifestyle`；特写 / 面料 → `detail`；其余 `studio`。
-   - 用户给了参考图时，先映射它的姿势、机位和场景到最接近的 shot，不要照抄对方衣服的款式和图案。
-   - **图案有文字时，把干净印花图也传进去**：`--ref print=<product_dir>/refs/<product>-print.png`，并在 Prompt 写「印花图只用于核对图案形状和逐字写法，不要照搬白底」。实测能明显减少换姿势时的糊字。
-   - **复刻模特图的房间时写死取景**：Prompt 里点名拱形镜框、电视、沙发、矮柜的位置不变，禁止新增植物、门或第二扇窗，禁止拉远扩大视野；否则模型会自己扩展场景，四色成片构图对不上。
-   - **脸被遮挡时，遮挡物必须跟着姿势走**：模特图用手机、手、帽子或头发挡脸时，每张派生图的 Prompt 都要写「遮挡物始终在脸前，不能离开脸，禁止补全完整五官」。实测一旦没写死，模型会在「提衣摆」「转身」这类需要腾出手的姿势里把手机放下，自己编一张脸。
-   - 机位角度以实际画面差异为准：模型可能把 45° 画成接近侧身，只要与其它张角度不同、服装和场景不变，就按通过处理，不必纠结 shot 名称。
-   - 无印花时跳过 `requires: ["print"]` 的 shot。
-   - 用户给了单屏姿势参考图时加 `--ref pose=`，Prompt 写：身体、手脚、头朝向以姿势参考图为准，本张套餐文字作补充。
-   - 每张 Prompt 的【场景】【风格】【镜头语言】【主体动作】整段粘贴 `looks.json` 该 shot，不要拆开重配。
-7. **看图质检**（必须看）：
-   - 同一人的五官和眼睛；头的朝向符合本张姿势（回眸必须是侧脸 / 过肩，不是正面脸贴在背上）。
-   - 衣服是成衣那一件：领口、袖口、下摆、肩线、衣长。
-   - 印花位置、文字、颜色与成衣一致，只出现一次。
-   - 没有模特原衣残留（罗纹、帽子、旧图案）。
-   - 姿势、下装、鞋、包、背景与模特图 / 锚点一致。
-8. 失败时改 Prompt 点名出错部位（如「袖口是平口，不是罗纹」「头随身体转向，不要正面脸」），同一个 `--name` 重跑一次。两次仍失败记入交付，继续其余张。
-9. 交付 `main/` 文件列表与失败项；如果只出一个颜色，说明 Assumption。
+### 第二步：事实锁定（Lock —— 锁定 `facts.model` 与主图拍摄计划）
+
+1. 将模特五官、发型、下装、光线及 `uncertain` 写入 `facts.model`。
+2. 锁定主图生成计划：
+   - **第 1 张（锚点 `hero`）**：复刻模特原图姿势、机位与场景，仅将上衣整件替换为正面 `bg_white`。
+   - **后续派生姿势**：明确每张姿势的 `shot-id`、参考图角色组合（正面姿势传 `source=hero` + `garment=正面bg_white`；背面/回眸姿势传 `source=hero` + `garment_back=背面bg_white`；含文字印花时加传 `print=透明印花` 辅助核对字形）。
+
+### 第三步：生成（Generate —— 先出锚点，再派生多姿势）
+
+1. **生成各颜色锚点主图（`hero`）**：
+   - 按 [tryon.md](../aionforge/references/prompts/tryon.md) 编写 `<product_dir>/prompts/main/<product>-<color>-hero.txt`，写死 T 恤领口、袖口、下摆、底色、正面印花/左胸小标位置与文字，以及 6 位 Hex 色号。
+   - 调用 [prompt check](../aionforge/references/tools/prompt-check.md) 做静态检查（严禁出现「图1/图2」序号，一律用「成衣图/模特图」角色名）。
+   - 调用 [generate](../aionforge/references/tools/generate.md) 生成 `main/<product>-<color>-hero.png`，先跑第四步质检；**只有锚点通过质检后，才能继续派生其余姿势**。
+2. **从锚点派生多机位/多姿势主图**：
+   - 按 [vary.md](../aionforge/references/prompts/vary.md) 与 `looks.json` 对应 shot 编写每张姿势的 Prompt，强调「五官眼神锁定同一人，但头、颈、下颌、视线必须随本张身体动作自然转动」。
+   - 背面回眸镜头在 Prompt 中明确写死：「本张展示衣服背面，后背图案以背面成衣图为准，只出现背面主印花，严禁把左胸小图标画到后背；头部呈侧脸或后脑回眸，严禁贴正面证件照脸」。
+   - 逐张跑 [prompt check](../aionforge/references/tools/prompt-check.md) 后调用 [generate](../aionforge/references/tools/generate.md)。
+
+### 第四步：检查（Verify —— 客观校验与锁脸/锁衣视觉质检）
+
+1. **客观检查**：调用 [verify](../aionforge/references/tools/verify.md) 校验图片尺寸与目标画幅比例（如 `1:1` 或 `3:4`）。
+2. **看图质检清单**：
+   - **身份与头颈自然度**：五官、眼型、眼神光与原模特为同一人；侧身、行走、背影回眸时头颈转向自然，无「后背贴正脸」的违和感。
+   - **T 恤与印花 100% 还原**：T 恤颜色、领口、袖长、宽松度与 `bg_white` 完全一致，无模特旧衣残留；正面左胸小标与背面大印花位置、大小、颜色（含阶段 2 适配后的颜色）准确无误，正背面绝不串位。
+   - **画幅饱满**：画面铺满，无白边、黑边或 letterbox。
+3. **回写交接**：将通过质检的锚点图写入 `colors[].hero` / `anchor` 与 `canonical.anchor`，交接给 `aionforge-detail` 生成详情图。
+
+---
+
+## 失败路由
+
+| 现象 | 处置 |
+| --- | --- |
+| 五官漂移或眼神改变 | 在 Prompt【主体】细化眼型、瞳色、双眼皮与脸型特征，同一名称重跑一次 |
+| 身体转了但脸还死板正对镜头 | 在 Prompt 强调「头颈随身体转向，侧身看 3/4 脸，回眸看侧脸与后脑，禁止正脸贴背」 |
+| 背面图出现了正面左胸小标 | 检查是否误传了正面 `garment`，改为传入 `garment_back` 并在约束中禁止左胸徽章出现在背部 |
+| 换姿势后印花文字变糊 | 额外传入透明印花作为 `print` 角色参考，写明「核对图案形状与逐字写法」 |
+| 模特旧上衣结构残留 | 将残留部位（如帽衫领、旧袖口）明确加入 Prompt 的「必须去掉」列表重跑 |

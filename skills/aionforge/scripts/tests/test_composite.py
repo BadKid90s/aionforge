@@ -4,6 +4,7 @@ import pytest
 from PIL import Image, ImageDraw
 
 from aionforge.core.composite import composite_print
+from aionforge.core.placement import mean_luminance, placement_box, validate_box
 
 
 def _garment(path: Path, color: str, size: tuple[int, int] = (200, 200)) -> Path:
@@ -82,3 +83,17 @@ def test_composite_rejects_out_of_bounds(tmp_path: Path) -> None:
         composite_print(
             garment, print_file, x=0.1, y=0.5, width=0.5, ink="normal", shading=0
         )
+
+
+def test_placement_box_and_validation() -> None:
+    box = placement_box((200, 200), (20, 20), x=0.5, y=0.5, width=0.1)
+    assert box == (90, 90, 20, 20)
+    validate_box(box, (200, 200))
+
+    with pytest.raises(ValueError, match="超出画布"):
+        validate_box((1, 1, 200, 200), (200, 200))
+
+
+def test_mean_luminance_extremes() -> None:
+    assert mean_luminance(Image.new("RGB", (4, 4), "black")) == 0
+    assert mean_luminance(Image.new("RGB", (4, 4), "white")) == 255

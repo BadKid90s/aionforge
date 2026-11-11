@@ -2,7 +2,7 @@
 
 main 的模特展示图直接用 `catalog/looks.json` 该张 shot 的【风格】段，不要另写一套。
 
-信息图、人台、SKU、需要 `facts.style_lock` 的图：色板从 `catalog/typography.json` 对应平台抄 6 位 Hex；没点名平台则跟参考图写。选定后一字不差贴进每一张，不要每张重新配色。组段顺序见 `references/prompts/formula.md`。
+信息图与需要 `facts.style_lock` 的详情图：色板从 `catalog/typography.json` 对应平台抄 6 位 Hex；没点名平台则跟参考图写。选定后一字不差贴进每一张，不要每张重新配色。组段顺序见 `references/prompts/formula.md`。
 
 ## 从参考图写锁时必填
 
