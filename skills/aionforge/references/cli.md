@@ -168,6 +168,8 @@ forge extract-element --input <印花.png> --product-dir <product_dir> \
 
 先跑 `cutout` 或 `cutout --ai` 得到干净透明底，再拆元素。文字和图形会被拆成连通域；想按词合并，用 `--min-pixels` 过滤细小噪点后按需要组合。
 
+**这是纯本地命令，不调用图片模型**，也不会判断「哪个元素能独立成立」。需要 AI 挑出一枚完整核心图标，用下面的 `extract-core-element`。
+
 | 参数 | 说明 |
 | --- | --- |
 | `--input` / `-i` | 透明底印花（PNG / WebP） |
@@ -176,6 +178,37 @@ forge extract-element --input <印花.png> --product-dir <product_dir> \
 | `--min-pixels` | 忽略面积小于该像素数的连通域，默认 16 |
 | `--padding` | 每个元素的透明边距像素，默认 4 |
 | `--json` | 输出 JSON 信封，含 `elements` / `incomplete` / `catalog` |
+
+## extract-core-element
+
+```bash
+forge extract-core-element --input <原始logo稿.png> --product-dir <product_dir> \
+  --name <product>-chest-mark --element-hint "黄色笑脸骷髅头" --json
+```
+
+**AI 为主**：始终调用图片模型做语义判断，从整张印花稿里挑出**一枚**轮廓闭合、缩小后仍可辨认的核心元素，重绘到纯白底上，彻底删掉其余文字、装饰和背景。不按连通域拆分，也不静默回落本地——模型不可用时直接报错（先跑 `forge doctor --deep` 验证出图通道）。
+
+透明通道仍由本地 `cutout_background` flood fill 生成（刻意保留封闭白区，保护白色花瓣、白色字标等设计白墨），并做完整性校验：内容包围盒距画布边缘 ≥2% 才算未被裁断，结果写在 `complete` / `margin_ratio`。
+
+输出与记录：
+
+- `refs/<name>.png`：一枚 RGBA 透明底图标。
+- `refs/<name>.txt`（prompt）与 `manifest.json` 中的 `ai-element` 任务记录，含 `element_hint`、`complete`、`content_bbox`。
+- JSON 信封含 `mode` / `complete` / `margin_ratio` / `element_hint`。
+
+典型用途：后背大图 + 左胸心口小标的双印花位。`--element-hint` 留空时由模型自行挑选最合适的元素。
+
+| 参数 | 说明 |
+| --- | --- |
+| `--input` / `-i` | 原始印花稿，白底或透明底均可 |
+| `--product-dir` | 商品工作区目录 |
+| `--name` / `-n` | 输出名，默认 `core-element` |
+| `--element-hint` | 点名要提取的元素（10–25 字语义描述，不要坐标）；留空由模型挑 |
+| `--padding` | 透明边距像素，默认 12 |
+| `--denoise` | 删除面积小于该像素数的 alpha 孤岛，默认 4，`0` 关闭 |
+| `--threshold` | 本地抠白底亮度阈值，默认 238 |
+| `--tolerance` | 本地抠白底通道容差，默认 18 |
+| `--json` | 输出 JSON 信封 |
 
 ## composite
 

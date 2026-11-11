@@ -483,7 +483,10 @@ def extract_element_command(
         help="商品工作区目录，由 forge product init 生成。",
     ),
     name: str = typer.Option(
-        "print", "--name", "-n", help="输出前缀：refs/<name>-element-01.png。"
+        "print",
+        "--name",
+        "-n",
+        help="输出前缀：refs/<name>-element-01.png。",
     ),
     min_pixels: int = typer.Option(
         16, "--min-pixels", help="忽略面积小于该像素数的连通域。"
@@ -491,15 +494,18 @@ def extract_element_command(
     padding: int = typer.Option(4, "--padding", help="每个元素的透明边距像素。"),
     json_output: bool = typer.Option(False, "--json", help=_JSON_HELP),
 ) -> None:
-    """把透明底印花拆成独立元素，并标记元素是否触到画布边缘。"""
-    from PIL import Image
+    """按 alpha 连通域把透明底印花拆成多个独立元素（纯本地，不调图片模型）。
 
-    from aionforge.core.elements import element_catalog, extract_alpha_elements
-
+    需要 AI 语义级的一枚完整核心图标，请用 `forge extract-core-element`。
+    """
     try:
         item = Product.open(product_dir)
     except ValueError as exc:
         _fail(exc, json_output, stage="params")
+
+    from PIL import Image
+
+    from aionforge.core.elements import element_catalog, extract_alpha_elements
     try:
         with Image.open(source) as img:
             if "A" not in img.getbands():
@@ -557,6 +563,106 @@ def extract_element_command(
             "elements": len(elements),
             "incomplete": incomplete,
             "catalog": str(catalog),
+        },
+    )
+
+
+@app.command("extract-core-element")
+def extract_core_element_command(
+    source: Path = typer.Option(
+        ...,
+        "--input",
+        "-i",
+        exists=True,
+        readable=True,
+        help="原始印花稿：白底 PNG / JPG 或透明 PNG / WebP 均可。",
+    ),
+    product_dir: Path = typer.Option(
+        ...,
+        "--product-dir",
+        exists=True,
+        file_okay=False,
+        help="商品工作区目录，由 forge product init 生成。",
+    ),
+    name: str = typer.Option(
+        "core-element",
+        "--name",
+        "-n",
+        help="输出名：refs/<name>.png，同时写 prompt 与 manifest。",
+    ),
+    element_hint: str = typer.Option(
+        "",
+        "--element-hint",
+        help="要提取的核心元素描述，例如「黄色笑脸骷髅头」；留空由模型自行挑选。",
+    ),
+    padding: int = typer.Option(12, "--padding", help="透明边距像素。"),
+    denoise: int = typer.Option(
+        4, "--denoise", help="删除面积小于该像素数的 alpha 孤岛，0 关闭。"
+    ),
+    threshold: int = typer.Option(
+        238, "--threshold", help="本地抠白底的亮度阈值。"
+    ),
+    tolerance: int = typer.Option(
+        18, "--tolerance", help="本地抠白底的通道容差。"
+    ),
+    json_output: bool = typer.Option(False, "--json", help=_JSON_HELP),
+) -> None:
+    """用图片模型提取一枚完整、独立、可缩小的核心元素（如左胸心口小标）。
+
+    本命令始终调用图片模型做语义判断与重绘，不做连通域拆分，也不静默回落
+    本地；透明通道生成、去噪与完整性校验仍由本地完成。模型不可用时直接报错，
+    先跑 `forge doctor --deep` 检查出图通道。
+
+    需要按 alpha 列出所有碎片时用 `forge extract-element`（纯本地）。
+    """
+    from aionforge.adapters.factory import build_image_adapter
+    from aionforge.core.config import load_settings
+    from aionforge.core.log import configure_logging
+    from aionforge.tools.element_ai import run_element_extract
+
+    try:
+        item = Product.open(product_dir)
+    except ValueError as exc:
+        _fail(exc, json_output, stage="params")
+
+    settings = load_settings()
+    configure_logging(settings, console=False)
+
+    async def run():
+        adapter = build_image_adapter(settings.image)
+        try:
+            return await run_element_extract(
+                source,
+                item,
+                adapter,
+                name=name,
+                element_hint=element_hint,
+                padding=padding,
+                denoise=denoise,
+                threshold=threshold,
+                tolerance=tolerance,
+            )
+        finally:
+            await adapter.aclose()
+
+    try:
+        dest, meta = asyncio.run(run())
+    except Exception as exc:  # noqa: BLE001
+        item.record_task(
+            name, "failed", store="refs", error=str(exc), refs=[source]
+        )
+        _fail(exc, json_output)
+    _print_ok(
+        item.root,
+        [dest],
+        json_output,
+        extra={
+            "logo": item.workspace.logo,
+            "product": item.name,
+            "product_dir": str(item.root),
+            "store": "refs",
+            "command": "extract-core-element",
+            **meta,
         },
     )
 

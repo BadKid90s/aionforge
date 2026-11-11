@@ -85,7 +85,16 @@ def test_doctor_reports_log_file_in_workdir() -> None:
     payload = json.loads(result.output)
     log = next(c for c in payload["checks"] if c["name"] == "logging.file")
     assert log["pass"] is True
-    assert log["detail"] == "logs/forge.log"
+    assert Path(log["detail"]) == Path("logs/forge.log")
+
+
+def test_doctor_storage_checks_workdir() -> None:
+    """storage.writable 应检查真实写入位置（当前工作目录），而非用户 home。"""
+    result = runner.invoke(app, ["doctor", "--json"])
+    payload = json.loads(result.output)
+    storage = next(c for c in payload["checks"] if c["name"] == "storage.writable")
+    assert storage["pass"] is True
+    assert Path(storage["detail"]) == Path.cwd()
 
 
 def test_doctor_deep_runs_real_edit(monkeypatch) -> None:
@@ -444,6 +453,58 @@ def test_extract_element_command_writes_elements_and_catalog(tmp_path: Path) -> 
     task = next(item for item in manifest["tasks"] if item["name"] == "print-elements")
     assert task["mode"] == "element-extract"
     assert task["elements"] == 2
+
+
+def test_extract_element_command_is_local_only() -> None:
+    """旧命令回归纯本地：不再接受 --ai，AI 提取只走独立命令。"""
+    result = runner.invoke(app, ["extract-element", "--help"])
+    assert result.exit_code == 0, result.output
+    assert "--ai" not in result.output
+
+
+def test_extract_core_element_command_is_ai_powered(
+    tmp_path: Path, monkeypatch
+) -> None:
+    product_dir = _init_product()
+    _fake_logo_adapter(monkeypatch)
+    source = tmp_path / "logo.png"
+    Image.new("RGB", (120, 120), "white").save(source)
+
+    result = runner.invoke(
+        app,
+        [
+            "extract-core-element",
+            "--input",
+            str(source),
+            "--product-dir",
+            str(product_dir),
+            "--name",
+            "chest-mark",
+            "--element-hint",
+            "红色方块",
+            "--json",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["command"] == "extract-core-element"
+    assert payload["mode"] == "ai-element"
+    assert payload["complete"] is True
+    assert payload["element_hint"] == "红色方块"
+    assert len(payload["images"]) == 1
+
+    dest = Path(payload["images"][0])
+    with Image.open(dest) as image:
+        assert image.mode == "RGBA"
+        assert image.getpixel((0, 0))[3] == 0
+    # 不是连通域拆分：不应产出 -element-01.png 这类碎片
+    assert not (product_dir / "refs" / "chest-mark-element-01.png").exists()
+
+    manifest = json.loads((product_dir / "manifest.json").read_text(encoding="utf-8"))
+    task = next(t for t in manifest["tasks"] if t["name"] == "chest-mark")
+    assert task["mode"] == "ai-element"
+    assert task["element_hint"] == "红色方块"
+    assert task["complete"] is True
 
 
 def test_composite_command_writes_bucket(tmp_path: Path) -> None:

@@ -137,9 +137,10 @@ def collect_checks(settings: Settings, *, deep: bool = False) -> list[dict[str, 
         extra_suggestion,
     )
 
-    root = Path(settings.storage.root).expanduser()
+    # 产物 output/ 与日志都写在 Agent 当前工作目录，自检也应检查真实写入位置。
+    # 历史上这里检查 settings.storage.root（可被设为 ~/.aionforge），与实际写入位置不一致。
+    root = Path.cwd()
     try:
-        root.mkdir(parents=True, exist_ok=True)
         probe = root / ".doctor_probe"
         probe.write_text("ok", encoding="utf-8")
         probe.unlink()
@@ -149,7 +150,7 @@ def collect_checks(settings: Settings, *, deep: bool = False) -> list[dict[str, 
             "storage.writable",
             False,
             str(exc)[:120],
-            "检查权限或改 AIONFORGE_STORAGE_ROOT",
+            "检查当前工作目录的写权限（产物和日志都写在这里）",
         )
 
     log_path = Path(settings.logging.file).expanduser()

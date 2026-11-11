@@ -106,6 +106,8 @@ forge product init --logo <logo> --product <product> --json
 forge cutout --input <logo稿> --product-dir <product_dir> --name <product>-print --ai --json
 forge extract-element --input <product_dir>/refs/<product>-print.png \
   --product-dir <product_dir> --name <product>-print --json
+forge extract-core-element --input <logo稿> --product-dir <product_dir> \
+  --name <product>-chest-mark --element-hint "<核心元素描述>" --json
 forge composite --garment <白底成衣> --print <product_dir>/refs/<product>-print.png \
   --product-dir <product_dir> --bucket bg_white --name <product>-<color> \
   --x 0.5 --y 0.45 --width 0.35 --ink auto --json
@@ -118,7 +120,7 @@ forge verify --image <成品.png> --ratio 1:1 --white-bg --json
 
 - 参考图带角色名：`--ref garment=`、`--ref garment_back=`、`--ref model=`、`--ref print=`、`--ref source=`、`--ref pose=`。
 - 平面 logo 稿提取优先 `cutout --ai`：模型只清洗白底，透明通道仍由本地生成；原稿本来就是干净透明 PNG 时去掉 `--ai`，只走本地。
-- 需要独立元素时跑 `extract-element`：按 alpha 连通域拆分，`refs/<name>-elements.json` 里 `touches_edge` 为 true 的元素可能被裁断，要回源稿补全。
+- 两个提取命令职责分开、互不回落：`extract-core-element` 是 **AI 语义提取**，从原始稿里挑一枚完整独立的核心图标（做左胸心口小标用这个），始终调用图片模型，可用 `--element-hint` 点名元素，输出单张 `refs/<name>.png`；模型不通就直接报错，先跑 `forge doctor --deep`。`extract-element` 是**纯本地**按 alpha 连通域拆出所有碎片，`refs/<name>-elements.json` 里 `touches_edge` 为 true 的元素可能被裁断，要回源稿补全；它不调模型，也不判断「哪个元素能独立成立」。
 - 平面印花合成优先 `composite`：本地 alpha 合成，文字不会被重画；浅色衣 `--ink auto` 走正片叠底，深色衣自动白墨打底、深色笔画转白。只有需要贴合复杂褶皱/透视时才走模型重绘。
 - 成品写 `--bucket`；印花、白底清理这类中间产物写 `--store refs` 或 `--store tmp`，不要污染四个 bucket。
 - 返回 `{ok, run_dir, images, error}`。完整参数见 `references/cli.md`。

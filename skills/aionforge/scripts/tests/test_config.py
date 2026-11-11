@@ -246,9 +246,9 @@ def test_invalid_http_settings_raise(name: str, value: str) -> None:
 def test_storage_and_log_default_to_agent_workdir() -> None:
     settings = load_settings(GROK)
     assert settings.storage.root == "."
-    assert settings.logging.file == "logs/forge.log"
+    assert Path(settings.logging.file) == Path("logs/forge.log")
 
 
 def test_log_file_follows_custom_storage_root() -> None:
     settings = load_settings({**GROK, "AIONFORGE_STORAGE_ROOT": "runs"})
-    assert settings.logging.file == "runs/logs/forge.log"
+    assert Path(settings.logging.file) == Path("runs/logs/forge.log")
