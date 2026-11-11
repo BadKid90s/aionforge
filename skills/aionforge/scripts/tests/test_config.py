@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from aionforge.core.config import (
+    ConfigError,
     auth_headers,
     available_providers,
     load_settings,
@@ -202,3 +205,50 @@ def test_dotenv_google_gemini_base_url(tmp_path: Path) -> None:
     assert settings.image.provider == "gemini"
     assert settings.image.api_key == "g-from-file"
     assert settings.image.api_base == "http://from-dotenv/v1beta"
+
+
+def test_http_timeout_retries_and_backoff_are_configurable() -> None:
+    settings = load_settings(
+        {
+            **GROK,
+            "AIONFORGE_HTTP_TIMEOUT": "30",
+            "AIONFORGE_HTTP_RETRIES": "5",
+            "AIONFORGE_HTTP_BACKOFF": "0.5",
+        }
+    )
+    assert settings.image.timeout == 30.0
+    assert settings.image.retries == 5
+    assert settings.image.backoff == 0.5
+
+
+def test_http_retry_defaults() -> None:
+    settings = load_settings(GROK)
+    assert settings.image.timeout == 120.0
+    assert settings.image.retries == 2
+    assert settings.image.backoff == 2.0
+
+
+@pytest.mark.parametrize(
+    "name,value",
+    [
+        ("AIONFORGE_HTTP_TIMEOUT", "0"),
+        ("AIONFORGE_HTTP_TIMEOUT", "abc"),
+        ("AIONFORGE_HTTP_RETRIES", "-1"),
+        ("AIONFORGE_HTTP_RETRIES", "1.5"),
+        ("AIONFORGE_HTTP_BACKOFF", "-2"),
+    ],
+)
+def test_invalid_http_settings_raise(name: str, value: str) -> None:
+    with pytest.raises(ConfigError):
+        load_settings({**GROK, name: value})
+
+
+def test_storage_and_log_default_to_agent_workdir() -> None:
+    settings = load_settings(GROK)
+    assert settings.storage.root == "."
+    assert settings.logging.file == "logs/forge.log"
+
+
+def test_log_file_follows_custom_storage_root() -> None:
+    settings = load_settings({**GROK, "AIONFORGE_STORAGE_ROOT": "runs"})
+    assert settings.logging.file == "runs/logs/forge.log"

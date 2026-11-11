@@ -167,12 +167,20 @@ def _background_mask(
 
 
 def cutout_background(
-    path: Path, *, threshold: int = 238, padding: int = 8, tolerance: int = 18
+    path: Path,
+    *,
+    threshold: int = 238,
+    padding: int = 8,
+    tolerance: int = 18,
+    remove_enclosed_white: bool = False,
+    denoise: int = 0,
 ) -> Path:
     """把与边缘相连的浅色背景变成透明，并按图案边界裁切。
 
     先采样四边估计背景色，能估计时按颜色距离抠图，适配米白、浅灰等非纯白稿；
-    边缘太杂时退回亮度阈值。只有和边缘连通的背景会被去掉，图案内部的白色保留。
+    边缘太杂时退回亮度阈值。默认只有和边缘连通的背景会被去掉，图案内部的白色
+    保留；`remove_enclosed_white=True` 时连封闭白区（字母孔洞、镂空）一起去掉。
+    `denoise>0` 时删除面积小于该像素数的 alpha 孤岛。
     """
     if path.suffix.lower() not in _ALPHA_SUFFIXES:
         raise ValueError("透明背景需要 .png 或 .webp 输出")
@@ -187,16 +195,21 @@ def cutout_background(
         background = _background_mask(image, background_color, tolerance=tolerance)
     else:
         background = image.convert("L").point(lambda value: 255 if value >= threshold else 0)
-    fill = 128
-    step = max(1, min(width, height) // 32)
-    seeds = {(x, y) for x in range(0, width, step) for y in (0, height - 1)}
-    seeds |= {(x, y) for y in range(0, height, step) for x in (0, width - 1)}
-    for x, y in seeds:
-        if background.getpixel((x, y)) == 255:
-            ImageDraw.floodfill(background, (x, y), fill, thresh=0)
-    alpha = background.point(lambda value: 0 if value == fill else 255)
+    if remove_enclosed_white:
+        alpha = background.point(lambda value: 0 if value == 255 else 255)
+    else:
+        fill = 128
+        step = max(1, min(width, height) // 32)
+        seeds = {(x, y) for x in range(0, width, step) for y in (0, height - 1)}
+        seeds |= {(x, y) for y in range(0, height, step) for x in (0, width - 1)}
+        for x, y in seeds:
+            if background.getpixel((x, y)) == 255:
+                ImageDraw.floodfill(background, (x, y), fill, thresh=0)
+        alpha = background.point(lambda value: 0 if value == fill else 255)
     image.putalpha(alpha)
-    bbox = alpha.getbbox()
+    if denoise > 0:
+        image = remove_small_alpha_islands(image, min_pixels=denoise)
+    bbox = image.getchannel("A").getbbox()
     if bbox is None:
         raise ValueError("提取结果没有可见图案")
     cropped = image.crop(bbox)
@@ -213,18 +226,193 @@ def cutout_background(
     return path
 
 
-def prepare_logo(source: Path, dest: Path, *, padding: int = 8) -> Path:
-    """平面 logo 稿本地预处理：已有 alpha 就裁到图案边界，否则按背景色抠图。
+def _alpha_speck_mask(
+    alpha: Image.Image, *, min_pixels: int
+) -> tuple[Image.Image, int]:
+    """找出 alpha 连通域中面积小于 min_pixels 的孤岛。
+
+    返回 (掩码, 孤岛数量)：掩码 255 的位置是需要删除的小孤岛。
+    """
+    min_pixels = max(1, int(min_pixels))
+    mask = alpha.point(lambda value: 255 if value > 0 else 0)
+    if mask.getbbox() is None:
+        return Image.new("L", mask.size, 0), 0
+    width, height = mask.size
+    pixels = mask.load()
+    small = 128
+    large = 127
+    specks = 0
+    for y in range(height):
+        for x in range(width):
+            if pixels[x, y] != 255:
+                continue
+            before = mask.histogram()[large]
+            ImageDraw.floodfill(mask, (x, y), large, thresh=0)
+            area = mask.histogram()[large] - before
+            if area < min_pixels:
+                ImageDraw.floodfill(mask, (x, y), small, thresh=0)
+                specks += 1
+    return mask.point(lambda value: 255 if value == small else 0), specks
+
+
+def remove_small_alpha_islands(image: Image.Image, *, min_pixels: int) -> Image.Image:
+    """删除 alpha 中面积过小的孤立碎点，保留正常图案。"""
+    specks, _ = _alpha_speck_mask(image.getchannel("A"), min_pixels=min_pixels)
+    if specks.getbbox() is None:
+        return image
+    cleaned = ImageChops.darker(
+        image.getchannel("A"), specks.point(lambda value: 0 if value else 255)
+    )
+    result = image.copy()
+    result.putalpha(cleaned)
+    return result
+
+
+def alpha_speck_count(image: Image.Image, *, min_pixels: int = 4) -> int:
+    """统计 alpha 中小于 min_pixels 的孤立碎点数量。"""
+    _, count = _alpha_speck_mask(image.getchannel("A"), min_pixels=min_pixels)
+    return count
+
+
+def alpha_border_white_ratio(
+    image: Image.Image, *, threshold: int = 238, tolerance: int = 18
+) -> float:
+    """alpha 包围盒四边中，近白像素占不透明像素的比例。
+
+    印花外围残留白边时这个比例会很高；白色字标也会触发，需要结合图案判断。
+    """
+    if "A" not in image.getbands():
+        return 0.0
+    rgba = image.convert("RGBA")
+    bbox = rgba.getchannel("A").getbbox()
+    if bbox is None:
+        return 0.0
+    cropped = rgba.crop(bbox)
+    width, height = cropped.size
+    pixels = cropped.load()
+    coords = {(x, 0) for x in range(width)} | {(x, height - 1) for x in range(width)}
+    coords |= {(0, y) for y in range(height)} | {(width - 1, y) for y in range(height)}
+    total = 0
+    near_white = 0
+    for x, y in coords:
+        red, green, blue, alpha_value = pixels[x, y]
+        if alpha_value == 0:
+            continue
+        total += 1
+        if (
+            min(red, green, blue) >= threshold
+            and max(red, green, blue) - min(red, green, blue) <= tolerance
+        ):
+            near_white += 1
+    return near_white / total if total else 0.0
+
+
+def _trim_alpha_white(
+    image: Image.Image, *, threshold: int, tolerance: int, remove_enclosed_white: bool
+) -> Image.Image | None:
+    """清掉 alpha 包围盒边缘连通的白底 / 白边，保留图案内部的白色。
+
+    原稿只要带透明通道，旧实现就直接按 alpha 裁切返回；但很多素材的 alpha
+    只包住了整块画布，白底仍然留在 alpha 内，于是白边原样被带进商品图。
+    这里以 alpha 包围盒四边为种子做 flood fill，只清除与外围连通的白像素；
+    被深色描边包住的白色文字、高光和留白不会被误删。
+
+    清完后如果没有任何可见内容（例如图案本身就是白色），返回 None，
+    调用方保留原图，避免把白色 logo 整个抹掉。
+
+    `remove_enclosed_white=True` 时不再只清外围，而是把所有近背景色像素
+    （含字母孔洞、封闭白区）都清成透明；白色字标不要开。
+    """
+    bbox = image.getchannel("A").getbbox()
+    if bbox is None:
+        return None
+    cropped = image.crop(bbox)
+    background = _estimate_background(cropped, tolerance=tolerance)
+    if background is not None and min(background) < 200:
+        # 透明稿外围的 RGB 可能是任意值，不能把深色描边当成背景。
+        background = None
+    if background is not None:
+        mask = _background_mask(cropped, background, tolerance=tolerance)
+    else:
+        mask = cropped.convert("L").point(
+            lambda value: 255 if value >= threshold else 0
+        )
+    width, height = cropped.size
+    if remove_enclosed_white:
+        # 显式要求时，把所有接近背景色的像素都当背景，包括字母孔洞和封闭白区。
+        removed = mask.point(lambda value: 0 if value == 255 else 255)
+    else:
+        seeds = (
+            [(x, 0) for x in range(width)]
+            + [(x, height - 1) for x in range(width)]
+            + [(0, y) for y in range(height)]
+            + [(width - 1, y) for y in range(height)]
+        )
+        fill = 128
+        for seed in seeds:
+            if mask.getpixel(seed) == 255:
+                ImageDraw.floodfill(mask, seed, fill, thresh=0)
+        filled = mask.histogram()[fill]
+        if filled == 0:
+            return None
+        # 白底 / 白边通常同时贴住包围盒的多条边；白色字标往往只贴一条边。
+        # 少于三条边、或面积过小的白色区域不当成背景，避免误删白色设计。
+        edges = (
+            any(mask.getpixel((x, 0)) == fill for x in range(width)),
+            any(mask.getpixel((x, height - 1)) == fill for x in range(width)),
+            any(mask.getpixel((0, y)) == fill for y in range(height)),
+            any(mask.getpixel((width - 1, y)) == fill for y in range(height)),
+        )
+        if sum(edges) < 3 or filled < max(1, int(width * height * 0.002)):
+            return None
+        removed = mask.point(lambda value: 0 if value == fill else 255)
+    cleaned_alpha = ImageChops.darker(cropped.getchannel("A"), removed)
+    if cleaned_alpha.getbbox() is None:
+        return None
+    cropped.putalpha(cleaned_alpha)
+    return cropped
+
+
+def prepare_logo(
+    source: Path,
+    dest: Path,
+    *,
+    padding: int = 8,
+    threshold: int = 238,
+    tolerance: int = 18,
+    clean_white: bool = True,
+    remove_enclosed_white: bool = False,
+    denoise: int = 0,
+) -> Path:
+    """平面 logo 稿本地预处理：裁到图案主体并输出透明底。
 
     平面稿不需要经过图片模型重画，直接本地处理能保证文字和形状不被改。
+    原稿自带 alpha 时也会清理与透明区域外围连通的白底 / 白边；图案内部的
+    白色（白色文字、高光、留白）不受影响。`clean_white=False` 可退回旧行为。
+    `remove_enclosed_white=True` 会把封闭白区（字母孔洞、镂空）也清成透明；
+    `denoise>0` 会删除面积小于该像素数的 alpha 孤岛。
     """
     if dest.suffix.lower() not in _ALPHA_SUFFIXES:
         raise ValueError("图案输出需要 .png 或 .webp")
     padding = max(padding, 0)
+    threshold = min(max(int(threshold), 0), 255)
+    tolerance = min(max(int(tolerance), 0), 255)
+    denoise = max(int(denoise), 0)
     with Image.open(source) as img:
         image = img.convert("RGBA")
     dest.parent.mkdir(parents=True, exist_ok=True)
     if image.getchannel("A").getextrema()[0] < 255:
+        if clean_white:
+            cleaned = _trim_alpha_white(
+                image,
+                threshold=threshold,
+                tolerance=tolerance,
+                remove_enclosed_white=remove_enclosed_white,
+            )
+            if cleaned is not None:
+                image = cleaned
+        if denoise > 0:
+            image = remove_small_alpha_islands(image, min_pixels=denoise)
         bbox = image.getchannel("A").getbbox()
         if bbox is None:
             raise ValueError("图案没有可见内容")
@@ -244,4 +432,11 @@ def prepare_logo(source: Path, dest: Path, *, padding: int = 8) -> Path:
         image.save(dest, format="WEBP", lossless=True)
     else:
         image.save(dest, format="PNG")
-    return cutout_background(dest, padding=padding)
+    return cutout_background(
+        dest,
+        padding=padding,
+        threshold=threshold,
+        tolerance=tolerance,
+        remove_enclosed_white=remove_enclosed_white,
+        denoise=denoise,
+    )

@@ -10,7 +10,7 @@ from rich import print
 from aionforge.core.images import FitMode, parse_ratio
 from aionforge.core.prompt_check import validate_prompt_text
 from aionforge.core.verify import verify_image
-from aionforge.run.workspace import BUCKETS, STORE_DIRS, Product, Workspace
+from aionforge.run.workspace import BUCKETS, STORE_DIRS, Product, Workspace, safe_name
 
 app = typer.Typer(
     no_args_is_help=True,
@@ -31,6 +31,32 @@ prompt_app = typer.Typer(
 app.add_typer(workspace_app, name="workspace")
 app.add_typer(product_app, name="product")
 app.add_typer(prompt_app, name="prompt")
+
+
+def _version_callback(value: bool) -> None:
+    if not value:
+        return
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        number = version("aionforge")
+    except PackageNotFoundError:
+        number = "0.0.0"
+    print(f"aionforge {number}")
+    raise typer.Exit()
+
+
+@app.callback()
+def _root(
+    version: bool = typer.Option(
+        False,
+        "--version",
+        callback=_version_callback,
+        is_eager=True,
+        help="显示版本号。",
+    ),
+) -> None:
+    """货坊 AionForge — 女装电商出图。"""
 
 _RATIO_HELP = "输出图片比例，格式 W:H，输出宽高均大于 480px。"
 _FIT_HELP = "比例不符时：expand 扩图铺满（默认，禁止留白），crop 居中裁切。"
@@ -180,6 +206,24 @@ def generate_command(
         False, "--cutout/--no-cutout", help="白底转透明并按图案裁切（印花提取用）。"
     ),
     padding: int = typer.Option(8, "--padding", help="--cutout 时的透明边距像素。"),
+    threshold: int = typer.Option(
+        238,
+        "--threshold",
+        help="亮度阈值：背景估计失败时，亮度 >= 该值的像素视为背景（0-255）。",
+    ),
+    tolerance: int = typer.Option(
+        18,
+        "--tolerance",
+        help="背景色容差：与边缘采样背景色的最大通道差（0-255）。",
+    ),
+    remove_enclosed_white: bool = typer.Option(
+        False,
+        "--remove-enclosed-white/--keep-enclosed-white",
+        help="--cutout 时把封闭白区（字母孔洞、镂空）也清成透明；白色字标不要开。",
+    ),
+    denoise: int = typer.Option(
+        0, "--denoise", help="--cutout 时删除面积小于该像素数的 alpha 孤岛，0 关闭。"
+    ),
     json_output: bool = typer.Option(False, "--json", help=_JSON_HELP),
 ) -> None:
     """通用出图：成品写 bucket，中间产物写 store；prompt/refs/manifest 写进商品工作区。"""
@@ -203,6 +247,12 @@ def generate_command(
     if store and store not in STORE_DIRS:
         _fail(
             ValueError(f"store 必须是 {', '.join(STORE_DIRS)}，收到：{store}"),
+            json_output,
+            stage="params",
+        )
+    if cutout and ratio:
+        _fail(
+            ValueError("--cutout 与 --ratio 不能同时使用：抠图按图案尺寸输出，不套画幅比例"),
             json_output,
             stage="params",
         )
@@ -238,6 +288,10 @@ def generate_command(
                 fit=fit,
                 cutout=cutout,
                 padding=padding,
+                threshold=threshold,
+                tolerance=tolerance,
+                remove_enclosed_white=remove_enclosed_white,
+                denoise=denoise,
                 background=background,
             )
         finally:
@@ -290,28 +344,113 @@ def cutout_command(
         "print", "--name", "-n", help="输出文件名，写入 refs/<name>.png。"
     ),
     padding: int = typer.Option(8, "--padding", help="透明边距像素。"),
+    threshold: int = typer.Option(
+        238,
+        "--threshold",
+        help="亮度阈值：背景估计失败时，亮度 >= 该值的像素视为背景（0-255）。",
+    ),
+    tolerance: int = typer.Option(
+        18,
+        "--tolerance",
+        help="背景色容差：与边缘采样背景色的最大通道差（0-255）。",
+    ),
+    clean_white: bool = typer.Option(
+        True,
+        "--clean-white/--no-clean-white",
+        help="原稿自带 alpha 时，仍清理与边界连通的白底 / 白边。",
+    ),
+    remove_enclosed_white: bool = typer.Option(
+        False,
+        "--remove-enclosed-white/--keep-enclosed-white",
+        help="把封闭白区（字母孔洞、镂空）也清成透明；白色字标不要开。",
+    ),
+    denoise: int = typer.Option(
+        0, "--denoise", help="删除面积小于该像素数的 alpha 孤岛，0 关闭。"
+    ),
+    ai: bool = typer.Option(
+        False,
+        "--ai",
+        help="先用图片模型把图案清洗到纯白底，再本地抠图（适合 alpha 内残留白底的原稿）。",
+    ),
     json_output: bool = typer.Option(False, "--json", help=_JSON_HELP),
 ) -> None:
-    """本地抠图：把平面图案稿转透明底并裁到图案主体，不调用图片模型。"""
+    """提取平面图案：默认本地抠图；--ai 时先让图片模型清洗白底。"""
     from aionforge.core.images import prepare_logo
 
     try:
         item = Product.open(product_dir)
     except ValueError as exc:
         _fail(exc, json_output, stage="params")
-    try:
-        dest = item.store_path("refs", name)
-        prepare_logo(source, dest, padding=padding)
-    except Exception as exc:  # noqa: BLE001
-        item.record_task(name, "failed", store="refs", error=str(exc))
-        _fail(exc, json_output)
-    item.record_task(
-        name,
-        "ok",
-        store="refs",
-        image=dest,
-        extra={"mode": "local-cutout", "source": str(source)},
-    )
+
+    if ai:
+        from aionforge.adapters.factory import build_image_adapter
+        from aionforge.core.config import load_settings
+        from aionforge.core.log import configure_logging
+        from aionforge.tools.extract import run_logo_extract
+
+        settings = load_settings()
+        configure_logging(settings, console=False)
+
+        async def run():
+            image = build_image_adapter(settings.image)
+            try:
+                return await run_logo_extract(
+                    source,
+                    item,
+                    image,
+                    name=name,
+                    padding=padding,
+                    threshold=threshold,
+                    tolerance=tolerance,
+                    remove_enclosed_white=remove_enclosed_white,
+                    denoise=denoise,
+                )
+            finally:
+                await image.aclose()
+
+        try:
+            dest = asyncio.run(run())
+        except Exception as exc:  # noqa: BLE001
+            item.record_task(
+                name, "failed", store="refs", error=str(exc), refs=[source]
+            )
+            _fail(exc, json_output)
+    else:
+        try:
+            staged = item.tmp / f"{safe_name(name)}-cutout.png"
+            prepare_logo(
+                source,
+                staged,
+                padding=padding,
+                threshold=threshold,
+                tolerance=tolerance,
+                clean_white=clean_white,
+                remove_enclosed_white=remove_enclosed_white,
+                denoise=denoise,
+            )
+            dest = item.store_path("refs", name)
+            dest.write_bytes(staged.read_bytes())
+        except Exception as exc:  # noqa: BLE001
+            item.record_task(
+                name, "failed", store="refs", error=str(exc), refs=[source]
+            )
+            _fail(exc, json_output)
+        item.record_task(
+            name,
+            "ok",
+            store="refs",
+            image=dest,
+            refs=[source],
+            extra={
+                "mode": "local-cutout",
+                "source": str(source),
+                "threshold": threshold,
+                "tolerance": tolerance,
+                "clean_white": clean_white,
+                "remove_enclosed_white": remove_enclosed_white,
+                "denoise": denoise,
+            },
+        )
     _print_ok(
         item.root,
         [dest],
@@ -321,6 +460,240 @@ def cutout_command(
             "product": item.name,
             "product_dir": str(item.root),
             "store": "refs",
+            "mode": "ai-cutout" if ai else "local-cutout",
+        },
+    )
+
+
+@app.command("extract-element")
+def extract_element_command(
+    source: Path = typer.Option(
+        ...,
+        "--input",
+        "-i",
+        exists=True,
+        readable=True,
+        help="透明底印花（PNG / WebP）。",
+    ),
+    product_dir: Path = typer.Option(
+        ...,
+        "--product-dir",
+        exists=True,
+        file_okay=False,
+        help="商品工作区目录，由 forge product init 生成。",
+    ),
+    name: str = typer.Option(
+        "print", "--name", "-n", help="输出前缀：refs/<name>-element-01.png。"
+    ),
+    min_pixels: int = typer.Option(
+        16, "--min-pixels", help="忽略面积小于该像素数的连通域。"
+    ),
+    padding: int = typer.Option(4, "--padding", help="每个元素的透明边距像素。"),
+    json_output: bool = typer.Option(False, "--json", help=_JSON_HELP),
+) -> None:
+    """把透明底印花拆成独立元素，并标记元素是否触到画布边缘。"""
+    from PIL import Image
+
+    from aionforge.core.elements import element_catalog, extract_alpha_elements
+
+    try:
+        item = Product.open(product_dir)
+    except ValueError as exc:
+        _fail(exc, json_output, stage="params")
+    try:
+        with Image.open(source) as img:
+            if "A" not in img.getbands():
+                raise ValueError("元素提取需要透明底印花，先运行 forge cutout")
+            image = img.convert("RGBA")
+        elements = extract_alpha_elements(
+            image, min_pixels=min_pixels, padding=padding
+        )
+        if not elements:
+            raise ValueError("没有可提取的元素；检查 alpha 或调小 --min-pixels")
+        paths: list[Path] = []
+        for element in elements:
+            dest = item.store_path("refs", f"{name}-element-{element.index:02d}")
+            element.image.save(dest, format="PNG")
+            paths.append(dest)
+        catalog = item.refs / f"{safe_name(name)}-elements.json"
+        catalog.write_text(
+            json.dumps(
+                element_catalog(source, elements, paths=paths),
+                ensure_ascii=False,
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+    except Exception as exc:  # noqa: BLE001
+        item.record_task(
+            f"{name}-elements", "failed", store="refs", error=str(exc), refs=[source]
+        )
+        _fail(exc, json_output)
+    incomplete = sum(element.touches_edge for element in elements)
+    item.record_task(
+        f"{name}-elements",
+        "ok",
+        store="refs",
+        refs=[source],
+        extra={
+            "mode": "element-extract",
+            "prefix": name,
+            "elements": len(elements),
+            "incomplete": incomplete,
+            "catalog": str(catalog),
+            "min_pixels": min_pixels,
+            "padding": padding,
+        },
+    )
+    _print_ok(
+        item.root,
+        paths,
+        json_output,
+        extra={
+            "logo": item.workspace.logo,
+            "product": item.name,
+            "product_dir": str(item.root),
+            "store": "refs",
+            "elements": len(elements),
+            "incomplete": incomplete,
+            "catalog": str(catalog),
+        },
+    )
+
+
+@app.command("composite")
+def composite_command(
+    garment: Path = typer.Option(
+        ...,
+        "--garment",
+        "-g",
+        exists=True,
+        readable=True,
+        help="成衣图（通常用 bg_white 成品）。",
+    ),
+    print_file: Path = typer.Option(
+        ...,
+        "--print",
+        "--print-file",
+        exists=True,
+        readable=True,
+        help="透明底印花 PNG / WebP。",
+    ),
+    product_dir: Path = typer.Option(
+        ...,
+        "--product-dir",
+        exists=True,
+        file_okay=False,
+        help="商品工作区目录，由 forge product init 生成。",
+    ),
+    name: str = typer.Option(
+        "print-composite", "--name", "-n", help="结果图文件名（不含扩展名）。"
+    ),
+    bucket: str | None = typer.Option(
+        None, "--bucket", "-b", help="成品落点：bg_white / main / sku / detail。"
+    ),
+    store: str | None = typer.Option(
+        None, "--store", help="中间产物落点：refs 或 tmp。"
+    ),
+    x: float = typer.Option(0.5, "--x", help="印花中心横坐标，占画布宽度比例。"),
+    y: float = typer.Option(0.38, "--y", help="印花中心纵坐标，占画布高度比例。"),
+    width: float = typer.Option(0.35, "--width", help="印花宽度，占画布宽度比例。"),
+    ink: str = typer.Option(
+        "auto", "--ink", help="墨色策略：auto / multiply / normal / white。"
+    ),
+    shading: float = typer.Option(
+        0.25, "--shading", help="布料明暗强度 0-1；multiply 模式不再叠加。"
+    ),
+    opacity: float = typer.Option(1.0, "--opacity", help="印花不透明度 0-1。"),
+    underbase_expand: int = typer.Option(
+        0,
+        "--underbase-expand",
+        help="white 模式下白墨底向外扩张像素；默认 0，调大会出现白边。",
+    ),
+    json_output: bool = typer.Option(False, "--json", help=_JSON_HELP),
+) -> None:
+    """本地合成：把印花贴到成衣图上，支持正片叠底与深色衣白墨适配。"""
+    from aionforge.core.composite import composite_print
+
+    if bool(bucket) == bool(store):
+        _fail(
+            ValueError("--bucket 与 --store 必须二选一：成品用 bucket，中间产物用 store"),
+            json_output,
+            stage="params",
+        )
+    if bucket and bucket not in BUCKETS:
+        _fail(
+            ValueError(f"bucket 必须是 {', '.join(BUCKETS)}，收到：{bucket}"),
+            json_output,
+            stage="params",
+        )
+    if store and store not in STORE_DIRS:
+        _fail(
+            ValueError(f"store 必须是 {', '.join(STORE_DIRS)}，收到：{store}"),
+            json_output,
+            stage="params",
+        )
+    try:
+        item = Product.open(product_dir)
+    except ValueError as exc:
+        _fail(exc, json_output, stage="params")
+    try:
+        result = composite_print(
+            garment,
+            print_file,
+            x=x,
+            y=y,
+            width=width,
+            ink=ink,
+            shading=shading,
+            opacity=opacity,
+            underbase_expand=underbase_expand,
+        )
+        dest = (
+            item.target_path(bucket, name)
+            if bucket
+            else item.store_path(store or "", name)
+        )
+        result.image.save(dest, format="PNG")
+    except Exception as exc:  # noqa: BLE001
+        item.record_task(
+            name,
+            "failed",
+            bucket=bucket or "",
+            store=store or "",
+            error=str(exc),
+            refs=[garment, print_file],
+        )
+        _fail(exc, json_output)
+    item.record_task(
+        name,
+        "ok",
+        bucket=bucket or "",
+        store=store or "",
+        image=dest,
+        refs=[garment, print_file],
+        extra={
+            "mode": "composite",
+            "garment": str(garment),
+            "print": str(print_file),
+            "placement": {"x": x, "y": y, "width": width},
+            "ink": result.ink,
+            "shading": shading,
+            "opacity": opacity,
+            "underbase_expand": underbase_expand,
+        },
+    )
+    _print_ok(
+        item.root,
+        [dest],
+        json_output,
+        extra={
+            "logo": item.workspace.logo,
+            "product": item.name,
+            "product_dir": str(item.root),
+            "bucket": bucket or "",
+            "store": store or "",
+            "ink": result.ink,
         },
     )
 
@@ -333,10 +706,15 @@ def verify_command(
     ratio: str | None = typer.Option(None, "--ratio", help="期望比例，例如 1:1 / 3:4。"),
     white_bg: bool = typer.Option(False, "--white-bg", help="检查四边是否为纯白背景。"),
     alpha: bool = typer.Option(False, "--alpha", help="检查印花提取是否带透明通道。"),
+    print_quality: bool = typer.Option(
+        False,
+        "--print",
+        help="印花质量：透明通道、alpha 边界白边、孤立碎点。",
+    ),
     min_side: int = typer.Option(480, "--min-side", help="宽高最小像素。"),
     json_output: bool = typer.Option(False, "--json", help=_JSON_HELP),
 ) -> None:
-    """成品图客观校验：文件、尺寸、比例、白底、透明通道。"""
+    """成品图客观校验：文件、尺寸、比例、白底、透明通道、印花质量。"""
     from aionforge.cli.envelope import envelope, print_json
 
     if ratio:
@@ -345,7 +723,12 @@ def verify_command(
         except ValueError as exc:
             _fail(exc, json_output, stage="params")
     checks = verify_image(
-        image, ratio=ratio, white_bg=white_bg, alpha=alpha, min_side=min_side
+        image,
+        ratio=ratio,
+        white_bg=white_bg,
+        alpha=alpha,
+        print_quality=print_quality,
+        min_side=min_side,
     )
     ok = all(item["pass"] for item in checks)
     if json_output:
@@ -444,7 +827,14 @@ def list_command(
 
 
 @app.command("doctor")
-def doctor(json_output: bool = typer.Option(False, "--json", help=_JSON_HELP)) -> None:
+def doctor(
+    json_output: bool = typer.Option(False, "--json", help=_JSON_HELP),
+    deep: bool = typer.Option(
+        False,
+        "--deep",
+        help="真实 POST 一次 /images/edits，验证出图通道（会产生一次模型调用）。",
+    ),
+) -> None:
     """配置与连通性自检。任一检查失败时退出码为 1。"""
     from aionforge.cli.doctor import collect_checks
     from aionforge.cli.envelope import envelope, print_json
@@ -473,7 +863,7 @@ def doctor(json_output: bool = typer.Option(False, "--json", help=_JSON_HELP)) -
             print(f"[red][FAIL][/red] config  {exc}")
         raise typer.Exit(code=1) from exc
 
-    checks = collect_checks(settings)
+    checks = collect_checks(settings, deep=deep)
     ok = all(item["pass"] for item in checks)
     if json_output:
         print_json(envelope(ok=ok, extra={"checks": checks}))

@@ -88,11 +88,14 @@ class ImageConfig:
     api_base: str
     api_key: str
     api: str = "edits_multipart"
+    timeout: float = 120.0
+    retries: int = 2
+    backoff: float = 2.0
 
 
 @dataclass(frozen=True)
 class StorageSettings:
-    root: str = "~/.aionforge"
+    root: str = "."
 
 
 @dataclass(frozen=True)
@@ -122,6 +125,36 @@ def _bool(env: Mapping[str, str], name: str, default: bool) -> bool:
     if value in _FALSE:
         return False
     raise ConfigError(f"{name}={value} 不是布尔值；可用 {', '.join((*_TRUE, *_FALSE))}")
+
+
+def _number(
+    env: Mapping[str, str], name: str, default: float, *, minimum: float = 0.0
+) -> float:
+    raw = _get(env, name)
+    if not raw:
+        return default
+    try:
+        value = float(raw)
+    except ValueError as exc:
+        raise ConfigError(f"{name}={raw} 不是数字") from exc
+    if value < minimum:
+        raise ConfigError(f"{name}={raw} 不能小于 {minimum:g}")
+    return value
+
+
+def _integer(
+    env: Mapping[str, str], name: str, default: int, *, minimum: int = 0
+) -> int:
+    raw = _get(env, name)
+    if not raw:
+        return default
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ConfigError(f"{name}={raw} 不是整数") from exc
+    if value < minimum:
+        raise ConfigError(f"{name}={raw} 不能小于 {minimum}")
+    return value
 
 
 def _available_key(env: Mapping[str, str], provider: str) -> str:
@@ -217,6 +250,9 @@ def _resolve_image(env: Mapping[str, str]) -> ImageConfig:
         api_base=_api_base(env, provider),
         api_key=_available_key(env, provider),
         api=_DEFAULT_API[provider],
+        timeout=_number(env, "AIONFORGE_HTTP_TIMEOUT", 120.0, minimum=1.0),
+        retries=_integer(env, "AIONFORGE_HTTP_RETRIES", 2, minimum=0),
+        backoff=_number(env, "AIONFORGE_HTTP_BACKOFF", 2.0, minimum=0.0),
     )
 
 
@@ -224,12 +260,17 @@ def load_settings(
     env: Mapping[str, str] | None = None, dotenv_path: Path | None = None
 ) -> Settings:
     environ = merge_env(None, dotenv_path) if env is None else dict(env)
+    # 日志和保存目录都跟随 Agent 当前工作目录，不落到用户 home。
+    storage_root = _get(environ, "AIONFORGE_STORAGE_ROOT") or "."
+    log_file = _get(environ, "AIONFORGE_LOG_FILE") or str(
+        Path(storage_root) / "logs" / "forge.log"
+    )
     return Settings(
         image=_resolve_image(environ),
-        storage=StorageSettings(root=_get(environ, "AIONFORGE_STORAGE_ROOT") or "~/.aionforge"),
+        storage=StorageSettings(root=storage_root),
         logging=LoggingSettings(
             level=_get(environ, "AIONFORGE_LOG_LEVEL") or "INFO",
             console=_bool(environ, "AIONFORGE_LOG_CONSOLE", False),
-            file=_get(environ, "AIONFORGE_LOG_FILE") or "logs/forge.log",
+            file=log_file,
         ),
     )

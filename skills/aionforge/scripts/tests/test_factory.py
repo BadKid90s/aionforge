@@ -11,6 +11,7 @@ from aionforge.adapters.image import (
     JsonEditsImageAdapter,
     MultipartEditsImageAdapter,
 )
+from aionforge.adapters.retry import RetryingImageAdapter
 from aionforge.core.config import ImageConfig
 
 
@@ -26,44 +27,60 @@ def _image(**over: Any) -> ImageConfig:
     return ImageConfig(**base)
 
 
+def _inner(adapter: object) -> object:
+    assert isinstance(adapter, RetryingImageAdapter)
+    return adapter.inner
+
+
 def test_image_api_selects_adapter_by_shape() -> None:
-    assert isinstance(build_image_adapter(_image(api="edits_json")), JsonEditsImageAdapter)
     assert isinstance(
-        build_image_adapter(_image(api="edits_multipart")), MultipartEditsImageAdapter
+        _inner(build_image_adapter(_image(api="edits_json"))), JsonEditsImageAdapter
     )
     assert isinstance(
-        build_image_adapter(_image(provider="dashscope", api="dashscope_async")),
+        _inner(build_image_adapter(_image(api="edits_multipart"))),
+        MultipartEditsImageAdapter,
+    )
+    assert isinstance(
+        _inner(
+            build_image_adapter(_image(provider="dashscope", api="dashscope_async"))
+        ),
         DashScopeImageAdapter,
     )
     assert isinstance(
-        build_image_adapter(
-            _image(
-                provider="gemini",
-                model="gemini-3-pro-image",
-                api_base="https://generativelanguage.googleapis.com/v1beta",
-                api="gemini_generate_content",
+        _inner(
+            build_image_adapter(
+                _image(
+                    provider="gemini",
+                    model="gemini-3-pro-image",
+                    api_base="https://generativelanguage.googleapis.com/v1beta",
+                    api="gemini_generate_content",
+                )
             )
         ),
         GeminiImageAdapter,
     )
     assert isinstance(
-        build_image_adapter(
-            _image(
-                provider="hunyuan",
-                model="hy-image-v3",
-                api_base="https://api.hunyuan.cloud.tencent.com/v1",
-                api="edits_multipart",
+        _inner(
+            build_image_adapter(
+                _image(
+                    provider="hunyuan",
+                    model="hy-image-v3",
+                    api_base="https://api.hunyuan.cloud.tencent.com/v1",
+                    api="edits_multipart",
+                )
             )
         ),
         MultipartEditsImageAdapter,
     )
     assert isinstance(
-        build_image_adapter(
-            _image(
-                provider="qianfan",
-                model="ernie-image",
-                api_base="https://qianfan.baidubce.com/v2",
-                api="edits_multipart",
+        _inner(
+            build_image_adapter(
+                _image(
+                    provider="qianfan",
+                    model="ernie-image",
+                    api_base="https://qianfan.baidubce.com/v2",
+                    api="edits_multipart",
+                )
             )
         ),
         MultipartEditsImageAdapter,

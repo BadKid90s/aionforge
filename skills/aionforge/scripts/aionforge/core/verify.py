@@ -10,7 +10,14 @@ from typing import Any
 
 from PIL import Image
 
-from aionforge.core.images import MIN_SIDE, aspect_close, flatten_to_rgb, target_size
+from aionforge.core.images import (
+    MIN_SIDE,
+    alpha_border_white_ratio,
+    alpha_speck_count,
+    aspect_close,
+    flatten_to_rgb,
+    target_size,
+)
 
 
 def _white_border_ratio(
@@ -53,6 +60,7 @@ def verify_image(
     ratio: str | None = None,
     white_bg: bool = False,
     alpha: bool = False,
+    print_quality: bool = False,
     min_side: int = MIN_SIDE,
 ) -> list[dict[str, Any]]:
     checks: list[dict[str, Any]] = []
@@ -99,7 +107,7 @@ def verify_image(
                     f"四边近白像素 {coverage:.2%}",
                     "重新出图，要求纯白 #FFFFFF 无缝背景，四边铺满",
                 )
-            if alpha:
+            if alpha or print_quality:
                 bands = image.getbands()
                 if "A" not in bands:
                     check(
@@ -110,12 +118,29 @@ def verify_image(
                     )
                 else:
                     low, high = image.getchannel("A").getextrema()
+                    alpha_ok = low < 255 and high > 0
                     check(
                         "alpha",
-                        low < 255 and high > 0,
+                        alpha_ok,
                         f"alpha {low}-{high}",
                         "检查 --cutout 是否真的把背景转成了透明",
                     )
+                    if print_quality and alpha_ok:
+                        border_ratio = alpha_border_white_ratio(image)
+                        check(
+                            "print.white_edge",
+                            border_ratio <= 0.20,
+                            f"alpha 边界近白 {border_ratio:.1%}",
+                            "用 forge cutout --remove-enclosed-white 或 --ai 重做；"
+                            "图案本身是白色字标时可忽略此项",
+                        )
+                        specks = alpha_speck_count(image, min_pixels=4)
+                        check(
+                            "print.specks",
+                            specks == 0,
+                            f"{specks} 个 <4px alpha 孤岛",
+                            "用 forge cutout --denoise 4 清理",
+                        )
     except Exception as exc:  # noqa: BLE001
         check("open", False, str(exc)[:160], "确认文件是有效图片")
     return checks

@@ -1,0 +1,84 @@
+from pathlib import Path
+
+import pytest
+from PIL import Image, ImageDraw
+
+from aionforge.core.composite import composite_print
+
+
+def _garment(path: Path, color: str, size: tuple[int, int] = (200, 200)) -> Path:
+    Image.new("RGB", size, color).save(path)
+    return path
+
+
+def _print(path: Path, color: tuple[int, int, int, int]) -> Path:
+    image = Image.new("RGBA", (20, 20), (0, 0, 0, 0))
+    ImageDraw.Draw(image).rectangle((0, 0, 19, 19), fill=color)
+    image.save(path)
+    return path
+
+
+def test_composite_normal_on_light_garment(tmp_path: Path) -> None:
+    garment = _garment(tmp_path / "garment.png", "white")
+    print_file = _print(tmp_path / "print.png", (255, 0, 0, 255))
+
+    result = composite_print(
+        garment,
+        print_file,
+        x=0.5,
+        y=0.5,
+        width=0.1,
+        ink="normal",
+        shading=0,
+    )
+
+    assert result.ink == "normal"
+    assert result.image.size == (200, 200)
+    assert result.image.getpixel((100, 100)) == (255, 0, 0)
+    assert result.image.getpixel((0, 0)) == (255, 255, 255)
+
+
+def test_composite_multiply_white_print_stays_invisible(tmp_path: Path) -> None:
+    garment = _garment(tmp_path / "garment.png", "white")
+    print_file = _print(tmp_path / "print.png", (255, 255, 255, 255))
+
+    result = composite_print(
+        garment, print_file, x=0.5, y=0.5, width=0.1, ink="multiply", shading=0
+    )
+
+    assert result.image.getpixel((100, 100)) == (255, 255, 255)
+
+
+def test_composite_auto_on_dark_garment_turns_black_ink_white(tmp_path: Path) -> None:
+    garment = _garment(tmp_path / "garment.png", "black")
+    print_file = _print(tmp_path / "print.png", (0, 0, 0, 255))
+
+    result = composite_print(
+        garment, print_file, x=0.5, y=0.5, width=0.1, ink="auto", shading=0
+    )
+
+    assert result.ink == "white"
+    red, green, blue = result.image.getpixel((100, 100))
+    assert min(red, green, blue) > 200
+
+
+def test_composite_auto_on_light_garment_uses_multiply(tmp_path: Path) -> None:
+    garment = _garment(tmp_path / "garment.png", "white")
+    print_file = _print(tmp_path / "print.png", (255, 0, 0, 255))
+
+    result = composite_print(
+        garment, print_file, x=0.5, y=0.5, width=0.1, ink="auto", shading=0
+    )
+
+    assert result.ink == "multiply"
+    assert result.image.getpixel((100, 100)) == (255, 0, 0)
+
+
+def test_composite_rejects_out_of_bounds(tmp_path: Path) -> None:
+    garment = _garment(tmp_path / "garment.png", "white")
+    print_file = _print(tmp_path / "print.png", (255, 0, 0, 255))
+
+    with pytest.raises(ValueError, match="超出画布"):
+        composite_print(
+            garment, print_file, x=0.1, y=0.5, width=0.5, ink="normal", shading=0
+        )

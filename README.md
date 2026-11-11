@@ -214,9 +214,12 @@ output/
 | `QIANFAN_BASE_URL` | `https://qianfan.baidubce.com/v2` | 千帆接口地址 |
 | `AIONFORGE_IMAGE_MODEL` | 见上表 | 覆盖默认模型 |
 | `AIONFORGE_API_BASE` | — | 其它 OpenAI 兼容网关地址（仅 custom） |
-| `AIONFORGE_STORAGE_ROOT` | `~/.aionforge` | 数据目录 |
+| `AIONFORGE_STORAGE_ROOT` | `.`（Agent 工作目录） | 数据目录 |
 | `AIONFORGE_LOG_LEVEL` | `INFO` | 日志级别 |
 | `AIONFORGE_LOG_FILE` | `logs/forge.log` | 日志文件（相对当前目录） |
+| `AIONFORGE_HTTP_TIMEOUT` | `120` | 图片接口超时秒数 |
+| `AIONFORGE_HTTP_RETRIES` | `2` | 断连 / 5xx 自动重试次数 |
+| `AIONFORGE_HTTP_BACKOFF` | `2` | 重试退避基数秒数（指数递增） |
 
 读取顺序：进程环境 > 当前目录 `.env` > Skill `.env`。一等供应商的专用 Base 优先于 `AIONFORGE_API_BASE`（后者只用于其它 OpenAI 兼容网关）。
 
@@ -226,10 +229,12 @@ Agent 会自动调用，一般不用手动跑。手动调用：`uv run --project
 
 | 命令 | 作用 |
 | --- | --- |
-| `forge doctor --json` | 检查配置、Key、连通性、数据目录 |
+| `forge doctor --json` | 检查配置、Key、连通性、日志与数据目录；`--deep` 真实 POST 一次出图 |
 | `forge workspace init --logo <logo> --json` | 创建 logo 工作区和四个交付目录 |
 | `forge product init --logo <logo> --product <product> --json` | 创建商品工作区、facts 模板、manifest |
-| `forge cutout --input <logo稿> --product-dir <dir> --name <id> --json` | 本地抠平面 logo 稿，输出透明底到 `refs/` |
+| `forge cutout --input <logo稿> --product-dir <dir> --name <id> --ai --json` | 平面 logo 提取：模型清洗白底，本地生成透明通道到 `refs/` |
+| `forge extract-element --input <印花.png> --product-dir <dir> --name <id> --json` | 按 alpha 连通域拆独立元素，输出 `refs/<id>-element-*.png` 和触边目录 |
+| `forge composite --garment <成衣> --print <印花> --product-dir <dir> --bucket bg_white --name <id> --json` | 本地合成印花，正片叠底 / 深色衣白墨适配，不重画文字 |
 | `forge generate --product-dir <dir> --bucket <bucket> --prompt-file <txt> --ref <图> --name <id> --json` | prompt + 参考图 → 一张成品，落到 bucket |
 | `forge generate --product-dir <dir> --store refs --prompt-file <txt> --ref <图> --name <id> --json` | 中间产物（印花 / 白底素材）落到商品工作区 |
 | `forge verify --image <图> --ratio 1:1 --white-bg --json` | 校验尺寸、比例、白底、alpha |

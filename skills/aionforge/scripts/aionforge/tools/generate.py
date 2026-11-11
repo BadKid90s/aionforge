@@ -104,10 +104,16 @@ async def run_generate(
     fit: FitMode | str = FitMode.expand,
     cutout: bool = False,
     padding: int = 8,
+    threshold: int = 238,
+    tolerance: int = 18,
+    remove_enclosed_white: bool = False,
+    denoise: int = 0,
     background: str = "white",
 ) -> Path:
     if not prompt.strip():
         raise ValueError("prompt 不能为空")
+    if cutout and ratio:
+        raise ValueError("--cutout 与 --ratio 不能同时使用")
     if bool(bucket) == bool(store):
         raise ValueError("--bucket 与 --store 必须二选一：成品用 bucket，中间产物用 store")
     dest = product.target_path(bucket, name) if bucket else product.store_path(store or "", name)
@@ -123,7 +129,14 @@ async def run_generate(
     else:
         saved = await image.generate(prompt, dest)
     if cutout:
-        cutout_background(saved, padding=padding)
+        cutout_background(
+            saved,
+            padding=padding,
+            threshold=threshold,
+            tolerance=tolerance,
+            remove_enclosed_white=remove_enclosed_white,
+            denoise=denoise,
+        )
     elif ratio:
         saved = await _apply_ratio(saved, ratio, mode, image, product, name, background)
     product.record_task(
@@ -138,6 +151,10 @@ async def run_generate(
             "ratio": ratio or "",
             "fit": str(mode),
             "cutout": cutout,
+            "threshold": threshold,
+            "tolerance": tolerance,
+            "remove_enclosed_white": remove_enclosed_white,
+            "denoise": denoise,
             "roles": [item.role or "" for item in refs],
         },
     )

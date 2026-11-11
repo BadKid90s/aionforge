@@ -1,5 +1,15 @@
 # 印花合成 Prompt
 
+**平面印花优先用本地 `forge composite`**，不经过图片模型重画，文字和颜色逐像素保留：
+
+```bash
+forge composite --garment <白底成衣> --print <透明印花> \
+  --product-dir <product_dir> --bucket bg_white \
+  --name <product>-<color> --x 0.5 --y 0.45 --width 0.35 --ink auto --json
+```
+
+只有需要把印花贴合复杂褶皱、透视，或成衣实拍没有对应白底图时，才用下面的模型合成模板。
+
 按 `references/prompts/formula.md` 组段。把提取好的透明底印花合到白底成衣上。写入 `<product_dir>/prompts/bg_white/<product>-<color>.txt`，位置和尺寸写进「镜头语言」。
 
 ```bash

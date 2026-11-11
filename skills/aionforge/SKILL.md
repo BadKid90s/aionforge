@@ -103,7 +103,12 @@ output/<logo>/
 forge doctor --json
 forge workspace init --logo <logo> --json
 forge product init --logo <logo> --product <product> --json
-forge cutout --input <logo稿> --product-dir <product_dir> --name <product>-print --json
+forge cutout --input <logo稿> --product-dir <product_dir> --name <product>-print --ai --json
+forge extract-element --input <product_dir>/refs/<product>-print.png \
+  --product-dir <product_dir> --name <product>-print --json
+forge composite --garment <白底成衣> --print <product_dir>/refs/<product>-print.png \
+  --product-dir <product_dir> --bucket bg_white --name <product>-<color> \
+  --x 0.5 --y 0.45 --width 0.35 --ink auto --json
 forge prompt check --file <prompt.txt> --facts <facts.json> --json
 forge generate --product-dir <product_dir> --bucket bg_white \
   --prompt-file <prompt.txt> --ref print=<印花> --ref garment=<白底衣> \
@@ -112,6 +117,9 @@ forge verify --image <成品.png> --ratio 1:1 --white-bg --json
 ```
 
 - 参考图带角色名：`--ref garment=`、`--ref garment_back=`、`--ref model=`、`--ref print=`、`--ref source=`、`--ref pose=`。
+- 平面 logo 稿提取优先 `cutout --ai`：模型只清洗白底，透明通道仍由本地生成；原稿本来就是干净透明 PNG 时去掉 `--ai`，只走本地。
+- 需要独立元素时跑 `extract-element`：按 alpha 连通域拆分，`refs/<name>-elements.json` 里 `touches_edge` 为 true 的元素可能被裁断，要回源稿补全。
+- 平面印花合成优先 `composite`：本地 alpha 合成，文字不会被重画；浅色衣 `--ink auto` 走正片叠底，深色衣自动白墨打底、深色笔画转白。只有需要贴合复杂褶皱/透视时才走模型重绘。
 - 成品写 `--bucket`；印花、白底清理这类中间产物写 `--store refs` 或 `--store tmp`，不要污染四个 bucket。
 - 返回 `{ok, run_dir, images, error}`。完整参数见 `references/cli.md`。
 
@@ -122,6 +130,8 @@ forge verify --image <成品.png> --ratio 1:1 --white-bg --json
 - 衣服是成衣图那一件，不是模特原来的上衣，也不是参考图上的衣服
 - 领口 / 袖口 / 下摆 / 肩线 / 衣长与成衣一致
 - 印花位置、颜色、文字逐字一致，只出现一次，未镜像
+- 印花 refs：`forge verify --image <print> --print --json` 通过；alpha 边界无白边，无 <4px 碎点；深色图案的字母孔洞透明，白色字标保持白色
+- composite 合成图：印花边缘无白边 / 黑边；深色衣的深色笔画已转白；浅色衣的白色印花接近隐形属于正常
 - 换装 / 裂变 / 套图：同一双眼睛和五官，头的朝向符合本张姿势
 - SKU 规格图：人、姿势、场景与母版一致；衣服颜色和结构是本张配色白底那一件
 - bg_white：四边纯白，没有灰底、棋盘格、投影板；衣缘平滑无锯齿

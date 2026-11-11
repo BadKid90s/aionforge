@@ -69,6 +69,10 @@ forge product init --logo <logo> --product <product> --json
 | `--fit` | `expand`（默认，扩图铺满）/ `crop`（居中裁切） |
 | `--cutout` | 白底转透明并按图案裁切，本地处理 |
 | `--padding` | `--cutout` 的透明边距像素，默认 8 |
+| `--threshold` | 背景估计失败时的亮度阈值，默认 238 |
+| `--tolerance` | 与边缘采样背景色的最大通道差，默认 18 |
+| `--remove-enclosed-white` | `--cutout` 时把封闭白区（字母孔洞、镂空）也清成透明；白色字标不要开 |
+| `--denoise` | `--cutout` 时删除面积小于该像素数的 alpha 孤岛，默认 0（关闭） |
 | `--json` | 输出 JSON 信封 |
 
 ```bash
@@ -114,10 +118,25 @@ forge generate --product-dir <product_dir> --bucket detail \
 ## cutout
 
 ```bash
+# 平面 logo 稿：模型清洗白底，本地生成透明通道（推荐）
+forge cutout --input <logo稿> --product-dir <product_dir> --name <product>-print --ai --json
+
+# 深色图案 / 字母孔洞：连封闭白区和压缩噪点一起清
+forge cutout --input <logo稿> --product-dir <product_dir> --name <product>-print \
+  --ai --remove-enclosed-white --denoise 4 --json
+
+# 原稿本来就是干净透明 PNG：只走本地，文字和形状逐像素不变
 forge cutout --input <logo稿> --product-dir <product_dir> --name <product>-print --json
 ```
 
-平面 logo 图案稿本地预处理：按四边背景色自适应去底，裁到图案主体，输出透明底 PNG 到 `<product_dir>/refs/<name>.png`。不调用图片模型，所以图案文字和形状不会被重画。
+平面图案稿预处理，输出透明底 PNG 到 `<product_dir>/refs/<name>.png`。
+
+- 默认本地抠图：按四边背景色自适应去底，裁到图案主体。原稿自带 alpha 时，也会清理与 alpha 边界连通的白底 / 白边；图案内部的白色文字、描边和高光保留。
+- `--ai`：先让图片模型把图案清洗到纯白底，再本地抠图。适合 alpha 内残留白底、白边或半透明光晕的原稿。模型只做背景清理，不重新设计；最终 alpha 仍由本地生成，不依赖模型直接输出透明图。
+- 背景色不是纯白（米白、浅灰）时调大 `--tolerance`；背景和图案亮度接近时调大 `--threshold`，或直接用 `--ai`。
+- 深色图案、字母孔洞需要把封闭白区也清掉时加 `--remove-enclosed-white`；白色字标保持默认的 `--keep-enclosed-white`。
+- 稿子里有压缩噪点、孤立白点时加 `--denoise 4`，删除小于 4 像素的 alpha 孤岛。
+- 图案内部有透明镂空（字母内圈、图形穿孔）或图案本身就是白色时，不要用 `--ai`：模型会把镂空当成白色细节保留，纯白图案可能被清洗成空白。这两类稿子用本地路径，`--clean-white` 会保留图案内部白色。
 
 | 参数 | 说明 |
 | --- | --- |
@@ -125,9 +144,69 @@ forge cutout --input <logo稿> --product-dir <product_dir> --name <product>-prin
 | `--product-dir` | 商品工作区目录 |
 | `--name` / `-n` | 输出文件名，写入 `refs/<name>.png` |
 | `--padding` | 透明边距像素，默认 8 |
+| `--threshold` | 背景估计失败时的亮度阈值，默认 238 |
+| `--tolerance` | 与边缘采样背景色的最大通道差，默认 18 |
+| `--clean-white/--no-clean-white` | 原稿带 alpha 时仍清理边界连通白底，默认开启；纯白 logo 可关闭 |
+| `--remove-enclosed-white/--keep-enclosed-white` | 是否把封闭白区（字母孔洞、镂空）也清成透明，默认保留 |
+| `--denoise` | 删除面积小于该像素数的 alpha 孤岛，默认 0（关闭） |
+| `--ai` | 先调用图片模型清洗白底，再本地抠图 |
 | `--json` | 输出 JSON 信封 |
 
-只有印花只存在于成衣实拍上时，才用 `generate --store refs --cutout` 让模型先提取再本地去底。
+印花只存在于成衣实拍上时，用 `generate --store refs --cutout` 让模型先提取再本地去底；平面稿有白残留则优先 `cutout --ai`。
+
+## extract-element
+
+```bash
+forge extract-element --input <印花.png> --product-dir <product_dir> \
+  --name <product>-print --min-pixels 16 --json
+```
+
+把透明底印花按 alpha 的 8 邻接连通域拆成独立元素，输出：
+
+- `refs/<name>-element-01.png`、`-02.png`……每个元素单独裁切并保留透明边距。
+- `refs/<name>-elements.json`：每个元素的 bbox、面积、`touches_edge`（是否贴到源图边缘，贴边说明可能被裁断）。
+
+先跑 `cutout` 或 `cutout --ai` 得到干净透明底，再拆元素。文字和图形会被拆成连通域；想按词合并，用 `--min-pixels` 过滤细小噪点后按需要组合。
+
+| 参数 | 说明 |
+| --- | --- |
+| `--input` / `-i` | 透明底印花（PNG / WebP） |
+| `--product-dir` | 商品工作区目录 |
+| `--name` / `-n` | 输出前缀，默认 `print` |
+| `--min-pixels` | 忽略面积小于该像素数的连通域，默认 16 |
+| `--padding` | 每个元素的透明边距像素，默认 4 |
+| `--json` | 输出 JSON 信封，含 `elements` / `incomplete` / `catalog` |
+
+## composite
+
+```bash
+forge composite --garment <白底成衣> --print <透明印花> \
+  --product-dir <product_dir> --bucket bg_white \
+  --name <product>-<color> --x 0.5 --y 0.45 --width 0.35 --ink auto --json
+```
+
+本地合成：把透明印花按坐标贴到成衣图上，不调用图片模型，文字和颜色不会被重画。
+
+- `--ink auto`：浅色衣用正片叠底（保留布料明暗），深色衣用白墨底，并把中性深色笔画转成白色。
+- `--ink multiply`：正片叠底，适合浅色衣；白色印花会接近隐形。
+- `--ink normal`：直接 alpha 合成，适合白墨或彩色印花。
+- `--ink white`：白墨打底 + 深色笔画转白，适合深色衣；`--underbase-expand` 默认 0，调大会出现白边。
+- `--x` / `--y` / `--width` 都是画布比例，默认中心 0.5 / 0.38、宽度 0.35；印花超出画布会报错。
+- `--shading` 布料明暗强度，默认 0.25；`--opacity` 印花不透明度，默认 1。
+
+| 参数 | 说明 |
+| --- | --- |
+| `--garment` / `-g` | 成衣图，通常用 `bg_white` 成品 |
+| `--print` / `--print-file` | 透明底印花 PNG / WebP |
+| `--product-dir` | 商品工作区目录 |
+| `--bucket` / `--store` | 成品或中间产物落点，二选一 |
+| `--name` / `-n` | 结果文件名，默认 `print-composite` |
+| `--x` / `--y` / `--width` | 印花中心和宽度，占画布比例 |
+| `--ink` | `auto` / `multiply` / `normal` / `white` |
+| `--shading` | 布料明暗强度 0-1，`multiply` 模式不再叠加 |
+| `--opacity` | 印花不透明度 0-1 |
+| `--underbase-expand` | 白墨底外扩像素，默认 0 |
+| `--json` | 输出 JSON 信封，含 `ink` |
 
 ## verify
 
@@ -141,10 +220,11 @@ forge verify --image <成品.png> --ratio 1:1 --white-bg --json
 | `--ratio` | 期望比例，例如 `1:1` / `3:4` |
 | `--white-bg` | 采样四边，检查是否接近纯白 |
 | `--alpha` | 检查是否保留透明通道（印花提取用） |
+| `--print` | 印花质量：透明通道、alpha 边界白边、小于 4px 的孤立碎点 |
 | `--min-side` | 宽高最小值，默认 480 |
 | `--json` | 输出 checks 列表 |
 
-只做确定性检查：文件、尺寸、比例、白底、alpha。审美与商品事实由 Agent 看图判断。
+只做确定性检查：文件、尺寸、比例、白底、alpha、印花白边与碎点。审美与商品事实由 Agent 看图判断。`--print` 的白边项对白色字标会误报，结合图案判断即可。
 
 ## prompt check
 
@@ -174,9 +254,12 @@ forge list --logo <logo> --bucket main --json
 
 ```bash
 forge doctor --json
+forge doctor --deep --json
 ```
 
-检查配置、Key、连通性、数据目录。任一项 `pass: false` 时把 `suggestion` 告诉用户并停下。
+检查配置、Key、浅层连通性、日志与数据目录。任一项 `pass: false` 时把 `suggestion` 告诉用户并停下。
+
+`--deep` 会真实 POST 一次 `/images/edits`（产生一次模型调用），检查模型名、额度、网关协议是否真的能出图。`image.reachable` 只测 `GET /models`，通过不代表出图通道可用；生成连续失败时先跑 `--deep`。
 
 ## JSON 信封
 

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
+import tempfile
+import time
 from pathlib import Path
 from typing import Any
 
@@ -23,7 +26,46 @@ _ALL_KEY_VARS = (
 )
 
 
-def collect_checks(settings: Settings) -> list[dict[str, Any]]:
+def _deep_edit_check(settings: Settings) -> tuple[bool, str]:
+    """真实 POST 一次 images/edits；/models 能通不代表出图能通。"""
+    from PIL import Image, ImageDraw
+
+    from aionforge.adapters.factory import build_image_adapter
+
+    async def run() -> tuple[bool, str]:
+        adapter = build_image_adapter(settings.image)
+        try:
+            with tempfile.TemporaryDirectory(prefix="forge-doctor-") as tmp:
+                probe = Path(tmp) / "probe.png"
+                output = Path(tmp) / "out.png"
+                image = Image.new("RGB", (512, 512), "white")
+                ImageDraw.Draw(image).rectangle((128, 128, 383, 383), fill="red")
+                image.save(probe)
+                started = time.monotonic()
+                await adapter.edit(
+                    "保持红色方块的位置和颜色不变，把背景改成纯白 #FFFFFF。",
+                    [probe],
+                    output,
+                )
+                elapsed = time.monotonic() - started
+                with Image.open(output) as result:
+                    result.verify()
+                with Image.open(output) as result:
+                    size = result.size
+                return True, (
+                    f"{settings.image.provider}/{settings.image.model} "
+                    f"{size[0]}x{size[1]} {elapsed:.1f}s"
+                )
+        finally:
+            await adapter.aclose()
+
+    try:
+        return asyncio.run(run())
+    except Exception as exc:  # noqa: BLE001
+        return False, str(exc)[:240]
+
+
+def collect_checks(settings: Settings, *, deep: bool = False) -> list[dict[str, Any]]:
     checks: list[dict[str, Any]] = []
 
     def check(name: str, passed: bool, detail: str = "", suggestion: str = "") -> None:
@@ -60,8 +102,8 @@ def collect_checks(settings: Settings) -> list[dict[str, Any]]:
             check(
                 "image.reachable",
                 resp.status_code < 500,
-                f"HTTP {resp.status_code}",
-                "检查网络、api_base 与 key 是否有效",
+                f"HTTP {resp.status_code}（浅层 /models）",
+                "检查网络、api_base 与 key 是否有效；真实出图请加 --deep",
             )
         except Exception as exc:  # noqa: BLE001
             check(
@@ -69,6 +111,16 @@ def collect_checks(settings: Settings) -> list[dict[str, Any]]:
                 False,
                 str(exc)[:120],
                 "检查网络连通性与 api_base 是否可达",
+            )
+        if deep:
+            passed, detail = _deep_edit_check(settings)
+            check(
+                "image.deep_edit",
+                passed,
+                detail,
+                ""
+                if passed
+                else "真实 POST /images/edits 失败；检查模型名、额度、网关是否支持该协议",
             )
 
     others = [p for p in available_providers(merge_env()) if p != image.provider]
@@ -98,6 +150,21 @@ def collect_checks(settings: Settings) -> list[dict[str, Any]]:
             False,
             str(exc)[:120],
             "检查权限或改 AIONFORGE_STORAGE_ROOT",
+        )
+
+    log_path = Path(settings.logging.file).expanduser()
+    try:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        probe = log_path.parent / ".doctor_log_probe"
+        probe.write_text("ok", encoding="utf-8")
+        probe.unlink()
+        check("logging.file", True, str(log_path))
+    except OSError as exc:
+        check(
+            "logging.file",
+            False,
+            str(exc)[:120],
+            "检查日志目录权限，或改 AIONFORGE_LOG_FILE",
         )
 
     return checks
