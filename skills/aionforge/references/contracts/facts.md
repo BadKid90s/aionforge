@@ -92,8 +92,10 @@
         "region": "back_center",
         "source": "refs/short-print.png",
         "x": 0.5,
-        "y": 0.42,
-        "width": 0.62,
+        "y": 0.19,
+        "width": 0.30,
+        "max_height": 0.40,
+        "anchor": "top",
         "ink": "auto",
         "text_exact": "锁定目标",
         "adaptations": {
@@ -112,9 +114,11 @@
         "side": "front",
         "region": "left_chest",
         "source": "refs/short-core.png",
-        "x": 0.32,
-        "y": 0.28,
-        "width": 0.12,
+        "x": 0.61,
+        "y": 0.29,
+        "width": 0.09,
+        "max_height": 0.11,
+        "anchor": "center",
         "ink": "normal",
         "text_exact": ""
       }
@@ -175,7 +179,12 @@
 3. **`print.placements[]`（正反面合成计划）**：
    - 一条 placement 对应一次合成动作。
    - `side`：`front`（正面）或 `back`（背面）。
-   - `region`：`chest_center`（胸前正中）、`left_chest`（左胸小标，默认 `x=0.32, y=0.28, width=0.12`）、`back_center`（后背中心，默认 `x=0.5, y=0.42, width=0.55~0.65`）。
+   - `region`：标准预设名，合成时自动绑定行业标准固定位置与尺寸（详见 [print/placement.md](../print/placement.md)）：
+     - `left_chest`：左胸小标（8–12cm，正面图右侧 `x=0.61, y=0.29, width=0.09, max_height=0.11, anchor="center"`）
+     - `chest_center`：胸前居中大图（28–32cm，领口下 7–9cm，`x=0.50, y=0.27, width=0.28, max_height=0.32, anchor="top"`）
+     - `back_center`：全背印花（28–32cm × 35cm，后领下 2–5cm，`x=0.50, y=0.19, width=0.30, max_height=0.40, anchor="top"`）
+     - `back_neck`：上背小标（5–8cm，后领下 3–5cm，`x=0.50, y=0.17, width=0.07, max_height=0.09, anchor="top"`）
+     - `hem_left` / `hem_right`：下摆衣角标（5–8cm，下摆上 5cm，`x=0.66/0.34, y=0.84, width=0.065, max_height=0.08, anchor="bottom"`）
    - `adaptations`（可选）：按颜色名覆盖 `source`（指向该色专属适配印花）与 `ink`（`auto | multiply | normal | white`），配合 `composite --placement <id> --color <color>` 自动生效。
 4. **`canonical`（跨阶段唯一真相源指针）**：
    - `garment` / `garment_back`：指向通过质检的正面 / 背面合成商品图，后续 `main` 与 `detail` 一律以它们为衣服标准。

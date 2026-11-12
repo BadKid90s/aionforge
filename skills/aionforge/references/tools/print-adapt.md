@@ -19,9 +19,12 @@
 | `--name` / `-n` | `print-fit` | 输出 `refs/<name>.png` |
 | `--strategy` | `auto` | `auto` / `multiply` / `normal` / `white` / `lighten` / `darken` / `palette` / `outline` |
 | `--palette` | 空 | `palette` 策略的目标色，逗号分隔 Hex，如 `#F2F2F2,#1A1A1A` |
-| `--x` | 0.5 | 采样区域的中心 x，0–1 |
-| `--y` | 0.38 | 采样区域的中心 y，0–1 |
-| `--width` | 0.35 | 采样区域宽度占画布比例 |
+| `--region` | 空 | 标准位置预设：`left_chest` / `chest_center` / `back_center` / `back_neck` / `hem_left` / `hem_right` |
+| `--x` | `0.5`（或随预设） | 采样区域的中心 x，0–1 |
+| `--y` | `0.38`（或随预设） | 采样区域的锚点 y，0–1 |
+| `--width` | `0.35`（或随预设） | 采样区域宽度占画布比例 |
+| `--max-height` | 空（或随预设） | 采样区域最大高度占画布比例 |
+| `--anchor` | `center`（或随预设） | 纵坐标锚点：`center` / `top` / `bottom` |
 | `--outline-px` | 4 | `outline` 策略的描边宽度 |
 | `--json` | 关闭 | 输出 JSON 信封 |
 

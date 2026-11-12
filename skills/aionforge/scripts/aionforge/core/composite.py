@@ -14,7 +14,12 @@ from pathlib import Path
 
 from PIL import Image, ImageChops
 
-from aionforge.core.placement import mean_luminance, placement_box, validate_box
+from aionforge.core.placement import (
+    mean_luminance,
+    placement_box,
+    resolve_geometry,
+    validate_box,
+)
 
 _INK_MODES = {"auto", "multiply", "normal", "white"}
 
@@ -43,18 +48,28 @@ def composite_print(
     garment_path: Path,
     print_path: Path,
     *,
-    x: float = 0.5,
-    y: float = 0.38,
-    width: float = 0.35,
+    region: str | None = None,
+    x: float | None = None,
+    y: float | None = None,
+    width: float | None = None,
+    max_height: float | None = None,
+    anchor: str | None = None,
     ink: str = "auto",
     shading: float = 0.25,
 ) -> CompositeResult:
     """把印花合成到成衣图上，返回合成结果与实际使用的墨色策略。"""
     if ink not in _INK_MODES:
         raise ValueError(f"--ink 必须是 {', '.join(sorted(_INK_MODES))}，收到：{ink}")
-    for name, value in (("x", x), ("y", y), ("width", width)):
-        if not 0 < value <= 1:
-            raise ValueError(f"--{name} 必须在 (0, 1] 之间，收到：{value}")
+    resolved_x, resolved_y, resolved_width, resolved_max_height, resolved_anchor = (
+        resolve_geometry(
+            region=region,
+            x=x,
+            y=y,
+            width=width,
+            max_height=max_height,
+            anchor=anchor,
+        )
+    )
     if not 0 <= shading <= 1:
         raise ValueError(f"--shading 必须在 0-1 之间，收到：{shading}")
 
@@ -64,7 +79,13 @@ def composite_print(
         print_rgba = source.convert("RGBA")
 
     left, top, target_width, target_height = placement_box(
-        garment.size, print_rgba.size, x=x, y=y, width=width
+        garment.size,
+        print_rgba.size,
+        x=resolved_x,
+        y=resolved_y,
+        width=resolved_width,
+        max_height=resolved_max_height,
+        anchor=resolved_anchor,
     )
     validate_box((left, top, target_width, target_height), garment.size)
     resized = print_rgba.resize(

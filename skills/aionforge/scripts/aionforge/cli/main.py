@@ -560,9 +560,23 @@ def print_adapt_command(
     palette: str | None = typer.Option(
         None, "--palette", help="palette 策略的目标色，逗号分隔 Hex。"
     ),
-    x: float = typer.Option(0.5, "--x", help="采样区域中心 x，0-1。"),
-    y: float = typer.Option(0.38, "--y", help="采样区域中心 y，0-1。"),
-    width: float = typer.Option(0.35, "--width", help="采样区域宽度占画布比例。"),
+    region: str | None = typer.Option(
+        None,
+        "--region",
+        help=(
+            "标准位置预设：left_chest / chest_center / back_center / "
+            "back_neck / hem_left / hem_right。"
+        ),
+    ),
+    x: float | None = typer.Option(None, "--x", help="采样区域中心 x，0-1。"),
+    y: float | None = typer.Option(None, "--y", help="采样区域锚点 y，0-1。"),
+    width: float | None = typer.Option(None, "--width", help="采样区域宽度占画布比例。"),
+    max_height: float | None = typer.Option(
+        None, "--max-height", help="采样区域最大高度占画布比例。"
+    ),
+    anchor: str | None = typer.Option(
+        None, "--anchor", help="纵坐标锚点：center / top / bottom。"
+    ),
     outline_px: int = typer.Option(4, "--outline-px", help="outline 策略的描边像素。"),
     json_output: bool = typer.Option(False, "--json", help=_JSON_HELP),
 ) -> None:
@@ -577,9 +591,12 @@ def print_adapt_command(
             garment,
             strategy=strategy,
             palette=parse_palette(palette),
+            region=region,
             x=x,
             y=y,
             width=width,
+            max_height=max_height,
+            anchor=anchor,
             outline_px=outline_px,
         )
         dest = item.store_path("refs", name)
@@ -673,14 +690,28 @@ def composite_command(
     bucket: str = typer.Option(
         "bg_white", "--bucket", "-b", help="成品落点，默认 bg_white。"
     ),
+    region: str | None = typer.Option(
+        None,
+        "--region",
+        help=(
+            "标准位置预设：left_chest / chest_center / back_center / "
+            "back_neck / hem_left / hem_right。"
+        ),
+    ),
     x: float | None = typer.Option(
-        None, "--x", help="印花中心横坐标，占画布宽度比例；默认 0.5。"
+        None, "--x", help="印花中心横坐标，占画布宽度比例。"
     ),
     y: float | None = typer.Option(
-        None, "--y", help="印花中心纵坐标，占画布高度比例；默认 0.38。"
+        None, "--y", help="印花锚点纵坐标，占画布高度比例。"
     ),
     width: float | None = typer.Option(
-        None, "--width", help="印花宽度，占画布宽度比例；默认 0.35。"
+        None, "--width", help="印花宽度，占画布宽度比例。"
+    ),
+    max_height: float | None = typer.Option(
+        None, "--max-height", help="印花最大高度，占画布高度比例。"
+    ),
+    anchor: str | None = typer.Option(
+        None, "--anchor", help="纵坐标锚点：center / top / bottom。"
     ),
     ink: str | None = typer.Option(
         None, "--ink", help="墨色策略：auto / multiply / normal / white；默认 auto。"
@@ -692,6 +723,7 @@ def composite_command(
 ) -> None:
     """本地合成：把印花贴到成衣实拍图上，支持正片叠底与深色衣白墨适配。"""
     from aionforge.core.composite import composite_print
+    from aionforge.core.placement import PLACEMENT_PRESETS, resolve_geometry
 
     if bucket not in BUCKETS:
         _fail(
@@ -711,9 +743,12 @@ def composite_command(
         _fail(exc, json_output, stage="params")
 
     resolved_print: Path | None = print_file
-    resolved_x = 0.5
-    resolved_y = 0.38
-    resolved_width = 0.35
+    resolved_region: str | None = region
+    selected_x: float | None = None
+    selected_y: float | None = None
+    selected_width: float | None = None
+    selected_max_height: float | None = None
+    selected_anchor: str | None = None
     resolved_ink = "auto"
     placement_id = ""
 
@@ -782,20 +817,25 @@ def composite_command(
                 stage="params",
             )
         resolved_print = candidate
-        resolved_x = float(selected.get("x", 0.5))
-        resolved_y = float(selected.get("y", 0.38))
-        resolved_width = float(selected.get("width", 0.35))
+        if resolved_region is None:
+            fact_region = selected.get("region")
+            if isinstance(fact_region, str) and fact_region in PLACEMENT_PRESETS:
+                resolved_region = fact_region
+        if "x" in selected and selected["x"] is not None:
+            selected_x = float(selected["x"])
+        if "y" in selected and selected["y"] is not None:
+            selected_y = float(selected["y"])
+        if "width" in selected and selected["width"] is not None:
+            selected_width = float(selected["width"])
+        if "max_height" in selected and selected["max_height"] is not None:
+            selected_max_height = float(selected["max_height"])
+        if "anchor" in selected and selected["anchor"] is not None:
+            selected_anchor = str(selected["anchor"])
         resolved_ink = selected_ink
         placement_id = placement
 
     if print_file is not None:
         resolved_print = print_file
-    if x is not None:
-        resolved_x = x
-    if y is not None:
-        resolved_y = y
-    if width is not None:
-        resolved_width = width
     if ink is not None:
         resolved_ink = ink
     if resolved_print is None:
@@ -806,12 +846,28 @@ def composite_command(
         )
 
     try:
+        (
+            resolved_x,
+            resolved_y,
+            resolved_width,
+            resolved_max_height,
+            resolved_anchor,
+        ) = resolve_geometry(
+            region=resolved_region,
+            x=selected_x if x is None else x,
+            y=selected_y if y is None else y,
+            width=selected_width if width is None else width,
+            max_height=selected_max_height if max_height is None else max_height,
+            anchor=selected_anchor if anchor is None else anchor,
+        )
         result = composite_print(
             garment,
             resolved_print,
             x=resolved_x,
             y=resolved_y,
             width=resolved_width,
+            max_height=resolved_max_height,
+            anchor=resolved_anchor,
             ink=resolved_ink,
             shading=shading,
         )
@@ -837,9 +893,12 @@ def composite_command(
             "garment": str(garment),
             "print": str(resolved_print),
             "placement": {
+                "region": resolved_region or "",
                 "x": resolved_x,
                 "y": resolved_y,
                 "width": resolved_width,
+                "max_height": resolved_max_height,
+                "anchor": resolved_anchor,
             },
             "placement_id": placement_id,
             "ink": result.ink,
@@ -857,6 +916,7 @@ def composite_command(
             "bucket": bucket,
             "ink": result.ink,
             "placement": placement_id,
+            "region": resolved_region or "",
         },
     )
 

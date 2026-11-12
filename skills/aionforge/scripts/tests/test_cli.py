@@ -583,6 +583,91 @@ def test_composite_requires_print_or_placement(tmp_path: Path) -> None:
     assert "必须提供" in payload["error"]["reason"]
 
 
+def test_composite_region_preset_flag(tmp_path: Path) -> None:
+    product_dir = _init_product()
+    garment = tmp_path / "garment.png"
+    Image.new("RGB", (1000, 1000), "white").save(garment)
+    print_file = tmp_path / "badge.png"
+    Image.new("RGBA", (100, 100), (0, 128, 255, 255)).save(print_file)
+
+    result = runner.invoke(
+        app,
+        [
+            "composite",
+            "--garment",
+            str(garment),
+            "--print",
+            str(print_file),
+            "--product-dir",
+            str(product_dir),
+            "--region",
+            "left_chest",
+            "--name",
+            "tee-badge",
+            "--ink",
+            "normal",
+            "--shading",
+            "0",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["region"] == "left_chest"
+    dest = product_dir.parents[2] / "bg_white" / "tee-badge.png"
+    with Image.open(dest) as image:
+        assert image.getpixel((610, 290)) == (0, 128, 255)
+
+
+def test_composite_placement_uses_region_preset_defaults(tmp_path: Path) -> None:
+    product_dir = _init_product()
+    print_file = product_dir / "refs" / "print.png"
+    print_file.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (100, 100), (255, 0, 0, 255)).save(print_file)
+    _write_placements(
+        product_dir,
+        [
+            {
+                "id": "back-main",
+                "side": "back",
+                "region": "back_center",
+                "source": "refs/print.png",
+                "ink": "normal",
+            }
+        ],
+    )
+    garment = tmp_path / "garment.png"
+    Image.new("RGB", (1000, 1000), "white").save(garment)
+
+    result = runner.invoke(
+        app,
+        [
+            "composite",
+            "--product-dir",
+            str(product_dir),
+            "--placement",
+            "back-main",
+            "--garment",
+            str(garment),
+            "--name",
+            "tee-back",
+            "--shading",
+            "0",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["region"] == "back_center"
+    dest = product_dir.parents[2] / "bg_white" / "tee-back.png"
+    with Image.open(dest) as image:
+        # back_center: x=0.50, y=0.19 (anchor=top), width=0.30 -> 300x300 box [350..650, 190..490]
+        assert image.getpixel((500, 200)) == (255, 0, 0)
+        assert image.getpixel((500, 150)) == (255, 255, 255)
+
+
 def test_print_metrics_command_json(tmp_path: Path) -> None:
     print_file = tmp_path / "print.png"
     image = Image.new("RGBA", (100, 50), (0, 0, 0, 0))

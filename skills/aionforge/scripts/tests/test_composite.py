@@ -94,6 +94,48 @@ def test_placement_box_and_validation() -> None:
         validate_box((1, 1, 200, 200), (200, 200))
 
 
+def test_placement_box_respects_max_height_and_anchors() -> None:
+    # 竖长图 100x200：按 width=0.30 会得 300x600，受 max_height=0.40 封顶到 200x400
+    left, top, width, height = placement_box(
+        (1000, 1000),
+        (100, 200),
+        x=0.5,
+        y=0.19,
+        width=0.30,
+        max_height=0.40,
+        anchor="top",
+    )
+    assert (left, top, width, height) == (400, 190, 200, 400)
+
+    _, bottom_top, _, bh = placement_box(
+        (1000, 1000),
+        (100, 100),
+        x=0.66,
+        y=0.84,
+        width=0.065,
+        anchor="bottom",
+    )
+    assert bottom_top + bh == 840
+
+
+def test_composite_with_region_preset_left_chest(tmp_path: Path) -> None:
+    garment = _garment(tmp_path / "garment.png", "white", size=(1000, 1000))
+    print_file = _print(tmp_path / "badge.png", (255, 0, 0, 255))
+
+    result = composite_print(
+        garment,
+        print_file,
+        region="left_chest",
+        ink="normal",
+        shading=0,
+    )
+
+    # left_chest 固定中心在 x=0.61 (610), y=0.29 (290)，正面图中心右侧
+    assert result.image.getpixel((610, 290)) == (255, 0, 0)
+    # 右胸对照点 (320, 290) 必须仍是白底
+    assert result.image.getpixel((320, 290)) == (255, 255, 255)
+
+
 def test_mean_luminance_extremes() -> None:
     assert mean_luminance(Image.new("RGB", (4, 4), "black")) == 0
     assert mean_luminance(Image.new("RGB", (4, 4), "white")) == 255

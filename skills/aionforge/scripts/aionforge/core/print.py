@@ -17,7 +17,11 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 from aionforge.core.composite import _dark_ink_to_white
 from aionforge.core.images import _background_mask, _estimate_background
-from aionforge.core.placement import mean_luminance, placement_box
+from aionforge.core.placement import (
+    mean_luminance,
+    placement_box,
+    resolve_geometry,
+)
 
 _HEX_RE = re.compile(r"^#?[0-9a-fA-F]{6}$")
 _STRATEGIES = {
@@ -320,9 +324,17 @@ def _garment_region(
     x: float,
     y: float,
     width: float,
+    max_height: float | None = None,
+    anchor: str = "center",
 ) -> Image.Image:
     left, top, box_width, box_height = placement_box(
-        garment.size, print_size, x=x, y=y, width=width
+        garment.size,
+        print_size,
+        x=x,
+        y=y,
+        width=width,
+        max_height=max_height,
+        anchor=anchor,
     )
     left = min(max(0, left), max(0, garment.width - 1))
     top = min(max(0, top), max(0, garment.height - 1))
@@ -440,9 +452,12 @@ def adapt_print(
     *,
     strategy: str = "auto",
     palette: list[tuple[int, int, int]] | None = None,
-    x: float = 0.5,
-    y: float = 0.38,
-    width: float = 0.35,
+    region: str | None = None,
+    x: float | None = None,
+    y: float | None = None,
+    width: float | None = None,
+    max_height: float | None = None,
+    anchor: str | None = None,
     outline_px: int = 4,
     max_colors: int = 8,
 ) -> AdaptReport:
@@ -451,9 +466,16 @@ def adapt_print(
         raise ValueError(f"strategy 必须是 {', '.join(sorted(_STRATEGIES))}")
     if strategy == "palette" and not palette:
         raise ValueError("palette 策略需要 --palette 目标色")
-    for name, value in (("x", x), ("y", y), ("width", width)):
-        if not 0 < value <= 1:
-            raise ValueError(f"--{name} 必须在 (0, 1] 之间，收到：{value}")
+    resolved_x, resolved_y, resolved_width, resolved_max_height, resolved_anchor = (
+        resolve_geometry(
+            region=region,
+            x=x,
+            y=y,
+            width=width,
+            max_height=max_height,
+            anchor=anchor,
+        )
+    )
 
     source = Path(print_path)
     garment_file = Path(garment_path)
@@ -468,9 +490,17 @@ def adapt_print(
     with Image.open(garment_file) as opened:
         garment = opened.convert("RGB")
 
-    region = _garment_region(garment, original.size, x=x, y=y, width=width)
-    garment_rgb = _mean_rgb(region)
-    garment_luminance = mean_luminance(region)
+    sampled = _garment_region(
+        garment,
+        original.size,
+        x=resolved_x,
+        y=resolved_y,
+        width=resolved_width,
+        max_height=resolved_max_height,
+        anchor=resolved_anchor,
+    )
+    garment_rgb = _mean_rgb(sampled)
+    garment_luminance = mean_luminance(sampled)
     palette_entries = _palette_entries(original, max_colors=max_colors)
     contrast_before = _min_contrast(palette_entries, garment_rgb)
 
