@@ -164,3 +164,32 @@ def test_select_size_template_includes_confirm_modal_handler() -> None:
         assert "确认切换" in expr and "确定" in expr
 
     asyncio.run(_run())
+
+
+def test_upload_auxiliary_images_via_cdp(tmp_path: Path) -> None:
+    white_img = tmp_path / "white.jpg"
+    long_img = tmp_path / "long.jpg"
+    white_img.write_bytes(b"fake")
+    long_img.write_bytes(b"fake")
+
+    fake_ws = _FakeWebSocket(
+        {
+            "Runtime.evaluate": {"result": {"value": True}},
+            "DOM.getDocument": {"root": {"nodeId": 1}},
+            "DOM.querySelector": {"nodeId": 42},
+            "DOM.setFileInputFiles": {},
+        }
+    )
+
+    async def _run() -> None:
+        client = pdd_cdp_publish.CDPClient("ws://127.0.0.1:9222/devtools/page/1")
+        client._ws = fake_ws
+        res = await pdd_cdp_publish._upload_auxiliary_images(
+            client, str(white_img), str(long_img)
+        )
+        assert res["white_bg"] is True
+        assert res["long_image"] is True
+        set_calls = [m for m in fake_ws.sent if m["method"] == "DOM.setFileInputFiles"]
+        assert len(set_calls) == 2
+
+    asyncio.run(_run())

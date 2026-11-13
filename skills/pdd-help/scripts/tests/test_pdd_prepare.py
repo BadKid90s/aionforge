@@ -287,3 +287,22 @@ def test_check_title() -> None:
     long_title = "纯棉短袖T恤女宽松百搭印花半袖体恤夏装潮流设计感小众上衣女装新款"
     long_args = parser.parse_args(["check-title", long_title])
     assert long_args.func(long_args) == 1
+
+
+def test_auxiliary_images_export_and_listing(tmp_path: Path) -> None:
+    ws = tmp_path / "aux_ws"
+    _make_img(ws / "main" / "hero.png", (800, 800), (220, 220, 220))
+    _make_img(ws / "auxiliary" / "tee-white.png", (900, 900), (255, 255, 255))
+    _make_img(ws / "auxiliary" / "tee-long.png", (800, 1200), (230, 230, 230))
+    out_dir = tmp_path / "out_aux"
+    parser = pdd_prepare.build_parser()
+    args = parser.parse_args(["prepare", str(ws), "--out", str(out_dir)])
+    assert args.func(args) == 0
+
+    listing = json.loads((out_dir / "pdd_listing.json").read_text(encoding="utf-8"))
+    assert Path(listing["white_bg_image"]).name == "tee-white.jpg"
+    assert Path(listing["long_image"]).name == "tee-long.jpg"
+    manifest = json.loads((out_dir / "pdd_manifest.json").read_text(encoding="utf-8"))
+    long_item = next(i for i in manifest["auxiliary"] if "tee-long" in i["output"])
+    assert long_item["width"] == 800
+    assert long_item["height"] == 1200

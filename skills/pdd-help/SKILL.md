@@ -42,7 +42,7 @@ uv run --project skills/aionforge/scripts python skills/pdd-help/scripts/pdd_pre
 - `02_white_bg/`：纯白 `#FFFFFF` `800×800` 白底商品图
 - `03_detail/`：统一 `750px` 宽详情图（超 `1500px` 自动纵向切分）
 - `04_sku/`：`800×800` SKU 规格图（无 `sku/` 时自动从 `bg_white/` 正面图提取）
-- `pdd_manifest.json`、`pdd_attributes.json`（独立可编辑的属性文件，默认读取 [default-attributes.json](references/default-attributes.json) 的**「短袖」「长袖」两套素禾母版**，支持 `--profile 短袖|长袖` 指定或自动识别，也可用 `--attributes-file` 覆盖）与 `pdd_listing.json`
+- `pdd_manifest.json`、`pdd_attributes.json`（独立可编辑的属性文件，默认读取统一配置文件 [default-config.json](references/default-config.json) 中的**「短袖」「长袖」两套素禾母版**，支持 `--profile 短袖|长袖` 指定或自动识别，也可用 `--config-file` / `--attributes-file` 覆盖）、`05_auxiliary/`（商品白底图与 `2:3` 长图）与 `pdd_listing.json`
 
 ### 第三步：校验标题并确认上架参数（Lock）
 
@@ -53,10 +53,10 @@ uv run --project skills/aionforge/scripts python skills/pdd-help/scripts/pdd_pre
 2. 向用户确认关键上架参数（禁止擅自编造价格或直接正式发布）：
    - **上架模式**：`上架到草稿箱`（默认推荐）或 `正式上架`
    - **商品标题 & 类目**：确认最终标题与三级类目（如 `女装/女士精品 > T恤 > T恤`）
-   - **商品属性**：核对 `pdd_listing.json` / `pdd_attributes.json` 中的属性（默认对齐「素禾优选女装」母版：`品牌`、`支数`、`重要面料俗称`、`重要平方克重`、`领型`、`重要袖长`、`重要服装版型`、`重要衣长`、`重要是否加绒`、`重要上市时节`、`重要主风格`、`重要适用年龄`、`风格`）
-   - **尺码模板 & 运费模板**：优先读取 [default-templates.json](references/default-templates.json)（或 `--templates-file` / `pdd_listing.json`）；**若其中任一项未配置（为空），必须先通过 `list-templates` 读取页面可选项并询问用户选择哪个尺码模板与运费模板**，禁止擅自决定。
-   - **拼单价 & 单买价 & 库存**：优先读取 [default-pricing.json](references/default-pricing.json)（按 **长袖 / 短袖** 分开配置，支持 `--pricing-file` 覆盖）；**若任一价格未配置（`null`），必须询问用户确认后再执行批量设置**。
-   - **SKU 规格与预览图**：确认颜色列表与 `04_sku/` 预览图映射、尺码（如 `S/M/L/XL`）
+   - **商品属性**：核对 `pdd_listing.json` / `pdd_attributes.json` 中的属性（默认对齐 [default-config.json](references/default-config.json) 中「素禾优选女装」按长袖/短袖区分的 16 项属性母版）
+   - **尺码模板 & 运费模板**：优先读取 [default-config.json](references/default-config.json)（或 `--config-file` / `--templates-file` / `pdd_listing.json`）；**若其中任一项未配置（为空），必须先通过 `list-templates` 读取页面可选项并询问用户选择哪个尺码模板与运费模板**，禁止擅自决定。
+   - **拼单价 & 单买价 & 库存**：优先读取 [default-config.json](references/default-config.json)（按 **长袖 / 短袖** 分开配置，支持 `--config-file` / `--pricing-file` 覆盖）；**若任一价格未配置（`null`），必须询问用户确认后再执行批量设置**。
+   - **商品辅助图与 SKU 规格**：确认白底图（`white_bg_image`）、长图（`long_image`）、颜色列表与 `04_sku/` 预览图映射
 
 ### 第四步：CDP 协议长连接自动上传与上架
 
@@ -79,5 +79,5 @@ uv run --project skills/aionforge/scripts python skills/pdd-help/scripts/pdd_pre
      ```
 3. **长连接会话内自动处理**：
    - 未登录时保持同一条 CDP WebSocket 长连接等待用户扫码登录，登录后自动续跑；
-   - 通过 CDP `DOM.setFileInputFiles` 直接上传本地 `01_main/`、`02_white_bg/`、`03_detail/`、`04_sku/`；
-   - 通过 CDP `Runtime.evaluate` 填写标题、选择类目、保存草稿或提交上架。
+   - 通过 CDP `DOM.setFileInputFiles` 直接上传本地 `01_main/`、`05_auxiliary/`（白底图与长图，先于商品属性上传）、`04_sku/` 颜色预览图；
+   - 严格按顺序完成：**上传商品辅助图（白底图+长图）→ 填写商品属性 → 填写颜色分类与预览图 → 选择尺码表模板并确认弹窗 → 批量设置拼单价/单买价/库存 → 选择邮费模板 → 保存草稿/上架、处理弹窗并关闭浏览器标签页**（调试时可加 `--keep-tab` 保留标签页）。

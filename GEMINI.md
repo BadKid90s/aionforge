@@ -6,3 +6,4 @@
 @./skills/aionforge-product/SKILL.md
 @./skills/aionforge-main/SKILL.md
 @./skills/aionforge-detail/SKILL.md
+@./skills/aionforge-auxiliary/SKILL.md

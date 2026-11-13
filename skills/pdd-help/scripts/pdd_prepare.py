@@ -170,6 +170,7 @@ def _discover_categories(target: Path) -> dict[str, list[Path]]:
         "bg_white": _list_images(target / "bg_white"),
         "detail": _list_images(target / "detail"),
         "sku": _list_images(target / "sku"),
+        "auxiliary": _list_images(target / "auxiliary"),
     }
     if any(sub_map.values()):
         return {k: v for k, v in sub_map.items() if v}
@@ -422,8 +423,14 @@ def _build_listing_payload(
     if category == "T恤":
         category = "女装/女士精品 > T恤 > T恤"
 
+    aux_list = [str(item["output"]) for item in manifest.get("auxiliary", [])]
+    aux_long = next((p for p in aux_list if Path(p).stem.endswith("-long")), "")
+    aux_white = next(
+        (p for p in aux_list if Path(p).stem.endswith("-white") and p != aux_long), ""
+    )
+
     white_bg_list = [str(item["output"]) for item in manifest["white_bg"]]
-    preferred_white_bg = next(
+    preferred_white_bg = aux_white or next(
         (p for p in white_bg_list if "-back" not in Path(p).stem),
         white_bg_list[0] if white_bg_list else "",
     )
@@ -462,6 +469,7 @@ def _build_listing_payload(
         "attributes": _infer_attributes(facts, product_name, category, custom_attrs_file, profile),
         "main_images": [str(item["output"]) for item in manifest["main"]][:10],
         "white_bg_image": preferred_white_bg,
+        "long_image": aux_long,
         "detail_images": [str(item["output"]) for item in manifest["detail"]],
         "sku_colors": sku_items,
         "sizes": ["S", "M", "L", "XL"],
@@ -543,6 +551,7 @@ def cmd_prepare(args: argparse.Namespace) -> int:
         "white_bg": [],
         "detail": [],
         "sku": [],
+        "auxiliary": [],
     }
 
     # 1. 主图 -> 01_main/ (800x800, cover)
@@ -626,6 +635,28 @@ def cmd_prepare(args: argparse.Namespace) -> int:
         dest = out_dir / "04_sku" / f"{src.stem}{ext}"
         size_bytes = _save_image(out_img, dest, fmt)
         manifest["sku"].append(
+            {
+                "source": str(src),
+                "output": str(dest),
+                "width": out_img.width,
+                "height": out_img.height,
+                "size_kb": round(size_bytes / 1024, 1),
+            }
+        )
+
+    # 5. 商品辅助图 -> 05_auxiliary/ (白底图 1:1 800x800, 长图 2:3 800x1200)
+    for src in categories.get("auxiliary", []):
+        with Image.open(src) as raw:
+            rgb = _to_rgb_white_bg(raw)
+            if "-long" in src.stem:
+                out_img = ImageOps.fit(
+                    rgb, (args.main_size, int(args.main_size * 1.5)), method=Image.Resampling.LANCZOS
+                )
+            else:
+                out_img = _fit_square(rgb, args.main_size, "contain")
+        dest = out_dir / "05_auxiliary" / f"{src.stem}{ext}"
+        size_bytes = _save_image(out_img, dest, fmt)
+        manifest["auxiliary"].append(
             {
                 "source": str(src),
                 "output": str(dest),

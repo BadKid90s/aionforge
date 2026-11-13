@@ -221,6 +221,68 @@ async def _wait_until_logged_in(cdp: CDPClient, timeout_sec: int = 180) -> bool:
     return False
 
 
+async def _upload_auxiliary_images(
+    cdp: CDPClient, white_bg_image: str, long_image: str
+) -> dict[str, bool]:
+    """在填写商品属性之前上传商品辅助图（白底图与长图）。"""
+    status = {"white_bg": False, "long_image": False}
+    tasks = [
+        ("white_bg", "白底图", white_bg_image),
+        ("long_image", "长图", long_image),
+    ]
+    for key, label, img_path in tasks:
+        if not img_path or not Path(img_path).is_file():
+            continue
+        marked = await cdp.eval_js(
+            f"""(() => {{
+                document.querySelectorAll('input[data-pdd-aux-upload]')
+                    .forEach(el => el.removeAttribute('data-pdd-aux-upload'));
+                const labelText = {json.dumps(label)};
+                const group = document.querySelector('.activity-materials-pic')
+                    || Array.from(document.querySelectorAll('.mui-form-group, div'))
+                        .find(el => (el.innerText || '').includes('商品辅助图'));
+                if (!group) return false;
+                group.scrollIntoView({{ block: 'center' }});
+                const labels = Array.from(group.querySelectorAll('span, label, div'))
+                    .filter(el => (el.innerText || '').trim() === labelText);
+                for (const lbl of labels) {{
+                    let box = lbl.parentElement;
+                    for (let d = 0; d < 4 && box && box !== group; d++, box = box.parentElement) {{
+                        const files = box.querySelectorAll('input[type="file"]');
+                        if (files.length === 1) {{
+                            files[0].setAttribute('data-pdd-aux-upload', {json.dumps(key)});
+                            return true;
+                        }}
+                    }}
+                }}
+                return false;
+            }})()"""
+        )
+        if not marked:
+            continue
+        doc = await cdp.call("DOM.getDocument", {"depth": -1})
+        root_id = doc["root"]["nodeId"]
+        qres = await cdp.call(
+            "DOM.querySelector",
+            {
+                "nodeId": root_id,
+                "selector": f'input[data-pdd-aux-upload="{key}"]',
+            },
+        )
+        node_id = qres.get("nodeId", 0)
+        if node_id:
+            await cdp.call(
+                "DOM.setFileInputFiles",
+                {"nodeId": node_id, "files": [str(Path(img_path).resolve())]},
+            )
+            status[key] = True
+            await asyncio.sleep(0.8)
+        await cdp.eval_js(
+            "document.querySelectorAll('input[data-pdd-aux-upload]').forEach(el => el.removeAttribute('data-pdd-aux-upload'))"
+        )
+    return status
+
+
 async def _fill_attributes(cdp: CDPClient, attributes: dict[str, str]) -> dict[str, list[str]]:
     """在完整编辑页按属性标签自动填充输入框或下拉选择框。"""
     if not attributes:
@@ -909,7 +971,17 @@ async def _run_cdp_flow(
         if next_ok:
             await asyncio.sleep(3.5)
 
-        # 4. 填充商品属性（材质、领型、袖长、版型等）
+        # 4. 上传商品辅助图（白底图与长图）—— 在填写商品属性之前完成
+        white_bg_img = str(listing.get("white_bg_image") or "").strip()
+        long_img = str(listing.get("long_image") or "").strip()
+        if white_bg_img or long_img:
+            aux_res = await _upload_auxiliary_images(cdp, white_bg_img, long_img)
+            print(
+                f"商品辅助图上传: 白底图={'OK' if aux_res['white_bg'] else 'SKIP'}, "
+                f"长图={'OK' if aux_res['long_image'] else 'SKIP'}"
+            )
+
+        # 5. 填充商品属性（材质、领型、袖长、版型等）
         raw_attrs = listing.get("attributes")
         if isinstance(raw_attrs, dict) and raw_attrs:
             attr_res = await _fill_attributes(cdp, {str(k): str(v) for k, v in raw_attrs.items()})
