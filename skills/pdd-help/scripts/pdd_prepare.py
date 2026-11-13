@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import unicodedata
+import zlib
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Literal
@@ -459,14 +461,24 @@ def _build_listing_payload(
             if custom_price.get(key) is not None:
                 pricing[key] = custom_price[key]
 
+    attrs = _infer_attributes(facts, product_name, category, custom_attrs_file, profile)
+    title_candidates = _generate_tshirt_titles(
+        facts,
+        attrs,
+        resolved_profile,
+        formula="all",
+        config_file=custom_templates_file or custom_attrs_file or DEFAULT_CONFIG_FILE,
+    )
+
     return {
         "mode": "draft",
         "profile": resolved_profile,
-        "title": product_name[:30],
+        "title": str(title_candidates[0]["title"]),
+        "title_candidates": title_candidates,
         "category": category,
         "size_template": templates["size_template"],
         "shipping_template": templates["shipping_template"],
-        "attributes": _infer_attributes(facts, product_name, category, custom_attrs_file, profile),
+        "attributes": attrs,
         "main_images": [str(item["output"]) for item in manifest["main"]][:10],
         "white_bg_image": preferred_white_bg,
         "long_image": aux_long,
@@ -711,6 +723,413 @@ def _pdd_char_len(text: str) -> int:
     return total
 
 
+MAX_TITLE_UNITS = 60
+
+MUTUALLY_EXCLUSIVE_TOKEN_GROUPS: list[set[str]] = [
+    {"宽松", "修身", "紧身", "显瘦收腰"},
+    {"短袖", "长袖", "五分袖", "七分袖"},
+    {"圆领", "V领", "半高领", "高领", "POLO领"},
+]
+
+CORE_ROOT_TOKENS: tuple[str, ...] = (
+    "T恤",
+    "纯棉",
+    "印花",
+    "宽松",
+    "修身",
+    "紧身",
+    "圆领",
+    "V领",
+    "韩版",
+    "韩系",
+    "美式",
+    "复古",
+    "法式",
+    "甜酷",
+    "设计感",
+    "小众",
+    "显瘦",
+    "遮肉",
+    "叠穿",
+    "打底",
+    "百搭",
+    "上衣",
+    "体恤",
+    "半袖",
+    "短袖",
+    "长袖",
+    "夏季",
+    "秋季",
+    "新款",
+)
+
+
+def _sanitize_title_token(token: str) -> str:
+    """移除违禁词、多余空白与标点，保证标题词干净合规。"""
+    cleaned = token.strip()
+    for word in PROHIBITED_WORDS:
+        if word in cleaned:
+            cleaned = cleaned.replace(word, "")
+    cleaned = re.sub(r"[\s/|·,，。!！?？]+", "", cleaned)
+    return cleaned
+
+
+def _has_mutually_exclusive_conflict(token: str, current_title: str) -> bool:
+    """检查待追加词与已选词是否存在互斥冲突（如宽松与修身）。"""
+    for group in MUTUALLY_EXCLUSIVE_TOKEN_GROUPS:
+        token_hits = {item for item in group if item in token}
+        if not token_hits:
+            continue
+        existing_hits = {item for item in group if item in current_title}
+        if existing_hits and not token_hits.issubset(existing_hits):
+            return True
+    return False
+
+
+def _has_root_overlap(token: str, current_title: str) -> bool:
+    """检查词根是否已出现在当前标题中，避免重复堆砌关键词。"""
+    if not token:
+        return True
+    lowered_title = current_title.lower()
+    if token.lower() in lowered_title:
+        return True
+    for root in CORE_ROOT_TOKENS:
+        if root in token and root.lower() in lowered_title:
+            return True
+    return False
+
+
+LOGO_MOTIF_MAP: tuple[tuple[str, str], ...] = (
+    ("daisy", "小雏菊印花"),
+    ("flower", "花卉印花"),
+    ("butterfly", "蝴蝶印花"),
+    ("dog", "卡通小狗印花"),
+    ("cat", "猫咪印花"),
+    ("bear", "小熊印花"),
+    ("boba", "趣味卡通印花"),
+    ("romantic", "浪漫标语印花"),
+    ("los-angeles", "美式字母印花"),
+    ("happy", "英文标语印花"),
+    ("positive", "字母标语印花"),
+    ("liberty", "复古标语印花"),
+)
+
+
+def _load_title_hot_keywords(config_file: Path | None = None) -> dict[str, object]:
+    """从统一配置文件（如 default-config.json）加载拼多多女装 T 恤热搜词库。"""
+    for path in (config_file, DEFAULT_CONFIG_FILE):
+        if path and path.exists():
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                continue
+            hot_kw = data.get("title_hot_keywords")
+            if isinstance(hot_kw, dict):
+                return hot_kw
+    return {}
+
+
+def _infer_title_theme(
+    facts: dict[str, object], extra_keywords: list[str] | None = None
+) -> str:
+    """根据印花元素、logo 标识与用户关键词识别热搜风格分组。"""
+    joined = " ".join(
+        [
+            str(facts.get("logo") or ""),
+            str(facts.get("product_name") or ""),
+            *(extra_keywords or []),
+        ]
+    ).lower()
+    if any(k in joined for k in ("daisy", "flower", "butterfly", "romantic", "花", "蝴蝶", "法式", "温柔")):
+        return "floral"
+    if any(k in joined for k in ("los-angeles", "happy", "positive", "liberty", "retro", "23", "美式", "复古", "字母", "标语", "街头")):
+        return "retro_street"
+    if any(k in joined for k in ("dog", "cat", "bear", "boba", "卡通", "小狗", "可爱", "学院")):
+        return "cartoon"
+    return "general"
+
+
+def _has_back_print(facts: dict[str, object]) -> bool:
+    """判断商品是否包含后背主印花，用于精准匹配「后背印花」热搜词。"""
+    print_info = facts.get("print")
+    if isinstance(print_info, dict):
+        placements = print_info.get("placements")
+        if isinstance(placements, list):
+            for p in placements:
+                if isinstance(p, dict) and str(p.get("side") or "").lower() == "back":
+                    return True
+    colors = facts.get("colors")
+    if isinstance(colors, list):
+        for c in colors:
+            if isinstance(c, dict) and str(c.get("bg_white_back") or "").strip():
+                return True
+    return False
+
+
+def _rotate_list(items: list[str], seed: int, offset: int = 0) -> list[str]:
+    """按确定性偏移轮换热搜词顺序，避免同店多款标题高度雷同。"""
+    if not items:
+        return []
+    idx = (seed + offset) % len(items)
+    return items[idx:] + items[:idx]
+
+
+def _extract_print_descriptor(
+    facts: dict[str, object], extra_keywords: list[str] | None = None, fallback: str = "创意印花"
+) -> str:
+    """从工作区 facts 或用户关键词中提取具体印花/设计词。"""
+    back_prefix = "后背" if _has_back_print(facts) else ""
+
+    for kw in extra_keywords or []:
+        cleaned = _sanitize_title_token(kw)
+        if cleaned and _pdd_char_len(cleaned) <= 12:
+            if "印花" in cleaned or "图案" in cleaned or "刺绣" in cleaned:
+                return cleaned
+            return f"{cleaned}印花" if _pdd_char_len(cleaned) <= 8 else cleaned
+
+    print_info = facts.get("print")
+    if isinstance(print_info, dict):
+        if print_info.get("has_print") is False:
+            return "简约纯色"
+        text_exact = _sanitize_title_token(str(print_info.get("text_exact") or ""))
+        if text_exact and _pdd_char_len(text_exact) <= 8:
+            return f"{back_prefix}{text_exact}印花"
+        for key in ("theme", "motif", "style"):
+            val = _sanitize_title_token(str(print_info.get(key) or ""))
+            if val and _pdd_char_len(val) <= 10:
+                base = val if "印花" in val else f"{val}印花"
+                return f"{back_prefix}{base}" if back_prefix and _pdd_char_len(base) <= 8 else base
+        visual_kws = print_info.get("visual_keywords")
+        if isinstance(visual_kws, list) and visual_kws:
+            first_kw = _sanitize_title_token(str(visual_kws[0]))
+            if first_kw and _pdd_char_len(first_kw) <= 8:
+                base = first_kw if "印花" in first_kw else f"{first_kw}印花"
+                return f"{back_prefix}{base}" if back_prefix and _pdd_char_len(base) <= 8 else base
+
+    logo_slug = str(facts.get("logo") or "").lower()
+    for motif, label in LOGO_MOTIF_MAP:
+        if motif in logo_slug:
+            if back_prefix and _pdd_char_len(back_prefix + label) <= 12:
+                return f"{back_prefix}{label}"
+            return label
+
+    return f"{back_prefix}{fallback}" if back_prefix else fallback
+
+
+def _extract_title_slots(
+    facts: dict[str, object],
+    attributes: dict[str, str],
+    profile: str,
+    extra_keywords: list[str] | None = None,
+) -> dict[str, str]:
+    """从属性与工作区事实提取女装 T 恤标题各槽位。"""
+    resolved_profile = "长袖" if profile in {"长袖", "long"} else "短袖"
+    sleeve_word = "长袖" if resolved_profile == "长袖" else "短袖"
+
+    raw_material = _sanitize_title_token(attributes.get("重要面料俗称", ""))
+    if "棉" in raw_material and "纯棉" not in raw_material:
+        material_word = "纯棉"
+    elif raw_material and _pdd_char_len(raw_material) <= 8:
+        material_word = raw_material
+    else:
+        material_word = "纯棉"
+
+    raw_weight = attributes.get("重要平方克重", "")
+    weight_match = re.search(r"(\d+)\s*g", raw_weight, flags=re.IGNORECASE)
+    weight_word = f"{weight_match.group(1)}g" if weight_match else ""
+
+    raw_season = _sanitize_title_token(attributes.get("重要上市时节", ""))
+    season_short = raw_season.replace("年", "")
+    if not season_short:
+        season_short = "2026秋季" if resolved_profile == "长袖" else "2026夏季"
+    year_season_new = season_short if "新款" in season_short else f"{season_short}新款"
+
+    raw_fit = _sanitize_title_token(attributes.get("重要服装版型", "宽松"))
+    if "宽松" in raw_fit:
+        fit_word = "宽松"
+    elif "修身" in raw_fit:
+        fit_word = "修身"
+    elif "紧身" in raw_fit:
+        fit_word = "紧身"
+    else:
+        fit_word = raw_fit[:4] or "宽松"
+
+    raw_collar = _sanitize_title_token(attributes.get("领型", "圆领")) or "圆领"
+    collar_word = "圆领" if "圆领" in raw_collar and _pdd_char_len(raw_collar) > 6 else raw_collar
+
+    raw_style = _sanitize_title_token(
+        attributes.get("重要主风格") or attributes.get("风格") or "韩版"
+    )
+    if "韩" in raw_style:
+        style_word = "韩版"
+    elif raw_style and _pdd_char_len(raw_style) <= 6:
+        style_word = raw_style
+    else:
+        style_word = "韩版"
+
+    return {
+        "profile": resolved_profile,
+        "sleeve": sleeve_word,
+        "material": material_word,
+        "weight": weight_word,
+        "season_short": season_short,
+        "year_season_new": year_season_new,
+        "fit": fit_word,
+        "collar": collar_word,
+        "style": style_word,
+        "print_a": _extract_print_descriptor(facts, extra_keywords, fallback="创意印花"),
+        "print_b": _extract_print_descriptor(facts, extra_keywords, fallback="趣味印花"),
+    }
+
+
+def _assemble_title_tokens(core_tokens: list[str], tail_tokens: list[str]) -> str:
+    """按词组装标题：严格控制在 60 字符（30 汉字）内，不截断半个词，自动去重与防冲突。"""
+    title = ""
+    for raw in core_tokens:
+        token = _sanitize_title_token(raw)
+        if not token or _has_mutually_exclusive_conflict(token, title):
+            continue
+        if _pdd_char_len(title + token) <= MAX_TITLE_UNITS:
+            title += token
+
+    for raw in tail_tokens:
+        token = _sanitize_title_token(raw)
+        if not token:
+            continue
+        if _has_mutually_exclusive_conflict(token, title) or _has_root_overlap(token, title):
+            continue
+        if _pdd_char_len(title + token) <= MAX_TITLE_UNITS:
+            title += token
+
+    return title
+
+
+def _generate_tshirt_titles(
+    facts: dict[str, object],
+    attributes: dict[str, str],
+    profile: str,
+    formula: Literal["a", "b", "all"] = "all",
+    extra_keywords: list[str] | None = None,
+    config_file: Path | None = None,
+) -> list[dict[str, object]]:
+    """按拼多多女装 T 恤高权重公式 + 主题热搜词库生成差异化合规标题（<= 30 汉字 / 60 字符）。"""
+    slots = _extract_title_slots(facts, attributes, profile, extra_keywords)
+
+    hot_cfg = _load_title_hot_keywords(config_file)
+    theme = _infer_title_theme(facts, extra_keywords)
+    themes_map = hot_cfg.get("themes") if isinstance(hot_cfg.get("themes"), dict) else {}
+    theme_entry = themes_map.get(theme) or themes_map.get("general") or {}
+    profile_entry = hot_cfg.get(slots["profile"]) if isinstance(hot_cfg.get(slots["profile"]), dict) else {}
+
+    style_pool = [str(x) for x in (theme_entry.get("style") or [slots["style"]])]
+    sell_pool = [str(x) for x in (theme_entry.get("selling_points") or [])]
+    tail_pool = [str(x) for x in (profile_entry.get("tail") or [])]
+
+    logo_seed_str = str(facts.get("logo") or facts.get("product_name") or slots["print_a"])
+    seed = zlib.crc32(logo_seed_str.encode("utf-8"))
+
+    style_a = _rotate_list(style_pool, seed, offset=0)
+    sell_a = _rotate_list(sell_pool, seed, offset=0)
+    tail_a_hot = _rotate_list(tail_pool, seed, offset=0)
+
+    style_b = _rotate_list(style_pool, seed, offset=1)
+    sell_b = _rotate_list(sell_pool, seed, offset=1)
+    tail_b_hot = _rotate_list(tail_pool, seed, offset=1)
+
+    extra_clean = [_sanitize_title_token(k) for k in (extra_keywords or []) if _sanitize_title_token(k)]
+
+    # 公式 A：高权重核心前置公式
+    # [核心材质] + [袖长+核心品类+人群] + [年份季节] + [版型+领型] + [设计/印花元素] + [热搜风格+热搜卖点+长尾衍生词]
+    core_a = [
+        slots["material"],
+        f"{slots['sleeve']}T恤女",
+        slots["year_season_new"],
+        f"{slots['fit']}{slots['collar']}",
+        slots["print_a"],
+    ]
+    tail_a = [*extra_clean, *style_a[:1], *sell_a[:1], *tail_a_hot, *style_a[1:], *sell_a[1:]]
+    title_a = _assemble_title_tokens(core_a, tail_a)
+
+    # 公式 B：新品热搜长尾引流公式（风格热词前置抢占细分搜索流量）
+    # [热搜风格+版型] + [袖长+核心品类+人群] + [季节] + [材质/克重卖点] + [领型+印花] + [热搜卖点+场景长尾词]
+    material_weight = f"{slots['material']}{slots['weight']}" if slots["weight"] else slots["material"]
+    lead_style_b = style_b[0] if style_b else slots["style"]
+    core_b = [
+        f"{lead_style_b}{slots['fit']}",
+        f"{slots['sleeve']}T恤女",
+        slots["season_short"],
+        material_weight,
+        f"{slots['collar']}{slots['print_b']}",
+    ]
+    tail_b = [*extra_clean, *sell_b[:1], *tail_b_hot, *style_b[1:], *sell_b[1:]]
+    title_b = _assemble_title_tokens(core_b, tail_b)
+
+    specs: list[tuple[str, str, str]] = []
+    if formula in {"a", "all"}:
+        specs.append(("A", "高权重核心前置公式", title_a))
+    if formula in {"b", "all"}:
+        specs.append(("B", "热搜风格长尾引流公式", title_b))
+
+    results: list[dict[str, object]] = []
+    for code, name, title in specs:
+        char_len = _pdd_char_len(title)
+        hits = [w for w in PROHIBITED_WORDS if w in title]
+        results.append(
+            {
+                "formula": code,
+                "formula_name": name,
+                "theme": theme,
+                "title": title,
+                "char_len": char_len,
+                "hanzi_approx": round(char_len / 2, 1),
+                "valid": bool(title) and char_len <= MAX_TITLE_UNITS and not hits,
+            }
+        )
+    return results
+
+
+def cmd_generate_title(args: argparse.Namespace) -> int:
+    facts: dict[str, object] = {}
+    product_name = ""
+    if args.target:
+        target = Path(args.target).resolve()
+        if target.exists():
+            facts = _load_workspace_facts(target)
+            product_name = str(facts.get("product_name") or target.name)
+
+    custom_cfg = Path(args.config_file).resolve() if args.config_file else None
+    custom_attrs = Path(args.attributes_file).resolve() if args.attributes_file else custom_cfg
+    resolved_profile = _normalize_profile_name(args.profile, product_name, facts)
+    attrs = _infer_attributes(facts, product_name, "女装/T恤", custom_attrs, resolved_profile)
+
+    candidates = _generate_tshirt_titles(
+        facts,
+        attrs,
+        resolved_profile,
+        formula=args.formula,
+        extra_keywords=args.keywords,
+        config_file=custom_cfg,
+    )
+    if args.json:
+        print(
+            json.dumps(
+                {"profile": resolved_profile, "candidates": candidates},
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+        return 0
+
+    print(f"类目模板: 女装/T恤 ({resolved_profile})")
+    for item in candidates:
+        status = "PASS" if item["valid"] else "FAIL"
+        print(
+            f"[公式 {item['formula']} · {item['formula_name']}] {item['title']}\n"
+            f"  长度: {item['char_len']}/60（约 {item['hanzi_approx']} 汉字） | 状态: {status}"
+        )
+    return 0
+
+
 def cmd_check_title(args: argparse.Namespace) -> int:
     title = args.title.strip()
     char_len = _pdd_char_len(title)
@@ -786,6 +1205,32 @@ def build_parser() -> argparse.ArgumentParser:
     p_title = sub.add_parser("check-title", help="检查拼多多商品标题字数与违禁词")
     p_title.add_argument("title", help="待检测的商品标题")
     p_title.set_defaults(func=cmd_check_title)
+
+    p_gen_title = sub.add_parser("generate-title", help="按拼多多女装 T 恤高权重公式生成合规标题")
+    p_gen_title.add_argument(
+        "target", nargs="?", help="可选：AionForge 商品目录（如 output/<logo>），用于提取印花与版型事实"
+    )
+    p_gen_title.add_argument(
+        "--profile",
+        choices=["短袖", "长袖", "short", "long"],
+        help="选择袖长模板（短袖 / 长袖）；未指定时自动从商品名与 facts.json 识别",
+    )
+    p_gen_title.add_argument(
+        "--formula",
+        choices=["a", "b", "all"],
+        default="all",
+        help="标题公式：a=高权重核心前置，b=新品长尾引流，all=同时输出（默认）",
+    )
+    p_gen_title.add_argument(
+        "--keywords",
+        nargs="*",
+        default=[],
+        help="补充具体印花主题或卖点词（如：小雏菊 复古）",
+    )
+    p_gen_title.add_argument("--config-file", help="自定义配置 JSON 路径")
+    p_gen_title.add_argument("--attributes-file", help="自定义属性 JSON 路径")
+    p_gen_title.add_argument("--json", action="store_true", help="以 JSON 格式输出候选标题")
+    p_gen_title.set_defaults(func=cmd_generate_title)
 
     return parser
 

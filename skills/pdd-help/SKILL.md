@@ -44,21 +44,33 @@ uv run --project skills/aionforge/scripts python skills/pdd-help/scripts/pdd_pre
 - `04_sku/`：`800×800` SKU 规格图（无 `sku/` 时自动从 `bg_white/` 正面图提取）
 - `pdd_manifest.json`、`pdd_attributes.json`（独立可编辑的属性文件，默认读取统一配置文件 [default-config.json](references/default-config.json) 中的**「短袖」「长袖」两套素禾母版**，支持 `--profile 短袖|长袖` 指定或自动识别，也可用 `--config-file` / `--attributes-file` 覆盖）、`05_auxiliary/`（商品白底图与 `2:3` 长图）与 `pdd_listing.json`
 
-### 第三步：校验标题并确认上架参数（Lock）
+### 第三步：生成拼多多高权重标题（Title）
 
-1. 结合商品事实拟定拼多多标题（≤ 30 汉字 / 60 字符），并用脚本校验：
+1. `prepare` 已读取 [default-config.json](references/default-config.json) 中的 `title_hot_keywords` 热搜词库，按拼多多女装 T 恤双公式自动生成标题并写入 `pdd_listing.json`（`title` 与 `title_candidates`）：
+   - **公式 A（高权重核心前置）**：`[核心材质] + [袖长+T恤女] + [年份季节新款] + [版型+领型] + [印花/后背印花] + [热搜风格+热搜卖点+长尾衍生词]`
+   - **公式 B（热搜风格长尾引流）**：`[热搜风格+版型] + [袖长+T恤女] + [季节] + [材质克重] + [领型+印花] + [热搜卖点+场景长尾词]`
+   - 内置**≤ 60 字符（30 汉字）不截断词组**、**词根去重**、**互斥词防护**、**违禁词过滤**与**同主题差异化轮换**。
+2. 如需单独生成候选标题对比、补充印花/卖点关键词，或指定自定义热搜词配置，运行：
    ```bash
-   uv run --project skills/aionforge/scripts python skills/pdd-help/scripts/pdd_prepare.py check-title "<待校验标题>"
+   uv run --project skills/aionforge/scripts python skills/pdd-help/scripts/pdd_prepare.py generate-title <工作区目录> --keywords <印花/卖点词>
    ```
-2. 向用户确认关键上架参数（禁止擅自编造价格或直接正式发布）：
-   - **上架模式**：`上架到草稿箱`（默认推荐）或 `正式上架`
-   - **商品标题 & 类目**：确认最终标题与三级类目（如 `女装/女士精品 > T恤 > T恤`）
-   - **商品属性**：核对 `pdd_listing.json` / `pdd_attributes.json` 中的属性（默认对齐 [default-config.json](references/default-config.json) 中「素禾优选女装」按长袖/短袖区分的 16 项属性母版）
-   - **尺码模板 & 运费模板**：优先读取 [default-config.json](references/default-config.json)（或 `--config-file` / `--templates-file` / `pdd_listing.json`）；**若其中任一项未配置（为空），必须先通过 `list-templates` 读取页面可选项并询问用户选择哪个尺码模板与运费模板**，禁止擅自决定。
-   - **拼单价 & 单买价 & 库存**：优先读取 [default-config.json](references/default-config.json)（按 **长袖 / 短袖** 分开配置，支持 `--config-file` / `--pricing-file` 覆盖）；**若任一价格未配置（`null`），必须询问用户确认后再执行批量设置**。
-   - **商品辅助图与 SKU 规格**：确认白底图（`white_bg_image`）、长图（`long_image`）、颜色列表与 `04_sku/` 预览图映射
+   （支持 `--profile 短袖|长袖`、`--formula a|b|all`、`--config-file <路径>`、`--json`）。
+3. 将生成的公式 A / B 候选标题展示给用户确认或微调；若用户手动修改标题，必须先用脚本校验（≤ 30 汉字 / 60 字符且无违禁词），再写回 `pdd_listing.json`：
+   ```bash
+   uv run --project skills/aionforge/scripts python skills/pdd-help/scripts/pdd_prepare.py check-title "<最终标题>"
+   ```
 
-### 第四步：CDP 协议长连接自动上传与上架
+### 第四步：确认上架参数（Lock）
+
+向用户确认关键上架参数（禁止擅自编造价格或直接正式发布）：
+- **上架模式**：`上架到草稿箱`（默认推荐）或 `正式上架`
+- **商品标题 & 类目**：确认最终标题与三级类目（如 `女装/女士精品 > T恤 > T恤`）
+- **商品属性**：核对 `pdd_listing.json` / `pdd_attributes.json` 中的属性（默认对齐 [default-config.json](references/default-config.json) 中「素禾优选女装」按长袖/短袖区分的 16 项属性母版）
+- **尺码模板 & 运费模板**：优先读取 [default-config.json](references/default-config.json)（或 `--config-file` / `--templates-file` / `pdd_listing.json`）；**若其中任一项未配置（为空），必须先通过 `list-templates` 读取页面可选项并询问用户选择哪个尺码模板与运费模板**，禁止擅自决定。
+- **拼单价 & 单买价 & 库存**：优先读取 [default-config.json](references/default-config.json)（按 **长袖 / 短袖** 分开配置，支持 `--config-file` / `--pricing-file` 覆盖）；**若任一价格未配置（`null`），必须询问用户确认后再执行批量设置**。
+- **商品辅助图与 SKU 规格**：确认白底图（`white_bg_image`）、长图（`long_image`）、颜色列表与 `04_sku/` 预览图映射
+
+### 第五步：CDP 协议长连接自动上传与上架
 
 **必须使用 CDP 协议建立 WebSocket 长连接**操作本地浏览器，严格按 [pdd-mms-flow.md](references/pdd-mms-flow.md) 执行：
 

@@ -306,3 +306,99 @@ def test_auxiliary_images_export_and_listing(tmp_path: Path) -> None:
     long_item = next(i for i in manifest["auxiliary"] if "tee-long" in i["output"])
     assert long_item["width"] == 800
     assert long_item["height"] == 1200
+
+
+def test_generate_tshirt_titles_formulas_and_constraints(tmp_path: Path, capsys: object) -> None:
+    facts = {
+        "product_name": "白色短袖T恤",
+        "print": {"has_print": True, "text_exact": "", "visual_keywords": ["小雏菊"]},
+    }
+    attrs_short = {
+        "重要面料俗称": "棉",
+        "重要平方克重": "200g/m²（含）—220g/m²（不含）",
+        "重要上市时节": "2026年夏季",
+        "重要服装版型": "宽松型",
+        "领型": "圆领",
+        "重要主风格": "韩版",
+    }
+    candidates = pdd_prepare._generate_tshirt_titles(facts, attrs_short, "短袖", formula="all")
+    assert len(candidates) == 2
+
+    formula_a, formula_b = candidates[0], candidates[1]
+    assert formula_a["formula"] == "A"
+    assert formula_b["formula"] == "B"
+
+    title_a = str(formula_a["title"])
+    title_b = str(formula_b["title"])
+
+    assert title_a.startswith("纯棉短袖T恤女2026夏季新款宽松圆领小雏菊印花")
+    assert "纯棉200g" in title_b
+    assert "宽松短袖T恤女2026夏季" in title_b
+    assert title_a != title_b
+
+    # 同主题不同款式（logo）应轮换出差异化热搜词，且不重复词根
+    f1 = pdd_prepare._generate_tshirt_titles(
+        {"logo": "always-flower_navy", "print": {"has_print": True, "placements": [{"side": "back"}]}},
+        attrs_short,
+        "长袖",
+        formula="a",
+    )
+    f2 = pdd_prepare._generate_tshirt_titles(
+        {"logo": "power-flower", "print": {"has_print": True}},
+        attrs_short,
+        "长袖",
+        formula="a",
+    )
+    assert "后背花卉印花" in str(f1[0]["title"])
+    assert f1[0]["title"] != f2[0]["title"]
+
+    for item in candidates:
+        title = str(item["title"])
+        assert item["valid"] is True
+        assert 40 <= pdd_prepare._pdd_char_len(title) <= 60
+        assert not any(w in title for w in pdd_prepare.PROHIBITED_WORDS)
+
+    # 违禁词过滤与互斥词防护 + 词根不重复
+    filtered = pdd_prepare._generate_tshirt_titles(
+        facts,
+        attrs_short,
+        "长袖",
+        formula="a",
+        extra_keywords=["全网最低", "修身", "纯棉", "复古"],
+    )
+    t = str(filtered[0]["title"])
+    assert "全网最低" not in t
+    assert "修身" not in t  # 与属性中的宽松互斥
+    assert t.count("纯棉") == 1
+    assert "复古" in t
+    assert pdd_prepare._pdd_char_len(t) <= 60
+
+    # CLI generate-title --json
+    ws = tmp_path / "cli_title_ws"
+    (ws / ".forge" / "products" / "tee").mkdir(parents=True)
+    (ws / ".forge" / "products" / "tee" / "facts.json").write_text(
+        json.dumps(facts, ensure_ascii=False), encoding="utf-8"
+    )
+    parser = pdd_prepare.build_parser()
+    args = parser.parse_args(
+        ["generate-title", str(ws), "--profile", "短袖", "--keywords", "小雏菊", "--json"]
+    )
+    assert args.func(args) == 0
+    out_json = json.loads(capsys.readouterr().out)  # type: ignore[attr-defined]
+    assert out_json["profile"] == "短袖"
+    assert len(out_json["candidates"]) == 2
+    assert out_json["candidates"][0]["valid"] is True
+
+
+def test_prepare_writes_formula_title_to_listing(tmp_path: Path) -> None:
+    ws = tmp_path / "title_prep_ws"
+    _make_img(ws / "main" / "hero.png", (800, 800), (220, 220, 220))
+    out_dir = tmp_path / "out_title_prep"
+    parser = pdd_prepare.build_parser()
+    args = parser.parse_args(["prepare", str(ws), "--out", str(out_dir), "--profile", "长袖"])
+    assert args.func(args) == 0
+
+    listing = json.loads((out_dir / "pdd_listing.json").read_text(encoding="utf-8"))
+    assert listing["title"].startswith("纯棉长袖T恤女")
+    assert pdd_prepare._pdd_char_len(listing["title"]) <= 60
+    assert len(listing["title_candidates"]) == 2
